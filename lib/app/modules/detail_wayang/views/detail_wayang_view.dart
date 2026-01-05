@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:ionicons/ionicons.dart';
 import '../controllers/detail_wayang_controller.dart';
 
 class DetailWayangView extends GetView<DetailWayangController> {
@@ -8,12 +9,13 @@ class DetailWayangView extends GetView<DetailWayangController> {
 
   @override
   Widget build(BuildContext context) {
-    // Definisi Warna Tema
-    const Color primaryBeige = Color(0xFFD9C19D);
-    const Color darkWood = Color(0xFF3E2723);
+    // --- PENYAMAAN TEMA WARNA (Sesuai HomeView) ---
+    const Color primaryDark = Color(0xFF4E342E); // Coklat Tua
+    const Color goldAccent = Color(0xFFD4AF37); // Emas
+    const Color background = Color(0xFFFAFAF5); // Krem
+    const Color secondaryBrown = Color(0xFF8D6E63); // Coklat Susu
 
-    // Menerima data dari Get.arguments.
-    // Menggunakan Map kosong sebagai fallback jika arguments null untuk menghindari error runtime.
+    // Menerima data dari Get.arguments
     final Map<String, dynamic> data = Get.arguments ?? {};
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -24,25 +26,34 @@ class DetailWayangView extends GetView<DetailWayangController> {
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
       child: Scaffold(
-        backgroundColor: primaryBeige,
+        backgroundColor: background, // Background disamakan
         body: SafeArea(
           bottom: false,
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: Column(
               children: [
-                // 1. Custom App Bar
-                _buildSimpleAppBar(darkWood),
+                // 1. Custom App Bar dengan LIKE BUTTON
+                _buildAppBarWithLike(primaryDark, goldAccent),
 
                 const SizedBox(height: 10),
 
                 // 2. Header Title
-                _buildHeaderTitle(data['title'] ?? 'Wayang', darkWood),
+                _buildHeaderTitle(
+                  data['title'] ?? 'Wayang',
+                  primaryDark,
+                  goldAccent,
+                ),
 
                 const SizedBox(height: 20),
 
                 // 3. 3D Canvas Card
-                _build3DCanvas(context, data['imagePath'] ?? '', darkWood),
+                _build3DCanvas(
+                  context,
+                  data['imagePath'] ?? '',
+                  primaryDark,
+                  goldAccent,
+                ),
 
                 const SizedBox(height: 25),
 
@@ -50,9 +61,17 @@ class DetailWayangView extends GetView<DetailWayangController> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _buildHintChip(Icons.touch_app_outlined, "Putar", darkWood),
+                    _buildHintChip(
+                      Ionicons.hand_left_outline,
+                      "Putar",
+                      primaryDark,
+                    ),
                     const SizedBox(width: 12),
-                    _buildHintChip(Icons.zoom_in_outlined, "Zoom", darkWood),
+                    _buildHintChip(
+                      Ionicons.resize_outline,
+                      "Zoom",
+                      primaryDark,
+                    ),
                   ],
                 ),
 
@@ -62,7 +81,8 @@ class DetailWayangView extends GetView<DetailWayangController> {
                 _buildDescriptionPanel(
                   data['description'] ??
                       'Informasi mengenai tokoh ini belum tersedia.',
-                  darkWood,
+                  primaryDark,
+                  secondaryBrown,
                 ),
               ],
             ),
@@ -74,23 +94,20 @@ class DetailWayangView extends GetView<DetailWayangController> {
 
   // --- WIDGET HELPERS ---
 
-  Widget _buildSimpleAppBar(Color color) {
+  // MODIFIKASI: Menambahkan Tombol Like di Kanan
+  Widget _buildAppBarWithLike(Color color, Color accentColor) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      child: Stack(
-        alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: IconButton(
-              icon: Icon(
-                Icons.arrow_back_ios_new_rounded,
-                color: color,
-                size: 22,
-              ),
-              onPressed: () => Get.back(),
-            ),
+          // Tombol Back
+          IconButton(
+            onPressed: () => Get.back(),
+            icon: Icon(Ionicons.chevron_back, color: color, size: 24),
           ),
+
+          // Judul Tengah
           Text(
             "DETAIL WAYANG",
             style: TextStyle(
@@ -100,12 +117,33 @@ class DetailWayangView extends GetView<DetailWayangController> {
               letterSpacing: 2.0,
             ),
           ),
+
+          // Tombol Like (Baru)
+          IconButton(
+            onPressed: () {
+              // Tambahkan logika like di sini (panggil controller)
+              Get.snackbar(
+                "Disukai",
+                "Tokoh ditambahkan ke favorit",
+                snackPosition: SnackPosition.BOTTOM,
+                backgroundColor: color,
+                colorText: Colors.white,
+                duration: const Duration(seconds: 1),
+              );
+            },
+            icon: Icon(
+              Ionicons
+                  .heart_outline, // Gunakan heart untuk filled jika sudah dilike
+              color: color, // Bisa diganti accentColor jika aktif
+              size: 26,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildHeaderTitle(String title, Color color) {
+  Widget _buildHeaderTitle(String title, Color color, Color accent) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 30),
       child: Column(
@@ -132,7 +170,11 @@ class DetailWayangView extends GetView<DetailWayangController> {
                   indent: 40,
                 ),
               ),
-              Icon(Icons.auto_awesome, size: 14, color: color.withOpacity(0.4)),
+              Icon(
+                Ionicons.star,
+                size: 14,
+                color: accent,
+              ), // Ganti jadi icon Bintang Emas
               Expanded(
                 child: Divider(
                   color: color.withOpacity(0.2),
@@ -147,18 +189,23 @@ class DetailWayangView extends GetView<DetailWayangController> {
     );
   }
 
-  Widget _build3DCanvas(BuildContext context, String path, Color wood) {
+  Widget _build3DCanvas(
+    BuildContext context,
+    String path,
+    Color primary,
+    Color accent,
+  ) {
     double screenHeight = MediaQuery.of(context).size.height;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 25),
       height: screenHeight * 0.45,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
+        color: Colors.white.withOpacity(0.8), // Sedikit transparan
         borderRadius: BorderRadius.circular(35),
         boxShadow: [
           BoxShadow(
-            color: wood.withOpacity(0.15),
+            color: primary.withOpacity(0.1), // Shadow warna coklat
             blurRadius: 30,
             offset: const Offset(0, 15),
           ),
@@ -171,8 +218,8 @@ class DetailWayangView extends GetView<DetailWayangController> {
             top: 20,
             left: 20,
             child: Icon(
-              Icons.threesixty_rounded,
-              color: wood.withOpacity(0.5),
+              Ionicons.cube_outline,
+              color: accent.withOpacity(0.8), // Icon warna emas pudar
               size: 24,
             ),
           ),
@@ -189,9 +236,9 @@ class DetailWayangView extends GetView<DetailWayangController> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.4),
+        color: color.withOpacity(0.05), // Background chip lebih soft
         borderRadius: BorderRadius.circular(25),
-        border: Border.all(color: Colors.white.withOpacity(0.5)),
+        border: Border.all(color: color.withOpacity(0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -212,7 +259,7 @@ class DetailWayangView extends GetView<DetailWayangController> {
     );
   }
 
-  Widget _buildDescriptionPanel(String desc, Color color) {
+  Widget _buildDescriptionPanel(String desc, Color primary, Color secondary) {
     return Container(
       width: double.infinity,
       constraints: const BoxConstraints(minHeight: 300),
@@ -240,7 +287,7 @@ class DetailWayangView extends GetView<DetailWayangController> {
                 width: 5,
                 height: 25,
                 decoration: BoxDecoration(
-                  color: color,
+                  color: primary, // Warna Coklat Tua
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -250,7 +297,7 @@ class DetailWayangView extends GetView<DetailWayangController> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
-                  color: color,
+                  color: primary,
                   letterSpacing: 1.0,
                 ),
               ),
@@ -262,7 +309,7 @@ class DetailWayangView extends GetView<DetailWayangController> {
             style: TextStyle(
               fontSize: 15,
               height: 1.8,
-              color: color.withOpacity(0.8),
+              color: primary.withOpacity(0.8), // Warna teks coklat agak pudar
               fontWeight: FontWeight.w400,
             ),
             textAlign: TextAlign.justify,
@@ -273,7 +320,7 @@ class DetailWayangView extends GetView<DetailWayangController> {
   }
 }
 
-// --- LOGIC IMAGE INTERACTION ---
+// --- LOGIC IMAGE INTERACTION (TETAP SAMA) ---
 
 class ImageOneFinger360 extends StatefulWidget {
   final String imagePath;

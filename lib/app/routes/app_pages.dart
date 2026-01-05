@@ -6,6 +6,8 @@ import '../modules/deteksi/bindings/deteksi_binding.dart';
 import '../modules/deteksi/views/deteksi_view.dart';
 import '../modules/home/bindings/home_binding.dart';
 import '../modules/home/views/home_view.dart';
+import '../modules/leaderboard/bindings/leaderboard_binding.dart';
+import '../modules/leaderboard/views/leaderboard_view.dart';
 import '../modules/login/bindings/login_binding.dart';
 import '../modules/login/views/login_view.dart';
 import '../modules/profile/bindings/profile_binding.dart';
@@ -26,7 +28,7 @@ part 'app_routes.dart';
 class AppPages {
   AppPages._();
 
-  static const INITIAL = Routes.QUIZ;
+  static const INITIAL = Routes.HOME;
 
   static final routes = [
     GetPage(
@@ -78,6 +80,11 @@ class AppPages {
       name: _Paths.QUIZ,
       page: () => const QuizView(),
       binding: QuizBinding(),
+    ),
+    GetPage(
+      name: _Paths.LEADERBOARD,
+      page: () => const LeaderboardView(),
+      binding: LeaderboardBinding(),
     ),
   ];
 }
