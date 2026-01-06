@@ -1,3 +1,18 @@
+buildscript {
+    // Menentukan versi Kotlin secara eksplisit untuk mencegah error Daemon
+    val kotlinVersion = "1.9.0"
+    
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        // Classpath untuk Kotlin Gradle Plugin
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
+    }
+}
+
 allprojects {
     repositories {
         google()
@@ -5,16 +20,15 @@ allprojects {
     }
 }
 
-val newBuildDir: Directory =
-    rootProject.layout.buildDirectory
-        .dir("../../build")
-        .get()
+// Konfigurasi direktori build (Standar Flutter)
+val newBuildDir: Directory = rootProject.layout.buildDirectory.dir("../../build").get()
 rootProject.layout.buildDirectory.value(newBuildDir)
 
 subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
+
 subprojects {
     project.evaluationDependsOn(":app")
 }

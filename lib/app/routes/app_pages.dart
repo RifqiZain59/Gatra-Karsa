@@ -2,14 +2,28 @@ import 'package:get/get.dart';
 
 import '../modules/detail_wayang/bindings/detail_wayang_binding.dart';
 import '../modules/detail_wayang/views/detail_wayang_view.dart';
+import '../modules/detaildalang/bindings/detaildalang_binding.dart';
+import '../modules/detaildalang/views/detaildalang_view.dart';
+import '../modules/detailevent/bindings/detailevent_binding.dart';
+import '../modules/detailevent/views/detailevent_view.dart';
+import '../modules/detailkisah/bindings/detailkisah_binding.dart';
+import '../modules/detailkisah/views/detailkisah_view.dart';
+import '../modules/detailmuseum/bindings/detailmuseum_binding.dart';
+import '../modules/detailmuseum/views/detailmuseum_view.dart';
 import '../modules/deteksi/bindings/deteksi_binding.dart';
 import '../modules/deteksi/views/deteksi_view.dart';
+import '../modules/event/bindings/event_binding.dart';
+import '../modules/event/views/event_view.dart';
 import '../modules/home/bindings/home_binding.dart';
 import '../modules/home/views/home_view.dart';
+import '../modules/kisah/bindings/kisah_binding.dart';
+import '../modules/kisah/views/kisah_view.dart';
 import '../modules/leaderboard/bindings/leaderboard_binding.dart';
 import '../modules/leaderboard/views/leaderboard_view.dart';
 import '../modules/login/bindings/login_binding.dart';
 import '../modules/login/views/login_view.dart';
+import '../modules/museum/bindings/museum_binding.dart';
+import '../modules/museum/views/museum_view.dart';
 import '../modules/profile/bindings/profile_binding.dart';
 import '../modules/profile/views/profile_view.dart';
 import '../modules/quiz/bindings/quiz_binding.dart';
@@ -20,6 +34,8 @@ import '../modules/splash/bindings/splash_binding.dart';
 import '../modules/splash/views/splash_view.dart';
 import '../modules/tentangkami/bindings/tentangkami_binding.dart';
 import '../modules/tentangkami/views/tentangkami_view.dart';
+import '../modules/tokoh/bindings/tokoh_binding.dart';
+import '../modules/tokoh/views/tokoh_view.dart';
 import '../modules/video/bindings/video_binding.dart';
 import '../modules/video/views/video_view.dart';
 
@@ -85,6 +101,46 @@ class AppPages {
       name: _Paths.LEADERBOARD,
       page: () => const LeaderboardView(),
       binding: LeaderboardBinding(),
+    ),
+    GetPage(
+      name: _Paths.MUSEUM,
+      page: () => const MuseumView(),
+      binding: MuseumBinding(),
+    ),
+    GetPage(
+      name: _Paths.TOKOH,
+      page: () => const TokohView(),
+      binding: TokohBinding(),
+    ),
+    GetPage(
+      name: _Paths.KISAH,
+      page: () => const KisahView(),
+      binding: KisahBinding(),
+    ),
+    GetPage(
+      name: _Paths.EVENT,
+      page: () => const EventView(),
+      binding: EventBinding(),
+    ),
+    GetPage(
+      name: _Paths.DETAILDALANG,
+      page: () => const DetaildalangView(),
+      binding: DetaildalangBinding(),
+    ),
+    GetPage(
+      name: _Paths.DETAILMUSEUM,
+      page: () => const DetailmuseumView(),
+      binding: DetailmuseumBinding(),
+    ),
+    GetPage(
+      name: _Paths.DETAILEVENT,
+      page: () => const DetaileventView(),
+      binding: DetaileventBinding(),
+    ),
+    GetPage(
+      name: _Paths.DETAILKISAH,
+      page: () => const DetailkisahView(),
+      binding: DetailkisahBinding(),
     ),
   ];
 }

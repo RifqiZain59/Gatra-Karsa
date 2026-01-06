@@ -14,6 +14,14 @@ abstract class Routes {
   static const DETAIL_WAYANG = _Paths.DETAIL_WAYANG;
   static const QUIZ = _Paths.QUIZ;
   static const LEADERBOARD = _Paths.LEADERBOARD;
+  static const MUSEUM = _Paths.MUSEUM;
+  static const TOKOH = _Paths.TOKOH;
+  static const KISAH = _Paths.KISAH;
+  static const EVENT = _Paths.EVENT;
+  static const DETAILDALANG = _Paths.DETAILDALANG;
+  static const DETAILMUSEUM = _Paths.DETAILMUSEUM;
+  static const DETAILEVENT = _Paths.DETAILEVENT;
+  static const DETAILKISAH = _Paths.DETAILKISAH;
 }
 
 abstract class _Paths {
@@ -29,4 +37,12 @@ abstract class _Paths {
   static const DETAIL_WAYANG = '/detail-wayang';
   static const QUIZ = '/quiz';
   static const LEADERBOARD = '/leaderboard';
+  static const MUSEUM = '/museum';
+  static const TOKOH = '/tokoh';
+  static const KISAH = '/kisah';
+  static const EVENT = '/event';
+  static const DETAILDALANG = '/detaildalang';
+  static const DETAILMUSEUM = '/detailmuseum';
+  static const DETAILEVENT = '/detailevent';
+  static const DETAILKISAH = '/detailkisah';
 }

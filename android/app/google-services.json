@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "680168932940",
+    "project_id": "gatrakarsa",
+    "storage_bucket": "gatrakarsa.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:680168932940:android:8152e7fe068b8dd7f456e9",
+        "android_client_info": {
+          "package_name": "com.example.gatrakarsa"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB7dXkfb5mzr8DY91fiLWwEoPnghyULJHY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -13,6 +13,12 @@ import '../../video/views/video_view.dart';
 import '../../leaderboard/views/leaderboard_view.dart';
 import '../../quiz/views/quiz_view.dart';
 
+// --- IMPORT HALAMAN MENU BARU (Pastikan file ini sudah dibuat) ---
+import '../../tokoh/views/tokoh_view.dart';
+import '../../kisah/views/kisah_view.dart';
+import '../../museum/views/museum_view.dart';
+import '../../event/views/event_view.dart';
+
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
 
@@ -61,11 +67,11 @@ class _HomeViewState extends State<HomeView> {
       'label': 'Event',
       'color': 0xFFA1887F, // Coklat Abu
     },
-    // MENU BARU: KUIS (Warna disesuaikan agar senada)
+    // MENU BARU: KUIS
     {
       'icon': Ionicons.game_controller,
       'label': 'Kuis',
-      'color': 0xFF6D4C41, // Coklat Kayu (Disamakan dengan tema)
+      'color': 0xFF6D4C41, // Coklat Kayu
     },
   ];
 
@@ -385,7 +391,7 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
-  // --- MENU GRID DENGAN WRAP (Warna sudah disamakan) ---
+  // --- MENU GRID (UPDATED NAVIGATION) ---
   Widget _buildWayangMenuGrid() {
     return Container(
       width: double.infinity,
@@ -411,12 +417,23 @@ class _HomeViewState extends State<HomeView> {
             width: 70,
             child: GestureDetector(
               onTap: () {
-                if (cat['label'] == 'Kuis') {
+                // Logika Navigasi Berdasarkan Label Menu
+                final label = cat['label'];
+
+                if (label == 'Tokoh') {
+                  Get.to(() => const TokohView());
+                } else if (label == 'Kisah') {
+                  Get.to(() => const KisahView());
+                } else if (label == 'Museum') {
+                  Get.to(() => const MuseumView());
+                } else if (label == 'Event') {
+                  Get.to(() => const EventView());
+                } else if (label == 'Kuis') {
                   Get.to(() => const QuizView());
                 } else {
                   Get.snackbar(
                     "Info",
-                    "Menu ${cat['label']} diklik",
+                    "Fitur ${label} sedang dikembangkan",
                     snackPosition: SnackPosition.BOTTOM,
                     backgroundColor: _primaryColor,
                     colorText: Colors.white,
