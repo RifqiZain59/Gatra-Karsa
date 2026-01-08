@@ -1,154 +1,88 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:gatrakarsa/app/modules/detailmuseum/views/detailmuseum_view.dart';
+import 'package:gatrakarsa/app/data/service/api_service.dart';
 import 'package:get/get.dart';
 import 'package:ionicons/ionicons.dart';
 
-class MuseumView extends StatefulWidget {
+import '../controllers/museum_controller.dart';
+import '../../detailmuseum/views/detailmuseum_view.dart';
+
+class MuseumView extends GetView<MuseumController> {
   const MuseumView({super.key});
 
-  @override
-  State<MuseumView> createState() => _MuseumViewState();
-}
-
-class _MuseumViewState extends State<MuseumView> {
-  // --- PALET WARNA ---
-  final Color _primaryColor = const Color(0xFF4E342E); // Coklat Tua
-  final Color _accentColor = const Color(0xFFD4AF37); // Emas
-  final Color _bgColor = const Color(0xFFFAFAF5); // Krem
-  final Color _secondaryColor = const Color(0xFF8D6E63); // Coklat Susu
-
-  // --- STATE VARIABLES ---
-  final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = "";
-
-  // State untuk Tab Filter Baru
-  int _activeTabIndex = 0;
-  final List<String> _categories = [
-    'Semua',
-    'Yogyakarta',
-    'Jawa Tengah',
-    'Jakarta',
-    'Jawa Barat',
-  ];
-  String _selectedCategory = "Semua";
-
-  // --- DATA DUMMY MUSEUM ---
-  final List<Map<String, dynamic>> museums = [
-    {
-      'name': 'Museum Wayang Kekayon',
-      'location': 'Bantul, Yogyakarta',
-      'image': 'assets/banner1.jpg',
-      'openHours': '08.00 - 14.00 WIB',
-      'price': 'Rp 20.000',
-      'rating': 4.7,
-      'distance': '2.5 km',
-    },
-    {
-      'name': 'Museum Sonobudoyo',
-      'location': 'Kota Yogyakarta',
-      'image': 'assets/banner2.jpg',
-      'openHours': '08.00 - 15.30 WIB',
-      'price': 'Rp 10.000',
-      'rating': 4.8,
-      'distance': '5.0 km',
-    },
-    {
-      'name': 'Museum Wayang Jakarta',
-      'location': 'Kota Tua, Jakarta',
-      'image': 'assets/banner1.jpg',
-      'openHours': '09.00 - 15.00 WIB',
-      'price': 'Rp 5.000',
-      'rating': 4.6,
-      'distance': '120 km',
-    },
-    {
-      'name': 'Museum Radya Pustaka',
-      'location': 'Surakarta, Jawa Tengah',
-      'image': 'assets/banner2.jpg',
-      'openHours': '09.00 - 15.00 WIB',
-      'price': 'Rp 10.000',
-      'rating': 4.5,
-      'distance': '60 km',
-    },
-    {
-      'name': 'Museum Sri Baduga',
-      'location': 'Bandung, Jawa Barat',
-      'image': 'assets/banner1.jpg',
-      'openHours': '08.00 - 16.00 WIB',
-      'price': 'Rp 15.000',
-      'rating': 4.4,
-      'distance': '150 km',
-    },
-  ];
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  // --- LOGIKA FILTER ---
-  List<Map<String, dynamic>> get _filteredMuseums {
-    return museums.where((museum) {
-      // 1. Filter Search (Nama Museum)
-      bool matchesSearch = museum['name'].toString().toLowerCase().contains(
-        _searchQuery.toLowerCase(),
-      );
-
-      // 2. Filter Kategori (Berdasarkan Lokasi)
-      bool matchesCategory = true;
-      if (_selectedCategory != "Semua") {
-        matchesCategory = museum['location'].toString().contains(
-          _selectedCategory,
-        );
-      }
-
-      return matchesSearch && matchesCategory;
-    }).toList();
-  }
+  final Color _primaryColor = const Color(0xFF4E342E);
+  final Color _accentColor = const Color(0xFFD4AF37);
+  final Color _bgColor = const Color(0xFFFAFAF5);
+  final Color _secondaryColor = const Color(0xFF8D6E63);
 
   @override
   Widget build(BuildContext context) {
+    // TIPS: Sebaiknya letakkan Get.put di Binding.
+    // Namun untuk quick-fix agar tidak error jika tanpa binding:
+    if (!Get.isRegistered<MuseumController>()) {
+      Get.put(MuseumController());
+    }
+
     return Scaffold(
       backgroundColor: _bgColor,
       appBar: _buildAppBar(),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const SizedBox(height: 10),
           _buildSearchBar(),
           const SizedBox(height: 15),
-
-          // --- TAB FILTER BARU ---
           _buildCategoryTabs(),
-
           const SizedBox(height: 10),
-
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-            child: Text(
-              "Destinasi Terpopuler",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: _primaryColor,
-                fontFamily: 'Serif', // Font disamakan
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Destinasi Terpopuler",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: _primaryColor,
+                    fontFamily: 'Serif',
+                  ),
+                ),
+                // Optional: Menampilkan jumlah data
+                Obx(
+                  () => Text(
+                    "${controller.filteredMuseums.length} Tempat",
+                    style: TextStyle(fontSize: 12, color: _secondaryColor),
+                  ),
+                ),
+              ],
             ),
           ),
-
-          // --- LIST MUSEUM ---
           Expanded(
-            child: _filteredMuseums.isEmpty
-                ? _buildEmptyState()
-                : ListView.builder(
-                    padding: const EdgeInsets.all(20),
-                    physics: const BouncingScrollPhysics(),
-                    itemCount: _filteredMuseums.length,
-                    itemBuilder: (context, index) {
-                      return _buildMuseumCard(_filteredMuseums[index]);
-                    },
-                  ),
+            child: Obx(() {
+              if (controller.isLoading.value) {
+                return Center(
+                  child: CircularProgressIndicator(color: _primaryColor),
+                );
+              }
+              if (controller.filteredMuseums.isEmpty) {
+                return _buildEmptyState();
+              }
+              return RefreshIndicator(
+                onRefresh: controller.refreshData,
+                color: _primaryColor,
+                child: ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: controller.filteredMuseums.length,
+                  itemBuilder: (context, index) {
+                    return _buildMuseumCard(controller.filteredMuseums[index]);
+                  },
+                ),
+              );
+            }),
           ),
         ],
       ),
@@ -169,11 +103,17 @@ class _MuseumViewState extends State<MuseumView> {
         style: TextStyle(
           color: _primaryColor,
           fontWeight: FontWeight.bold,
-          fontSize: 20,
-          fontFamily: 'Serif', // Font disamakan
+          fontSize: 22,
+          fontFamily: 'Serif',
         ),
       ),
-      actions: [],
+      actions: [
+        IconButton(
+          onPressed: () => controller.refreshData(),
+          icon: Icon(Ionicons.refresh, color: _primaryColor),
+          tooltip: 'Refresh Data',
+        ),
+      ],
       systemOverlayStyle: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.dark,
@@ -185,98 +125,95 @@ class _MuseumViewState extends State<MuseumView> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 15),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-              color: _primaryColor.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: _primaryColor.withOpacity(0.08),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
             ),
           ],
         ),
         child: TextField(
-          controller: _searchController,
-          onChanged: (value) => setState(() => _searchQuery = value),
+          onChanged: (value) => controller.updateSearch(value),
+          textInputAction:
+              TextInputAction.search, // Menambahkan action search di keyboard
+          style: TextStyle(fontFamily: 'Serif', color: _primaryColor),
           decoration: InputDecoration(
-            icon: Icon(Ionicons.search_outline, color: _secondaryColor),
-            hintText: 'Cari museum wayang...',
+            prefixIcon: Icon(Ionicons.search_outline, color: _secondaryColor),
+            hintText: 'Cari museum atau kota...',
             hintStyle: TextStyle(
               color: Colors.grey[400],
               fontSize: 14,
-              fontFamily: 'Serif', // Font disamakan
+              fontFamily: 'Serif',
             ),
             border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(vertical: 14),
-            suffixIcon: _searchQuery.isNotEmpty
-                ? GestureDetector(
-                    onTap: () {
-                      _searchController.clear();
-                      setState(() => _searchQuery = "");
-                    },
-                    child: Icon(
-                      Ionicons.close_circle,
-                      color: _secondaryColor.withOpacity(0.5),
-                    ),
-                  )
-                : null,
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 14,
+              horizontal: 15,
+            ),
           ),
         ),
       ),
     );
   }
 
-  // --- WIDGET TAB KATEGORI BARU ---
   Widget _buildCategoryTabs() {
+    final List<String> categories = [
+      'Semua',
+      'Yogyakarta',
+      'Jawa Tengah',
+      'Jakarta',
+      'Jawa Barat',
+      'Jawa Timur',
+    ];
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
-        children: List.generate(_categories.length, (index) {
+        children: List.generate(categories.length, (index) {
           return Padding(
-            padding: const EdgeInsets.only(right: 30), // Jarak antar tab
-            child: _buildTabItem(_categories[index], index),
+            padding: const EdgeInsets.only(right: 25),
+            child: Obx(
+              () => GestureDetector(
+                onTap: () =>
+                    controller.changeCategory(index, categories[index]),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: controller.activeTabIndex.value == index
+                        ? _primaryColor
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(20),
+                    border: controller.activeTabIndex.value == index
+                        ? null
+                        : Border.all(color: Colors.grey.withOpacity(0.3)),
+                  ),
+                  child: Text(
+                    categories[index],
+                    style: TextStyle(
+                      color: controller.activeTabIndex.value == index
+                          ? Colors.white
+                          : Colors.grey[600],
+                      fontSize: 14,
+                      fontWeight: controller.activeTabIndex.value == index
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                      fontFamily: 'Serif',
+                    ),
+                  ),
+                ),
+              ),
+            ),
           );
         }),
-      ),
-    );
-  }
-
-  Widget _buildTabItem(String label, int index) {
-    bool isActive = _activeTabIndex == index;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _activeTabIndex = index;
-          _selectedCategory = label;
-        });
-      },
-      child: Column(
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: isActive ? _primaryColor : Colors.grey,
-              fontSize: 16,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-              fontFamily: 'Serif', // Font disamakan
-            ),
-          ),
-          const SizedBox(height: 6),
-          // Indikator Garis Bawah Animasi
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            height: 3,
-            width: isActive ? 25 : 0, // Lebar garis saat aktif
-            decoration: BoxDecoration(
-              color: _accentColor,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -286,13 +223,26 @@ class _MuseumViewState extends State<MuseumView> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Ionicons.map, size: 60, color: _secondaryColor.withOpacity(0.3)),
-          const SizedBox(height: 10),
+          Icon(
+            Ionicons.search,
+            size: 80,
+            color: _secondaryColor.withOpacity(0.2),
+          ),
+          const SizedBox(height: 15),
           Text(
-            "Museum tidak ditemukan",
+            "Tidak ditemukan",
             style: TextStyle(
-              color: _secondaryColor.withOpacity(0.5),
-              fontFamily: 'Serif', // Font disamakan
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: _secondaryColor,
+              fontFamily: 'Serif',
+            ),
+          ),
+          Text(
+            "Coba kata kunci atau kategori lain",
+            style: TextStyle(
+              color: _secondaryColor.withOpacity(0.6),
+              fontFamily: 'Serif',
             ),
           ),
         ],
@@ -300,7 +250,7 @@ class _MuseumViewState extends State<MuseumView> {
     );
   }
 
-  Widget _buildMuseumCard(Map<String, dynamic> museum) {
+  Widget _buildMuseumCard(ContentModel item) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
@@ -318,38 +268,24 @@ class _MuseumViewState extends State<MuseumView> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
-          onTap: () {
-            // NAVIGASI KE DetailMuseumView
-            Get.to(() => const DetailmuseumView(), arguments: museum);
-          },
+          onTap: () => Get.to(() => const DetailmuseumView(), arguments: item),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Image Section
+              // --- GAMBAR ---
               Stack(
                 children: [
                   ClipRRect(
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(20),
                     ),
-                    child: Image.asset(
-                      museum['image'],
+                    child: SizedBox(
                       height: 180,
                       width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          height: 180,
-                          color: _secondaryColor.withOpacity(0.2),
-                          child: Icon(
-                            Ionicons.image_outline,
-                            size: 50,
-                            color: _secondaryColor,
-                          ),
-                        );
-                      },
+                      child: _buildImage(item.imageUrl),
                     ),
                   ),
+                  // Badge Rating / Kategori
                   Positioned(
                     top: 15,
                     right: 15,
@@ -360,23 +296,25 @@ class _MuseumViewState extends State<MuseumView> {
                       ),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.95),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(15),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black12,
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Row(
                         children: [
-                          const Icon(
-                            Ionicons.star,
-                            color: Colors.orange,
-                            size: 14,
-                          ),
+                          Icon(Ionicons.star, color: _accentColor, size: 14),
                           const SizedBox(width: 4),
                           Text(
-                            museum['rating'].toString(),
+                            "4.8",
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               color: _primaryColor,
-                              fontFamily: 'Serif', // Font disamakan
                             ),
                           ),
                         ],
@@ -385,23 +323,49 @@ class _MuseumViewState extends State<MuseumView> {
                   ),
                 ],
               ),
-              // Info Section
+
+              // --- INFORMASI ---
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // JUDUL
+                    Text(
+                      item.title,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: _primaryColor,
+                        fontFamily: 'Serif',
+                        height: 1.2,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+
+                    // LOKASI (Menggunakan Subtitle + Location)
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Icon(
+                          Ionicons.location_outline,
+                          size: 16,
+                          color: _secondaryColor,
+                        ),
+                        const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            museum['name'],
+                            // Logic: Tampilkan subtitle (Kota/Wilayah).
+                            // Jika ada lokasi detail, gabungkan.
+                            item.subtitle.isNotEmpty
+                                ? item.subtitle
+                                : (item.location ?? "Lokasi tidak tersedia"),
                             style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: _primaryColor,
-                              fontFamily: 'Serif', // Font disamakan
+                              color: Colors.grey[600],
+                              fontSize: 13,
+                              fontFamily: 'Serif',
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -409,84 +373,52 @@ class _MuseumViewState extends State<MuseumView> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    // Location Row
-                    Row(
-                      children: [
-                        Icon(
-                          Ionicons.location_outline,
-                          size: 16,
-                          color: _secondaryColor,
-                        ),
-                        const SizedBox(width: 5),
-                        Text(
-                          museum['location'],
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 13,
-                            fontFamily: 'Serif', // Font disamakan
-                          ),
-                        ),
-                        const Spacer(),
-                        Icon(
-                          Ionicons.navigate_circle_outline,
-                          size: 16,
-                          color: _accentColor,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          museum['distance'],
-                          style: TextStyle(
-                            color: _accentColor,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                            fontFamily: 'Serif', // Font disamakan
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 15),
-                    const Divider(height: 1, color: Color(0xFFEEEEEE)),
-                    const SizedBox(height: 15),
-                    // Details Row (Jam & Harga)
+
+                    const SizedBox(height: 12),
+                    const Divider(height: 1, color: Color(0xFFF0F0F0)),
+                    const SizedBox(height: 12),
+
+                    // BOTTOM ROW (Time & Price)
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
+                        // Jam Operasional
                         Row(
                           children: [
                             Icon(
                               Ionicons.time_outline,
-                              size: 16,
-                              color: _primaryColor,
+                              size: 14,
+                              color: _secondaryColor,
                             ),
-                            const SizedBox(width: 5),
+                            const SizedBox(width: 4),
                             Text(
-                              museum['openHours'],
+                              item.time ?? "08.00 - 16.00",
                               style: TextStyle(
                                 fontSize: 12,
-                                color: _primaryColor,
+                                color: _secondaryColor,
                                 fontWeight: FontWeight.w500,
-                                fontFamily: 'Serif', // Font disamakan
                               ),
                             ),
                           ],
                         ),
+                        // Harga / Label
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 10,
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: _secondaryColor.withOpacity(0.1),
+                            color: _primaryColor.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            museum['price'],
+                            item.price != null && item.price!.isNotEmpty
+                                ? item.price!
+                                : "Gratis",
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 11,
                               color: _primaryColor,
                               fontWeight: FontWeight.bold,
-                              fontFamily: 'Serif', // Font disamakan
                             ),
                           ),
                         ),
@@ -500,5 +432,66 @@ class _MuseumViewState extends State<MuseumView> {
         ),
       ),
     );
+  }
+
+  Widget _buildImage(String imageUrl) {
+    // Placeholder default
+    const String assetPlaceholder = 'assets/banner1.jpg';
+
+    if (imageUrl.isEmpty) {
+      return Image.asset(assetPlaceholder, fit: BoxFit.cover);
+    }
+
+    try {
+      // 1. URL HTTP/HTTPS
+      if (imageUrl.startsWith('http')) {
+        return Image.network(
+          imageUrl,
+          fit: BoxFit.cover,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Container(
+              color: Colors.grey[200],
+              child: Center(
+                child: Icon(Ionicons.image_outline, color: Colors.grey[400]),
+              ),
+            );
+          },
+          errorBuilder: (context, error, stackTrace) {
+            return Image.asset(assetPlaceholder, fit: BoxFit.cover);
+          },
+        );
+      }
+      // 2. ASSETS LOCAL
+      else if (imageUrl.startsWith('assets/')) {
+        return Image.asset(
+          imageUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) =>
+              Container(color: Colors.grey),
+        );
+      }
+      // 3. BASE64 STRING
+      else {
+        // Membersihkan string base64 dari prefix data:image jika ada
+        String base64String = imageUrl;
+        if (base64String.contains(',')) {
+          base64String = base64String.split(',').last;
+        }
+
+        // Dekode
+        Uint8List bytes = base64Decode(base64String);
+        return Image.memory(
+          bytes,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Image.asset(assetPlaceholder, fit: BoxFit.cover);
+          },
+        );
+      }
+    } catch (e) {
+      // Fallback jika format string benar-benar rusak
+      return Image.asset(assetPlaceholder, fit: BoxFit.cover);
+    }
   }
 }

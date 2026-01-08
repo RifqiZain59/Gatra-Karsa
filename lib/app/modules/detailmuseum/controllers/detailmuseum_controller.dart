@@ -1,52 +1,62 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:gatrakarsa/app/data/service/api_service.dart';
 
 class DetailmuseumController extends GetxController {
-  // --- 1. FITUR FAVORIT (BOOKMARK) ---
-  var isSaved = false.obs;
+  late ContentModel museum;
 
-  void toggleSave() {
-    isSaved.value = !isSaved.value;
-
-    if (isSaved.value) {
-      Get.snackbar(
-        "Disimpan",
-        "Museum masuk ke daftar kunjungan Anda",
-        backgroundColor: Colors.white,
-        colorText: const Color(0xFF3E2723), // Coklat Tua
-        icon: const Icon(Icons.bookmark, color: Color(0xFFC5A059)), // Emas
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(20),
-        borderRadius: 10,
-        duration: const Duration(seconds: 2),
-      );
+  // --- 1. INIT DATA ---
+  @override
+  void onInit() {
+    super.onInit();
+    if (Get.arguments is ContentModel) {
+      museum = Get.arguments as ContentModel;
     } else {
-      Get.snackbar(
-        "Dihapus",
-        "Museum dihapus dari daftar kunjungan",
-        backgroundColor: Colors.white,
-        colorText: Colors.grey[800],
-        icon: const Icon(Icons.delete_outline, color: Colors.red),
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(20),
-        borderRadius: 10,
-        duration: const Duration(seconds: 2),
+      // Fallback Data
+      museum = ContentModel(
+        id: '0',
+        title: 'Museum Tidak Ditemukan',
+        subtitle: '',
+        category: 'Museum',
+        description: 'Data tidak tersedia.',
+        imageUrl: '',
+        location: '-',
       );
     }
   }
 
-  // --- 2. FITUR RATING & ULASAN (BARU) ---
-  var userRating = 0.obs; // Menyimpan jumlah bintang (1-5)
+  // --- 2. BOOKMARK ---
+  var isSaved = false.obs;
+
+  void toggleSave() {
+    isSaved.value = !isSaved.value;
+    Get.snackbar(
+      isSaved.value ? "Disimpan" : "Dihapus",
+      isSaved.value
+          ? "Museum ditambahkan ke favorit"
+          : "Museum dihapus dari favorit",
+      backgroundColor: Colors.white,
+      colorText: const Color(0xFF3E2723),
+      icon: Icon(
+        isSaved.value ? Icons.bookmark : Icons.delete_outline,
+        color: isSaved.value ? const Color(0xFFC5A059) : Colors.red,
+      ),
+      snackPosition: SnackPosition.BOTTOM,
+      margin: const EdgeInsets.all(20),
+      borderRadius: 10,
+      duration: const Duration(seconds: 2),
+    );
+  }
+
+  // --- 3. REVIEW ---
+  var userRating = 0.obs;
   final TextEditingController reviewController = TextEditingController();
 
-  // Fungsi mengubah bintang saat diklik
   void setRating(int rating) {
     userRating.value = rating;
   }
 
-  // Fungsi kirim ulasan
   void submitReview() {
-    // Validasi: Cek apakah user sudah pilih bintang
     if (userRating.value == 0) {
       Get.snackbar(
         "Peringatan",
@@ -60,7 +70,6 @@ class DetailmuseumController extends GetxController {
       return;
     }
 
-    // Simulasi Pengiriman Data Sukses
     Get.snackbar(
       "Terima Kasih",
       "Ulasan Anda berhasil dikirim!",
@@ -71,31 +80,24 @@ class DetailmuseumController extends GetxController {
       margin: const EdgeInsets.all(20),
     );
 
-    // Reset Form setelah kirim
     userRating.value = 0;
     reviewController.clear();
-
-    // Menutup keyboard jika terbuka
     FocusManager.instance.primaryFocus?.unfocus();
   }
 
-  // --- 3. FITUR LAINNYA ---
+  // --- 4. MAPS ---
   void openMap() {
-    Get.snackbar(
-      "Peta",
-      "Membuka Google Maps...",
-      backgroundColor: Colors.white,
-      colorText: Colors.black,
-      icon: const Icon(Icons.map, color: Colors.blue),
-      snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(20),
-    );
+    if (museum.mapsUrl != null && museum.mapsUrl!.isNotEmpty) {
+      // TODO: Gunakan url_launcher untuk membuka real maps
+      // launchUrl(Uri.parse(museum.mapsUrl!));
+      Get.snackbar("Peta", "Membuka peta ke: ${museum.location}");
+    } else {
+      Get.snackbar("Info", "Lokasi peta tidak tersedia");
+    }
   }
 
-  // --- 4. MEMORY MANAGEMENT ---
   @override
   void onClose() {
-    // Wajib dispose controller text agar tidak memory leak
     reviewController.dispose();
     super.onClose();
   }

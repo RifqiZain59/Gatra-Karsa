@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-// Model data yang disesuaikan dengan skema Firestore di app.py
+// --- MODEL DATA ---
 class ContentModel {
   final String id;
   final String title;
@@ -14,7 +14,7 @@ class ContentModel {
   final String? price;
   final String? time;
   final String? performer;
-  final String? location; // Digunakan untuk 'Asal Daerah' di Detail Dalang
+  final String? location; // Field Lokasi
   final String? status;
   final Timestamp? createdAt;
 
@@ -51,34 +51,64 @@ class ContentModel {
       price: data['price'],
       time: data['time'],
       performer: data['performer'],
-      location: data['location'], // Mengambil field 'location' dari Firestore
+      // PASTIKAN field ini sesuai dengan di database ('location' atau 'address' atau 'alamat')
+      // Jika di database namanya 'address', ganti jadi data['address']
+      location: data['location'] ?? data['address'] ?? data['alamat'],
       status: data['status'],
       createdAt: data['created_at'],
     );
   }
 }
 
+// --- API SERVICE ---
 class ApiService {
-  // Nama koleksi disesuaikan dengan COLLECTION_NAME di app.py
   final CollectionReference _adminCollection = FirebaseFirestore.instance
       .collection('admin');
 
-  /// Mengambil data Tokoh Dalang
-  /// Logika filter menggunakan daftar kategori yang ada di app.py
-  Future<List<ContentModel>> getTokohDalang() async {
-    List<String> kategoriDalang = [
-      'Dalang',
-      'Maestro',
-      'Legend',
-      'Senior',
-      'Profesional',
-      'Dalang Muda',
-    ];
+  final List<String> _dalangCats = [
+    'Dalang',
+    'Maestro',
+    'Legend',
+    'Senior',
+    'Profesional',
+    'Dalang Muda',
+  ];
 
+  final List<String> _wayangCats = [
+    'Wayang Kulit',
+    'Wayang Golek',
+    'Wayang Orang',
+    'Wayang Klithik',
+    'Wayang Beber',
+    'Lainnya',
+  ];
+
+  final List<String> _nonKisahCats = [
+    'Dalang',
+    'Maestro',
+    'Legend',
+    'Senior',
+    'Profesional',
+    'Dalang Muda',
+    'Wayang Kulit',
+    'Wayang Golek',
+    'Wayang Orang',
+    'Wayang Klithik',
+    'Wayang Beber',
+    'Lainnya',
+    'Event',
+    'Agenda',
+    'Jadwal',
+    'Video',
+    'Museum',
+    'Galeri',
+  ];
+
+  /// 1. GET TOKOH DALANG
+  Future<List<ContentModel>> getTokohDalang() async {
     try {
-      // Query Firestore sesuai dengan route '/tokoh-dalang' di app.py
       QuerySnapshot snapshot = await _adminCollection
-          .where('category', whereIn: kategoriDalang)
+          .where('category', whereIn: _dalangCats)
           .where('status', isEqualTo: 'Publish')
           .get();
 
@@ -91,25 +121,14 @@ class ApiService {
     }
   }
 
-  /// Mengambil data Tokoh Wayang
-  /// Logika filter menggunakan daftar kategori wayang di app.py
+  /// 2. GET TOKOH WAYANG
   Future<List<ContentModel>> getTokohWayang() async {
-    List<String> wayangCats = [
-      'Wayang Kulit',
-      'Wayang Golek',
-      'Wayang Orang',
-      'Wayang Klithik',
-      'Wayang Beber',
-      'Lainnya',
-    ];
-
     try {
       QuerySnapshot snapshot = await _adminCollection
-          .where('category', whereIn: wayangCats)
+          .where('category', whereIn: _wayangCats)
           .where('status', isEqualTo: 'Publish')
           .get();
 
-      // Filter tambahan di client-side untuk memastikan murni data wayang (tanpa maps/time)
       return snapshot.docs.map((doc) => ContentModel.fromFirestore(doc)).where((
         item,
       ) {
@@ -119,6 +138,85 @@ class ApiService {
       }).toList();
     } catch (e) {
       print("Error fetching Wayang: $e");
+      return [];
+    }
+  }
+
+  /// 3. GET MUSEUM (Logic Sesuai app.py)
+  Future<List<ContentModel>> getMuseums() async {
+    try {
+      QuerySnapshot snapshot = await _adminCollection
+          .where('status', isEqualTo: 'Publish')
+          .get();
+
+      List<ContentModel> allData = snapshot.docs
+          .map((doc) => ContentModel.fromFirestore(doc))
+          .toList();
+
+      return allData.where((item) {
+        // Logic: Ada maps_url ATAU (ada price TAPI tidak ada performer & time)
+        bool hasMaps = item.mapsUrl != null && item.mapsUrl!.isNotEmpty;
+        bool hasPrice = item.price != null && item.price!.isNotEmpty;
+        bool hasPerformer =
+            item.performer != null && item.performer!.isNotEmpty;
+        bool hasTime = item.time != null && item.time!.isNotEmpty;
+
+        return hasMaps || (hasPrice && !hasPerformer && !hasTime);
+      }).toList();
+    } catch (e) {
+      print("Error fetching Museums: $e");
+      return [];
+    }
+  }
+
+  /// 4. GET EVENTS
+  Future<List<ContentModel>> getEvents() async {
+    try {
+      QuerySnapshot snapshot = await _adminCollection
+          .where('status', isEqualTo: 'Publish')
+          .get();
+
+      List<ContentModel> allData = snapshot.docs
+          .map((doc) => ContentModel.fromFirestore(doc))
+          .toList();
+
+      return allData.where((item) {
+        bool isDalangOrWayang =
+            _dalangCats.contains(item.category) ||
+            _wayangCats.contains(item.category);
+        if (isDalangOrWayang) return false;
+
+        bool hasPerformer =
+            item.performer != null && item.performer!.isNotEmpty;
+        bool hasTime = item.time != null && item.time!.isNotEmpty;
+
+        return hasPerformer || hasTime;
+      }).toList();
+    } catch (e) {
+      print("Error fetching Events: $e");
+      return [];
+    }
+  }
+
+  /// 5. GET KISAH
+  Future<List<ContentModel>> getKisah() async {
+    try {
+      QuerySnapshot snapshot = await _adminCollection
+          .where('status', isEqualTo: 'Publish')
+          .get();
+
+      return snapshot.docs.map((doc) => ContentModel.fromFirestore(doc)).where((
+        item,
+      ) {
+        bool isExcluded = _nonKisahCats.contains(item.category);
+        bool hasMaps = item.mapsUrl != null && item.mapsUrl!.isNotEmpty;
+        bool hasTime = item.time != null && item.time!.isNotEmpty;
+        bool hasPhone = item.phone != null && item.phone!.isNotEmpty;
+
+        return !isExcluded && !hasMaps && !hasTime && !hasPhone;
+      }).toList();
+    } catch (e) {
+      print("Error fetching Kisah: $e");
       return [];
     }
   }

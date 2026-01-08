@@ -1,16 +1,18 @@
-import 'dart:convert'; // Untuk decode Base64
-import 'dart:typed_data'; // Untuk tipe data Uint8List
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gatrakarsa/app/data/service/api_service.dart';
 import 'package:get/get.dart';
 import 'package:ionicons/ionicons.dart';
 
-// --- IMPORT VIEW, CONTROLLER, & SERVICE ---
-// Sesuaikan path import di bawah ini dengan struktur folder project Anda
+// --- IMPORT VIEW & CONTROLLER ---
 import 'package:gatrakarsa/app/modules/detail_wayang/views/detail_wayang_view.dart';
+// TAMBAHKAN IMPORT BINDING INI:
+import 'package:gatrakarsa/app/modules/detail_wayang/bindings/detail_wayang_binding.dart';
+
 import 'package:gatrakarsa/app/modules/detaildalang/views/detaildalang_view.dart';
-import 'package:gatrakarsa/app/modules/detaildalang/controllers/detaildalang_controller.dart'; // PENTING: Import Controller Detail
+import 'package:gatrakarsa/app/modules/detaildalang/controllers/detaildalang_controller.dart';
 import 'package:gatrakarsa/app/modules/tokoh/controllers/tokoh_controller.dart';
 
 class TokohView extends StatefulWidget {
@@ -21,20 +23,19 @@ class TokohView extends StatefulWidget {
 }
 
 class _TokohViewState extends State<TokohView> {
-  // --- INJEKSI CONTROLLER TOKOH ---
+  // ... (kode variable dan state lainnya tetap sama) ...
   final TokohController controller = Get.put(TokohController());
-
-  // --- PALET WARNA ---
   final Color _primaryColor = const Color(0xFF4E342E);
   final Color _accentColor = const Color(0xFFD4AF37);
   final Color _bgColor = const Color(0xFFFAFAF5);
   final Color _secondaryColor = const Color(0xFF8D6E63);
 
-  // --- STATE VARIABLES UI ---
-  int _activeTab = 0; // 0: Tokoh Wayang, 1: Tokoh Dalang
+  int _activeTab = 0;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
   String _selectedCategory = "Semua";
+
+  // ... (kode dispose, decodeImage, filter tetap sama) ...
 
   @override
   void dispose() {
@@ -42,7 +43,6 @@ class _TokohViewState extends State<TokohView> {
     super.dispose();
   }
 
-  // --- HELPER: DECODE BASE64 IMAGE ---
   Uint8List? _decodeImage(String? base64String) {
     if (base64String == null || base64String.isEmpty) return null;
     try {
@@ -51,12 +51,10 @@ class _TokohViewState extends State<TokohView> {
       }
       return base64Decode(base64String);
     } catch (e) {
-      print("Gagal decode gambar: $e");
       return null;
     }
   }
 
-  // --- LOGIKA FILTER KATEGORI ---
   List<String> get _currentFilters {
     if (_activeTab == 0) {
       return [
@@ -70,28 +68,24 @@ class _TokohViewState extends State<TokohView> {
     return ['Semua', 'Dalang', 'Maestro', 'Legend', 'Dalang Muda'];
   }
 
-  // --- LOGIKA FILTER DATA ---
   List<ContentModel> get _filteredData {
     List<ContentModel> source = _activeTab == 0
         ? controller.wayangList
         : controller.dalangList;
 
     return source.where((item) {
-      // Filter Pencarian
       bool matchesSearch = item.title.toLowerCase().contains(
         _searchQuery.toLowerCase(),
       );
-
-      // Filter Kategori
       bool matchesCategory =
           _selectedCategory == "Semua" || item.category == _selectedCategory;
-
       return matchesSearch && matchesCategory;
     }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
+    // ... (kode build method tetap sama sampai pemanggilan _buildWayangCard) ...
     return Scaffold(
       backgroundColor: _bgColor,
       body: AnnotatedRegion<SystemUiOverlayStyle>(
@@ -104,13 +98,9 @@ class _TokohViewState extends State<TokohView> {
         child: SafeArea(
           child: Column(
             children: [
-              // --- HEADER SECTION ---
               _buildHeaderSection(),
-
-              // --- CONTENT GRID (Reactive with Obx) ---
               Expanded(
                 child: Obx(() {
-                  // Cek Loading State
                   bool isLoading = _activeTab == 0
                       ? controller.isLoadingWayang.value
                       : controller.isLoadingDalang.value;
@@ -120,11 +110,9 @@ class _TokohViewState extends State<TokohView> {
                       child: CircularProgressIndicator(color: _primaryColor),
                     );
                   }
-
                   if (_filteredData.isEmpty) {
                     return _buildEmptyState();
                   }
-
                   return _buildContentGrid(_filteredData);
                 }),
               ),
@@ -135,14 +123,13 @@ class _TokohViewState extends State<TokohView> {
     );
   }
 
-  // --- HEADER WIDGETS ---
+  // ... (Widget header dan tabs tetap sama) ...
   Widget _buildHeaderSection() {
     return Container(
       padding: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(color: _bgColor),
       child: Column(
         children: [
-          // 1. Tombol Back & Judul
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
             child: Row(
@@ -165,10 +152,7 @@ class _TokohViewState extends State<TokohView> {
               ],
             ),
           ),
-
           const SizedBox(height: 25),
-
-          // 2. MAIN TABS (Wayang vs Dalang)
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -177,10 +161,7 @@ class _TokohViewState extends State<TokohView> {
               _buildMainTabButton('Tokoh Dalang', 1),
             ],
           ),
-
           const SizedBox(height: 20),
-
-          // 3. SEARCH BAR
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Container(
@@ -230,10 +211,7 @@ class _TokohViewState extends State<TokohView> {
               ),
             ),
           ),
-
           const SizedBox(height: 15),
-
-          // 4. FILTER TABS
           _buildFilterTabs(),
         ],
       ),
@@ -350,7 +328,6 @@ class _TokohViewState extends State<TokohView> {
     );
   }
 
-  // --- GRID BUILDER ---
   Widget _buildContentGrid(List<ContentModel> data) {
     return GridView.builder(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
@@ -368,15 +345,18 @@ class _TokohViewState extends State<TokohView> {
     );
   }
 
-  // --- CARD: TOKOH WAYANG ---
+  // --- PERBAIKAN DI SINI ---
   Widget _buildWayangCard(ContentModel item) {
-    // Decode image
     Uint8List? imageBytes = _decodeImage(item.imageUrl);
 
     return GestureDetector(
       onTap: () {
-        // Navigasi ke Detail Wayang
-        Get.to(() => const DetailWayangView(), arguments: item);
+        // PERBAIKAN: Tambahkan 'binding: DetailWayangBinding()'
+        Get.to(
+          () => const DetailWayangView(),
+          arguments: item,
+          binding: DetailWayangBinding(),
+        );
       },
       child: Container(
         decoration: BoxDecoration(
@@ -484,16 +464,11 @@ class _TokohViewState extends State<TokohView> {
     );
   }
 
-  // --- CARD: TOKOH DALANG ---
+  // ... (buildDalangCard tetap sama) ...
   Widget _buildDalangCard(ContentModel item) {
-    // Decode image
     Uint8List? imageBytes = _decodeImage(item.imageUrl);
-
     return GestureDetector(
       onTap: () {
-        // PERBAIKAN PENTING:
-        // Menggunakan Binding untuk menginisialisasi DetaildalangController
-        // Agar tidak terjadi error "Controller not found"
         Get.to(
           () => const DetaildalangView(),
           arguments: item,

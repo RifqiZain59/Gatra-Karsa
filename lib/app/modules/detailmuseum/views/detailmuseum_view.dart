@@ -1,38 +1,32 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:ionicons/ionicons.dart';
-
+import 'package:gatrakarsa/app/data/service/api_service.dart'; // Import Model
 import '../controllers/detailmuseum_controller.dart';
 
 class DetailmuseumView extends GetView<DetailmuseumController> {
   const DetailmuseumView({super.key});
 
-  // --- PALET WARNA TEMA WAYANG ---
-  final Color _primaryBrown = const Color(0xFF3E2723); // Coklat Tua
-  final Color _goldAccent = const Color(0xFFC5A059); // Emas
-  final Color _paperBg = const Color(0xFFFDFBF7); // Krem
-  final Color _textBody = const Color(0xFF4E342E); // Coklat Teks
-  final Color _cardBg = const Color(0xFFFFFFFF); // Putih Bersih
+  // --- PALET WARNA ---
+  final Color _primaryBrown = const Color(0xFF3E2723);
+  final Color _goldAccent = const Color(0xFFC5A059);
+  final Color _paperBg = const Color(0xFFFDFBF7);
+  final Color _textBody = const Color(0xFF4E342E);
+  final Color _cardBg = const Color(0xFFFFFFFF);
 
   @override
   Widget build(BuildContext context) {
-    // Injeksi Controller
-    Get.put(DetailmuseumController());
+    // Pastikan controller di-put (atau gunakan Binding)
+    // Jika sudah ada binding, baris ini bisa dihapus
+    if (!Get.isRegistered<DetailmuseumController>()) {
+      Get.put(DetailmuseumController());
+    }
 
-    // --- 1. DATA HANDLING ---
-    final Map<String, dynamic> args = Get.arguments ?? {};
-
-    final String name = args['name'] ?? 'Museum Wayang Kekayon';
-    final String image = args['image'] ?? '';
-    final String address = args['address'] ?? 'Jl. Wonosari Km 7, Yogyakarta';
-    final String description =
-        args['description'] ??
-        'Museum ini menyimpan berbagai koleksi wayang dari seluruh nusantara, mulai dari wayang kulit purwa hingga wayang golek modern.';
-    final String price = args['price'] ?? 'Rp 20.000';
-    final String hours = args['hours'] ?? '08.00 - 16.00 WIB';
-    final List gallery =
-        args['gallery'] ?? ['assets/gallery1.png', 'assets/gallery2.png'];
+    // Ambil data object dari controller
+    final ContentModel museum = controller.museum;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
@@ -54,8 +48,6 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                   expandedHeight: 300,
                   pinned: true,
                   backgroundColor: _primaryBrown,
-
-                  // Tombol Back
                   leading: Container(
                     margin: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
@@ -70,24 +62,33 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                       onPressed: () => Get.back(),
                     ),
                   ),
-
+                  actions: [
+                    // Tombol Bookmark di AppBar
+                    Obx(
+                      () => Container(
+                        margin: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.black.withOpacity(0.3),
+                        ),
+                        child: IconButton(
+                          icon: Icon(
+                            controller.isSaved.value
+                                ? Ionicons.bookmark
+                                : Ionicons.bookmark_outline,
+                            color: _goldAccent,
+                          ),
+                          onPressed: () => controller.toggleSave(),
+                        ),
+                      ),
+                    ),
+                  ],
                   flexibleSpace: FlexibleSpaceBar(
                     stretchModes: const [StretchMode.zoomBackground],
                     background: Stack(
                       fit: StackFit.expand,
                       children: [
-                        // Gambar Utama
-                        if (image.isNotEmpty)
-                          Image.asset(
-                            image,
-                            fit: BoxFit.cover,
-                            errorBuilder: (c, e, s) =>
-                                Container(color: _primaryBrown),
-                          )
-                        else
-                          Container(color: _primaryBrown),
-
-                        // Gradient Overlay
+                        _buildImage(museum.imageUrl),
                         DecoratedBox(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
@@ -117,11 +118,11 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                       children: [
                         const SizedBox(height: 10),
 
-                        // 1. Judul & Alamat
+                        // 1. Judul & Lokasi
                         Text(
-                          name,
+                          museum.title,
                           style: TextStyle(
-                            fontFamily: 'Serif', // Font disamakan
+                            fontFamily: 'Serif',
                             fontSize: 26,
                             fontWeight: FontWeight.w800,
                             color: _primaryBrown,
@@ -138,9 +139,9 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                             const SizedBox(width: 6),
                             Expanded(
                               child: Text(
-                                address,
+                                museum.location ?? "Lokasi belum tersedia",
                                 style: TextStyle(
-                                  fontFamily: 'Serif', // Font disamakan
+                                  fontFamily: 'Serif',
                                   color: Colors.grey[600],
                                   fontSize: 14,
                                 ),
@@ -160,7 +161,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                               child: _buildInfoCard(
                                 icon: Ionicons.time_outline,
                                 title: "Jam Buka",
-                                value: hours,
+                                value: museum.time ?? "09.00 - 15.00 WIB",
                               ),
                             ),
                             const SizedBox(width: 16),
@@ -168,7 +169,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                               child: _buildInfoCard(
                                 icon: Ionicons.ticket_outline,
                                 title: "Tiket Masuk",
-                                value: price,
+                                value: museum.price ?? "Rp 5.000",
                               ),
                             ),
                           ],
@@ -180,7 +181,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                         Text(
                           "Tentang Museum",
                           style: TextStyle(
-                            fontFamily: 'Serif', // Font disamakan
+                            fontFamily: 'Serif',
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: _primaryBrown,
@@ -188,82 +189,24 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          description,
+                          museum.description,
                           textAlign: TextAlign.justify,
                           style: TextStyle(
-                            fontFamily: 'Serif', // Font disamakan
+                            fontFamily: 'Serif',
                             fontSize: 15,
                             height: 1.6,
                             color: _textBody,
                           ),
                         ),
 
-                        const SizedBox(height: 24),
-
-                        // 4. Koleksi Unggulan
-                        if (gallery.isNotEmpty) ...[
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                "Koleksi Unggulan",
-                                style: TextStyle(
-                                  fontFamily: 'Serif', // Font disamakan
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: _primaryBrown,
-                                ),
-                              ),
-                              Text(
-                                "Lihat Semua",
-                                style: TextStyle(
-                                  fontFamily: 'Serif', // Font disamakan
-                                  fontSize: 12,
-                                  color: _goldAccent,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          SizedBox(
-                            height: 120,
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              physics: const BouncingScrollPhysics(),
-                              itemCount: gallery.length,
-                              itemBuilder: (context, index) {
-                                return Container(
-                                  width: 160,
-                                  margin: const EdgeInsets.only(right: 12),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(12),
-                                    color: Colors.grey[200],
-                                    image: DecorationImage(
-                                      image: AssetImage(gallery[index]),
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                  // Fallback
-                                  child: gallery[index] == ''
-                                      ? const Center(
-                                          child: Icon(Ionicons.image),
-                                        )
-                                      : null,
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-
                         const SizedBox(height: 30),
 
-                        // 5. INPUT RATING & ULASAN (BARU)
+                        // 4. INPUT RATING & ULASAN
                         _buildRatingInput(context),
 
                         const SizedBox(height: 30),
 
-                        // 6. Tombol Petunjuk Arah
+                        // 5. Tombol Petunjuk Arah
                         SizedBox(
                           width: double.infinity,
                           height: 55,
@@ -282,7 +225,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                             label: const Text(
                               "Petunjuk Arah",
                               style: TextStyle(
-                                fontFamily: 'Serif', // Font disamakan
+                                fontFamily: 'Serif',
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -305,7 +248,32 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
     );
   }
 
-  // --- WIDGET HELPER: INFO CARD ---
+  // --- WIDGET HELPER ---
+
+  Widget _buildImage(String imageUrl) {
+    if (imageUrl.isEmpty) return Container(color: _primaryBrown);
+
+    try {
+      if (imageUrl.startsWith('http')) {
+        return Image.network(
+          imageUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (c, e, s) => Container(color: _primaryBrown),
+        );
+      } else if (imageUrl.startsWith('assets/')) {
+        return Image.asset(imageUrl, fit: BoxFit.cover);
+      } else {
+        // Base64
+        Uint8List bytes = imageUrl.contains(',')
+            ? base64Decode(imageUrl.split(',').last)
+            : base64Decode(imageUrl);
+        return Image.memory(bytes, fit: BoxFit.cover);
+      }
+    } catch (e) {
+      return Container(color: _primaryBrown);
+    }
+  }
+
   Widget _buildInfoCard({
     required IconData icon,
     required String title,
@@ -340,7 +308,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
           Text(
             title,
             style: TextStyle(
-              fontFamily: 'Serif', // Font disamakan
+              fontFamily: 'Serif',
               fontSize: 11,
               color: Colors.grey[500],
             ),
@@ -349,7 +317,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
           Text(
             value,
             style: TextStyle(
-              fontFamily: 'Serif', // Font disamakan
+              fontFamily: 'Serif',
               fontSize: 14,
               fontWeight: FontWeight.bold,
               color: _textBody,
@@ -362,7 +330,6 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
     );
   }
 
-  // --- WIDGET HELPER: INPUT RATING ---
   Widget _buildRatingInput(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -383,15 +350,13 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
           Text(
             "Bagaimana pengalamanmu?",
             style: TextStyle(
-              fontFamily: 'Serif', // Font disamakan
+              fontFamily: 'Serif',
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: _primaryBrown,
             ),
           ),
           const SizedBox(height: 10),
-
-          // Row Bintang Interaktif
           Center(
             child: Obx(
               () => Row(
@@ -405,7 +370,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                         index < controller.userRating.value
                             ? Ionicons.star
                             : Ionicons.star_outline,
-                        color: Colors.amber, // Warna Bintang
+                        color: Colors.amber,
                         size: 36,
                       ),
                     ),
@@ -414,17 +379,14 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
               ),
             ),
           ),
-
           const SizedBox(height: 20),
-
-          // Text Field Ulasan
           TextField(
             controller: controller.reviewController,
             maxLines: 3,
             decoration: InputDecoration(
               hintText: "Tulis ulasan Anda di sini...",
               hintStyle: TextStyle(
-                fontFamily: 'Serif', // Font disamakan
+                fontFamily: 'Serif',
                 color: Colors.grey[400],
                 fontSize: 14,
               ),
@@ -445,10 +407,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
               ),
             ),
           ),
-
           const SizedBox(height: 16),
-
-          // Tombol Kirim
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -464,7 +423,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
               child: const Text(
                 "Kirim Ulasan",
                 style: TextStyle(
-                  fontFamily: 'Serif', // Font disamakan
+                  fontFamily: 'Serif',
                   fontWeight: FontWeight.bold,
                 ),
               ),
