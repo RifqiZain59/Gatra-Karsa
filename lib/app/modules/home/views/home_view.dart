@@ -1,9 +1,12 @@
 import 'dart:async';
+import 'dart:convert'; // Untuk Base64
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:ionicons/ionicons.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 // --- IMPORT HALAMAN-HALAMAN ---
 import 'package:gatrakarsa/app/modules/detail_wayang/views/detail_wayang_view.dart';
@@ -13,7 +16,6 @@ import '../../video/views/video_view.dart';
 import '../../leaderboard/views/leaderboard_view.dart';
 import '../../quiz/views/quiz_view.dart';
 
-// --- IMPORT HALAMAN MENU BARU ---
 import '../../tokoh/views/tokoh_view.dart';
 import '../../kisah/views/kisah_view.dart';
 import '../../museum/views/museum_view.dart';
@@ -30,10 +32,10 @@ class _HomeViewState extends State<HomeView> {
   int _selectedIndex = 0;
 
   // --- PALET WARNA WAYANG ---
-  final Color _primaryColor = const Color(0xFF4E342E); // Coklat Tua
-  final Color _accentColor = const Color(0xFFD4AF37); // Emas
-  final Color _bgColor = const Color(0xFFFAFAF5); // Krem
-  final Color _secondaryColor = const Color(0xFF8D6E63); // Coklat Susu
+  final Color _primaryColor = const Color(0xFF4E342E);
+  final Color _accentColor = const Color(0xFFD4AF37);
+  final Color _bgColor = const Color(0xFFFAFAF5);
+  final Color _secondaryColor = const Color(0xFF8D6E63);
 
   final PageController _pageController = PageController();
   int _currentPage = 0;
@@ -45,34 +47,12 @@ class _HomeViewState extends State<HomeView> {
     'assets/banner1.jpg',
   ];
 
-  // --- KATEGORI MENU ---
   final List<Map<String, dynamic>> categories = [
-    {
-      'icon': Ionicons.people,
-      'label': 'Tokoh',
-      'color': 0xFF5D4037, // Coklat Kopi
-    },
-    {
-      'icon': Ionicons.book,
-      'label': 'Kisah',
-      'color': 0xFF795548, // Coklat Tanah
-    },
-    {
-      'icon': Ionicons.map,
-      'label': 'Museum',
-      'color': 0xFF8D6E63, // Coklat Bata
-    },
-    {
-      'icon': Ionicons.calendar,
-      'label': 'Event',
-      'color': 0xFFA1887F, // Coklat Abu
-    },
-    // MENU BARU: KUIS
-    {
-      'icon': Ionicons.game_controller,
-      'label': 'Kuis',
-      'color': 0xFF6D4C41, // Coklat Kayu
-    },
+    {'icon': Ionicons.people, 'label': 'Tokoh', 'color': 0xFF5D4037},
+    {'icon': Ionicons.book, 'label': 'Kisah', 'color': 0xFF795548},
+    {'icon': Ionicons.map, 'label': 'Museum', 'color': 0xFF8D6E63},
+    {'icon': Ionicons.calendar, 'label': 'Event', 'color': 0xFFA1887F},
+    {'icon': Ionicons.game_controller, 'label': 'Kuis', 'color': 0xFF6D4C41},
   ];
 
   final List<Map<String, dynamic>> popularCharacters = [
@@ -159,11 +139,11 @@ class _HomeViewState extends State<HomeView> {
         body: IndexedStack(
           index: _selectedIndex,
           children: [
-            _buildHomeContentBody(), // 0
-            const VideoView(), // 1
-            const DeteksiView(), // 2
-            const LeaderboardView(), // 3 (Klasemen)
-            const ProfileView(), // 4
+            _buildHomeContentBody(),
+            const VideoView(),
+            const DeteksiView(),
+            const LeaderboardView(),
+            const ProfileView(),
           ],
         ),
         bottomNavigationBar: _buildBottomAppBar(context),
@@ -181,7 +161,9 @@ class _HomeViewState extends State<HomeView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildCustomHeader(),
+          // Header Menggunakan StreamBuilder agar Auto-Update
+          _buildRealtimeHeader(),
+
           const SizedBox(height: 20),
           _buildBannerSection(),
           const SizedBox(height: 25),
@@ -193,12 +175,11 @@ class _HomeViewState extends State<HomeView> {
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: _primaryColor,
-                fontFamily: 'Serif', // Font disamakan
+                fontFamily: 'Serif',
               ),
             ),
           ),
           const SizedBox(height: 15),
-          // MENU GRID
           _buildWayangMenuGrid(),
           const SizedBox(height: 30),
           _buildSectionHeader('Tokoh Populer', 'Lihat Semua'),
@@ -214,70 +195,120 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
-  Widget _buildCustomHeader() {
-    return Container(
-      padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 15,
-        left: 24,
-        right: 24,
-        bottom: 20,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF4E342E).withOpacity(0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+  // --- HEADER REALTIME DENGAN STREAM ---
+  Widget _buildRealtimeHeader() {
+    final User? user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      return const SizedBox(); // Atau widget login button
+    }
+
+    return StreamBuilder<DocumentSnapshot>(
+      // MENDENGARKAN PERUBAHAN DI FIRESTORE
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .snapshots(),
+      builder: (context, snapshot) {
+        String displayName = "Sobat Wayang";
+        String? photoUrl = user.photoURL;
+        String? photoBase64;
+
+        if (snapshot.hasData &&
+            snapshot.data != null &&
+            snapshot.data!.exists) {
+          final data = snapshot.data!.data() as Map<String, dynamic>;
+          displayName = data['name'] ?? user.displayName ?? "Sobat Wayang";
+          photoBase64 = data['photoBase64'];
+        }
+
+        // Logika Gambar (Prioritas: Base64 -> URL Auth -> Default)
+        ImageProvider imageProvider;
+        if (photoBase64 != null && photoBase64.isNotEmpty) {
+          try {
+            imageProvider = MemoryImage(base64Decode(photoBase64));
+          } catch (e) {
+            imageProvider = const NetworkImage(
+              'https://i.pravatar.cc/150?img=32',
+            );
+          }
+        } else if (photoUrl != null) {
+          imageProvider = NetworkImage(photoUrl);
+        } else {
+          imageProvider = const NetworkImage(
+            'https://i.pravatar.cc/150?img=32',
+          );
+        }
+
+        return Container(
+          padding: EdgeInsets.only(
+            top: MediaQuery.of(context).padding.top + 15,
+            left: 24,
+            right: 24,
+            bottom: 20,
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: _accentColor, width: 2),
-            ),
-            child: const CircleAvatar(
-              radius: 24,
-              backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=32'),
-            ),
-          ),
-          const SizedBox(width: 15),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Sugeng Rawuh,',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: _secondaryColor,
-                  fontFamily: 'Serif', // Font disamakan
-                ),
-              ),
-              Text(
-                'Marina',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: _primaryColor,
-                  fontFamily: 'Serif', // Font disamakan
-                ),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF4E342E).withOpacity(0.08),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
               ),
             ],
           ),
-          const Spacer(),
-          Row(
+          child: Row(
             children: [
-              _buildHeaderIcon(Ionicons.time_outline, () {}),
-              const SizedBox(width: 10),
-              _buildHeaderIcon(Ionicons.notifications_outline, () {}),
+              Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: _accentColor, width: 2),
+                ),
+                child: CircleAvatar(
+                  radius: 24,
+                  backgroundColor: Colors.grey[200],
+                  backgroundImage: imageProvider,
+                ),
+              ),
+              const SizedBox(width: 15),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Sugeng Rawuh,',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: _secondaryColor,
+                        fontFamily: 'Serif',
+                      ),
+                    ),
+                    Text(
+                      displayName,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: _primaryColor,
+                        fontFamily: 'Serif',
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              Row(
+                children: [
+                  _buildHeaderIcon(Ionicons.time_outline, () {}),
+                  const SizedBox(width: 10),
+                  _buildHeaderIcon(Ionicons.notifications_outline, () {}),
+                ],
+              ),
             ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -295,6 +326,10 @@ class _HomeViewState extends State<HomeView> {
       ),
     );
   }
+
+  // ... (SISA KODE BAWAH TETAP SAMA) ...
+  // (Banner, Menu Grid, Article List, Bottom Nav, dll tidak perlu diubah)
+  // ...
 
   Widget _buildBannerSection() {
     return SizedBox(
@@ -348,7 +383,7 @@ class _HomeViewState extends State<HomeView> {
                                   color: Colors.white,
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
-                                  fontFamily: 'Serif', // Font disamakan
+                                  fontFamily: 'Serif',
                                 ),
                               ),
                             ),
@@ -359,7 +394,7 @@ class _HomeViewState extends State<HomeView> {
                                 color: Colors.white,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                fontFamily: 'Serif', // Font disamakan
+                                fontFamily: 'Serif',
                               ),
                             ),
                           ],
@@ -399,7 +434,6 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
-  // --- MENU GRID (UPDATED NAVIGATION) ---
   Widget _buildWayangMenuGrid() {
     return Container(
       width: double.infinity,
@@ -470,7 +504,7 @@ class _HomeViewState extends State<HomeView> {
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: _primaryColor,
-                      fontFamily: 'Serif', // Font disamakan
+                      fontFamily: 'Serif',
                     ),
                   ),
                 ],
@@ -494,7 +528,7 @@ class _HomeViewState extends State<HomeView> {
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: _primaryColor,
-              fontFamily: 'Serif', // Font disamakan
+              fontFamily: 'Serif',
             ),
           ),
           if (action.isNotEmpty)
@@ -504,7 +538,7 @@ class _HomeViewState extends State<HomeView> {
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
                 color: _secondaryColor,
-                fontFamily: 'Serif', // Font disamakan
+                fontFamily: 'Serif',
               ),
             ),
         ],
@@ -568,7 +602,7 @@ class _HomeViewState extends State<HomeView> {
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1,
-                            fontFamily: 'Serif', // Font disamakan
+                            fontFamily: 'Serif',
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -581,7 +615,7 @@ class _HomeViewState extends State<HomeView> {
                                 color: _primaryColor,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                fontFamily: 'Serif', // Font disamakan
+                                fontFamily: 'Serif',
                               ),
                             ),
                             Icon(
@@ -656,7 +690,7 @@ class _HomeViewState extends State<HomeView> {
                           fontSize: 10,
                           color: _secondaryColor,
                           fontWeight: FontWeight.bold,
-                          fontFamily: 'Serif', // Font disamakan
+                          fontFamily: 'Serif',
                         ),
                       ),
                     ),
@@ -669,7 +703,7 @@ class _HomeViewState extends State<HomeView> {
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: _primaryColor,
-                        fontFamily: 'Serif', // Font disamakan
+                        fontFamily: 'Serif',
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -678,7 +712,7 @@ class _HomeViewState extends State<HomeView> {
                       style: TextStyle(
                         fontSize: 11,
                         color: Colors.grey[500],
-                        fontFamily: 'Serif', // Font disamakan
+                        fontFamily: 'Serif',
                       ),
                     ),
                   ],
@@ -690,8 +724,6 @@ class _HomeViewState extends State<HomeView> {
       },
     );
   }
-
-  // --- NAVIGATION BAR & FAB ---
 
   Widget _buildScanFAB() {
     return SizedBox(
@@ -783,7 +815,7 @@ class _HomeViewState extends State<HomeView> {
               color: isSelected ? _primaryColor : Colors.grey[400],
               fontSize: 10,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              fontFamily: 'Serif', // Font disamakan
+              fontFamily: 'Serif',
             ),
           ),
         ],

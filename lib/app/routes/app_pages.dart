@@ -12,30 +12,48 @@ import '../modules/detailmuseum/bindings/detailmuseum_binding.dart';
 import '../modules/detailmuseum/views/detailmuseum_view.dart';
 import '../modules/deteksi/bindings/deteksi_binding.dart';
 import '../modules/deteksi/views/deteksi_view.dart';
+import '../modules/editprofile/bindings/editprofile_binding.dart';
+import '../modules/editprofile/views/editprofile_view.dart';
 import '../modules/event/bindings/event_binding.dart';
 import '../modules/event/views/event_view.dart';
+import '../modules/faq/bindings/faq_binding.dart';
+import '../modules/faq/views/faq_view.dart';
+import '../modules/gantikatasandi/bindings/gantikatasandi_binding.dart';
+import '../modules/gantikatasandi/views/gantikatasandi_view.dart';
 import '../modules/home/bindings/home_binding.dart';
 import '../modules/home/views/home_view.dart';
+import '../modules/kebijakanprivasi/bindings/kebijakanprivasi_binding.dart';
+import '../modules/kebijakanprivasi/views/kebijakanprivasi_view.dart';
+import '../modules/ketentuanpemakaian/bindings/ketentuanpemakaian_binding.dart';
+import '../modules/ketentuanpemakaian/views/ketentuanpemakaian_view.dart';
 import '../modules/kisah/bindings/kisah_binding.dart';
 import '../modules/kisah/views/kisah_view.dart';
 import '../modules/leaderboard/bindings/leaderboard_binding.dart';
 import '../modules/leaderboard/views/leaderboard_view.dart';
 import '../modules/login/bindings/login_binding.dart';
 import '../modules/login/views/login_view.dart';
+import '../modules/lupapassword/bindings/lupapassword_binding.dart';
+import '../modules/lupapassword/views/lupapassword_view.dart';
 import '../modules/museum/bindings/museum_binding.dart';
 import '../modules/museum/views/museum_view.dart';
+import '../modules/onboarding/bindings/onboarding_binding.dart';
+import '../modules/onboarding/views/onboarding_view.dart';
 import '../modules/profile/bindings/profile_binding.dart';
 import '../modules/profile/views/profile_view.dart';
 import '../modules/quiz/bindings/quiz_binding.dart';
 import '../modules/quiz/views/quiz_view.dart';
 import '../modules/register/bindings/register_binding.dart';
 import '../modules/register/views/register_view.dart';
+import '../modules/riwayatlogin/bindings/riwayatlogin_binding.dart';
+import '../modules/riwayatlogin/views/riwayatlogin_view.dart';
 import '../modules/splash/bindings/splash_binding.dart';
 import '../modules/splash/views/splash_view.dart';
 import '../modules/tentangkami/bindings/tentangkami_binding.dart';
 import '../modules/tentangkami/views/tentangkami_view.dart';
 import '../modules/tokoh/bindings/tokoh_binding.dart';
 import '../modules/tokoh/views/tokoh_view.dart';
+import '../modules/verification/bindings/verification_binding.dart';
+import '../modules/verification/views/verification_view.dart';
 import '../modules/video/bindings/video_binding.dart';
 import '../modules/video/views/video_view.dart';
 
@@ -44,7 +62,7 @@ part 'app_routes.dart';
 class AppPages {
   AppPages._();
 
-  static const INITIAL = Routes.HOME;
+  static const INITIAL = Routes.SPLASH;
 
   static final routes = [
     GetPage(
@@ -141,6 +159,51 @@ class AppPages {
       name: _Paths.DETAILKISAH,
       page: () => const DetailkisahView(),
       binding: DetailkisahBinding(),
+    ),
+    GetPage(
+      name: _Paths.EDITPROFILE,
+      page: () => const EditprofileView(),
+      binding: EditprofileBinding(),
+    ),
+    GetPage(
+      name: _Paths.ONBOARDING,
+      page: () => const OnboardingView(),
+      binding: OnboardingBinding(),
+    ),
+    GetPage(
+      name: _Paths.RIWAYATLOGIN,
+      page: () => const RiwayatloginView(),
+      binding: RiwayatloginBinding(),
+    ),
+    GetPage(
+      name: _Paths.KETENTUANPEMAKAIAN,
+      page: () => const KetentuanpemakaianView(),
+      binding: KetentuanpemakaianBinding(),
+    ),
+    GetPage(
+      name: _Paths.KEBIJAKANPRIVASI,
+      page: () => const KebijakanprivasiView(),
+      binding: KebijakanprivasiBinding(),
+    ),
+    GetPage(
+      name: _Paths.FAQ,
+      page: () => const FaqView(),
+      binding: FaqBinding(),
+    ),
+    GetPage(
+      name: _Paths.VERIFICATION,
+      page: () => const VerificationView(),
+      binding: VerificationBinding(),
+    ),
+    GetPage(
+      name: _Paths.GANTIKATASANDI,
+      page: () => const GantikatasandiView(),
+      binding: GantikatasandiBinding(),
+    ),
+    GetPage(
+      name: _Paths.LUPAPASSWORD,
+      page: () => const LupapasswordView(),
+      binding: LupapasswordBinding(),
     ),
   ];
 }

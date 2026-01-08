@@ -12,7 +12,20 @@
           "package_name": "com.example.gatrakarsa"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "680168932940-95dltv70jqr052v3rmrqnv9tq2daf2nr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.gatrakarsa",
+            "certificate_hash": "aa3f6b6a9121bdf6157f6bb2cf3e895e51c41b96"
+          }
+        },
+        {
+          "client_id": "680168932940-de3qfu1asns0sat090d78a8or9qv5kh1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyB7dXkfb5mzr8DY91fiLWwEoPnghyULJHY"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "680168932940-de3qfu1asns0sat090d78a8or9qv5kh1.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "680168932940-28o84p2j5fk0o3013pe5cddu87e8rlag.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.gatrakarsa"
+              }
+            }
+          ]
         }
       }
     }

@@ -1,105 +1,197 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:ionicons/ionicons.dart';
 
-// Kelas utama widget
 class TentangkamiView extends StatelessWidget {
   const TentangkamiView({super.key});
 
-  // Ganti warna latar belakang utama menjadi PUTIH (Colors.white)
-  final Color customBackgroundColor = Colors.white;
-
-  // Ganti warna System Navigation Bar menjadi PUTIH agar serasi
-  final Color systemNavColor = Colors.white;
+  // Tema Warna Gatra Karsa
+  final Color primaryDark = const Color(0xFF4E342E);
+  final Color accentGold = const Color(0xFFD4AF37);
+  final Color backgroundColor = const Color(0xFFFAFAF5);
 
   @override
   Widget build(BuildContext context) {
-    // Mengatur warna tombol navigasi bawaan HP menjadi PUTIH
-    SystemChrome.setSystemUIOverlayStyle(
-      SystemUiOverlayStyle(
-        systemNavigationBarColor: systemNavColor,
-        // Gunakan Brightness.dark agar ikon terlihat di latar belakang putih
-        systemNavigationBarIconBrightness: Brightness.dark,
-      ),
-    );
-
-    // Teks konten (tidak berubah)
-    const String text1 =
-        "Aplikasi ini dikembangkan untuk mengenali dan memberikan informasi mendalam tentang berbagai jenis wayang. Wayang adalah seni pertunjukan tradisional Indonesia yang kaya akan filosofi dan nilai budaya, diakui sebagai Warisan Budaya Takbenda oleh UNESCO.";
-    const String text2 =
-        "Kami menggunakan teknologi pengenalan gambar mutakhir untuk mengidentifikasi wayang, baik itu Wayang Kulit (dari Jawa/Bali), Wayang Golek (dari Sunda), atau jenis wayang lainnya. Tujuannya adalah melestarikan warisan ini dan mempermudah akses informasi tentang tokoh, cerita, dan gaya khas setiap wayang.";
-    const String text3 =
-        "Impian kami adalah menjadi sumber daya utama digital bagi pecinta dan pelajar budaya Indonesia. Dengan menggabungkan teknologi modern dan kekayaan budaya, kami bertekad memberikan pengalaman belajar yang interaktif dan menyenangkan mengenai dunia wayang yang menakjubkan.";
-
-    // Gaya teks untuk konten
-    const TextStyle bodyTextStyle = TextStyle(
-      fontSize: 14.0,
-      height: 1.5, // Spasi baris
-      color: Colors.black87,
-    );
-
     return Scaffold(
-      // Latar belakang Scaffold: PUTIH
-      backgroundColor: customBackgroundColor,
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        // === MENJAMIN IKON PANAH DI SEBELAH KIRI (Leading) ===
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back, // Ikon panah kembali yang diminta
-            color: Colors.black,
-          ),
-          onPressed: () {
-            // Logika untuk kembali ke halaman sebelumnya
-            Navigator.pop(context);
-          },
+        // === PENGATURAN STATUS BAR & NAVIGATION BAR ===
+        systemOverlayStyle: SystemUiOverlayStyle(
+          // 1. Status Bar (Atas)
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark, // Ikon hitam (Android)
+          statusBarBrightness: Brightness.light, // Ikon hitam (iOS)
+          // 2. Navigation Bar (Bawah)
+          systemNavigationBarColor: Colors.white, // NAV BAR JADI PUTIH
+          systemNavigationBarIconBrightness:
+              Brightness.dark, // IKON NAV BAR JADI HITAM
+          systemNavigationBarDividerColor: Colors.transparent,
         ),
-
-        // Memastikan judul berada di tengah
-        centerTitle: true,
-
-        // === TITLE HANYA BERISI TULISAN (di Tengah) ===
-        title: const Text(
-          "Tentang Aplikasi Wayang",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-
-        // ===============================================
-        backgroundColor: Colors.white,
+        // ==============================================
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
-        // Menonaktifkan properti bawaan agar leading yang kita definisikan bekerja
-        automaticallyImplyLeading: false,
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new, color: primaryDark, size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          "Tentang Gatra Karsa",
+          style: TextStyle(
+            color: primaryDark,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Serif',
+          ),
+        ),
       ),
-      // Konten utama
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              // --- Logo Aplikasi Wayang ---
+            children: [
+              const SizedBox(height: 30),
+
+              // Logo Section
               Center(
+                child: Container(
+                  padding: const EdgeInsets.all(25),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: primaryDark.withOpacity(0.08),
+                        blurRadius: 30,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Image.asset(
+                    'assets/logo2.png',
+                    height: 120,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => Icon(
+                      Ionicons.image_outline,
+                      size: 80,
+                      color: accentGold,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 15),
+              Text(
+                "Versi 1.0.0",
+                style: TextStyle(
+                  color: primaryDark.withOpacity(0.4),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 40),
+
+              // Konten Kartu
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
                   children: [
-                    Image.asset(
-                      'assets/logo2.png',
-                      // UKURAN GAMBAR DIPERBESAR menjadi 150
-                      height: 100,
-                      fit: BoxFit.contain,
+                    _buildInfoCard(
+                      icon: Ionicons.ribbon_outline,
+                      title: "Misi Budaya",
+                      content:
+                          "Aplikasi ini dikembangkan untuk mengenali dan memberikan informasi mendalam tentang berbagai jenis wayang. Wayang adalah seni pertunjukan tradisional Indonesia yang diakui sebagai Warisan Budaya Takbenda oleh UNESCO.",
                     ),
                     const SizedBox(height: 20),
+                    _buildInfoCard(
+                      icon: Ionicons.hardware_chip_outline,
+                      title: "Teknologi Cerdas",
+                      content:
+                          "Kami menggunakan teknologi pengenalan gambar mutakhir untuk mengidentifikasi Wayang Kulit, Wayang Golek, hingga Wayang Madya. Kami bertekad mempermudah akses informasi tentang tokoh dan cerita wayang.",
+                    ),
+                    const SizedBox(height: 20),
+                    _buildInfoCard(
+                      icon: Ionicons.earth_outline,
+                      title: "Impian Kami",
+                      content:
+                          "Menjadi sumber daya utama digital bagi pecinta budaya. Dengan menggabungkan teknologi modern dan kekayaan budaya, kami memberikan pengalaman belajar yang interaktif dan menyenangkan.",
+                    ),
                   ],
                 ),
               ),
-              // --- Teks Konten ---
-              Text(text1, style: bodyTextStyle, textAlign: TextAlign.justify),
-              const SizedBox(height: 15),
-              Text(text2, style: bodyTextStyle, textAlign: TextAlign.justify),
-              const SizedBox(height: 15),
-              Text(text3, style: bodyTextStyle, textAlign: TextAlign.justify),
-              const SizedBox(height: 30),
+
+              const SizedBox(height: 50),
+              Text(
+                "© 2026 Gatra Karsa Team",
+                style: TextStyle(
+                  color: primaryDark.withOpacity(0.4),
+                  fontSize: 12,
+                  letterSpacing: 1.2,
+                  fontFamily: 'Serif',
+                ),
+              ),
+              const SizedBox(height: 60),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildInfoCard({
+    required IconData icon,
+    required String title,
+    required String content,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: primaryDark.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: accentGold.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: accentGold, size: 22),
+              ),
+              const SizedBox(width: 14),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: primaryDark,
+                  fontFamily: 'Serif',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            content,
+            textAlign: TextAlign.justify,
+            style: TextStyle(
+              fontSize: 15,
+              height: 1.7,
+              color: primaryDark.withOpacity(0.75),
+              letterSpacing: 0.2,
+            ),
+          ),
+        ],
       ),
     );
   }

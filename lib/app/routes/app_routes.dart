@@ -22,6 +22,15 @@ abstract class Routes {
   static const DETAILMUSEUM = _Paths.DETAILMUSEUM;
   static const DETAILEVENT = _Paths.DETAILEVENT;
   static const DETAILKISAH = _Paths.DETAILKISAH;
+  static const EDITPROFILE = _Paths.EDITPROFILE;
+  static const ONBOARDING = _Paths.ONBOARDING;
+  static const RIWAYATLOGIN = _Paths.RIWAYATLOGIN;
+  static const KETENTUANPEMAKAIAN = _Paths.KETENTUANPEMAKAIAN;
+  static const KEBIJAKANPRIVASI = _Paths.KEBIJAKANPRIVASI;
+  static const FAQ = _Paths.FAQ;
+  static const VERIFICATION = _Paths.VERIFICATION;
+  static const GANTIKATASANDI = _Paths.GANTIKATASANDI;
+  static const LUPAPASSWORD = _Paths.LUPAPASSWORD;
 }
 
 abstract class _Paths {
@@ -45,4 +54,13 @@ abstract class _Paths {
   static const DETAILMUSEUM = '/detailmuseum';
   static const DETAILEVENT = '/detailevent';
   static const DETAILKISAH = '/detailkisah';
+  static const EDITPROFILE = '/editprofile';
+  static const ONBOARDING = '/onboarding';
+  static const RIWAYATLOGIN = '/riwayatlogin';
+  static const KETENTUANPEMAKAIAN = '/ketentuanpemakaian';
+  static const KEBIJAKANPRIVASI = '/kebijakanprivasi';
+  static const FAQ = '/faq';
+  static const VERIFICATION = '/verification';
+  static const GANTIKATASANDI = '/gantikatasandi';
+  static const LUPAPASSWORD = '/lupapassword';
 }
