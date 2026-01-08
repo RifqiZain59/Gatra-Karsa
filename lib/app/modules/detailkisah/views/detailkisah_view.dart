@@ -162,6 +162,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 1.5,
+                                fontFamily: 'Serif', // Font disamakan
                               ),
                             ),
                           ),
@@ -171,7 +172,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
                           title,
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontFamily: 'Serif',
+                            fontFamily: 'Serif', // Font disamakan
                             fontSize: 28,
                             fontWeight: FontWeight.w800,
                             color: _primaryBrown,
@@ -209,6 +210,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
                                       color: _primaryBrown,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
+                                      fontFamily: 'Serif', // Font disamakan
                                     ),
                                   ),
                                 ],
@@ -221,6 +223,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
                                   fontSize: 15,
                                   color: _textBody,
                                   height: 1.4,
+                                  fontFamily: 'Serif', // Font disamakan
                                 ),
                               ),
                             ],
@@ -237,7 +240,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
                             fontSize: 16,
                             height: 1.8,
                             color: _textBody,
-                            fontFamily: 'Serif',
+                            fontFamily: 'Serif', // Font disamakan
                           ),
                         ),
 
@@ -253,6 +256,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                               color: _primaryBrown,
+                              fontFamily: 'Serif', // Font disamakan
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -290,6 +294,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
                                         style: TextStyle(
                                           fontSize: 12,
                                           color: _textBody,
+                                          fontFamily: 'Serif', // Font disamakan
                                         ),
                                       ),
                                     ],
@@ -344,6 +349,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: _primaryBrown,
+              fontFamily: 'Serif', // Font disamakan
             ),
           ),
           const SizedBox(height: 15),
@@ -380,7 +386,11 @@ class DetailkisahView extends GetView<DetailkisahController> {
             maxLines: 3,
             decoration: InputDecoration(
               hintText: "Tulis pendapat Anda tentang kisah ini...",
-              hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+              hintStyle: TextStyle(
+                color: Colors.grey[400],
+                fontSize: 14,
+                fontFamily: 'Serif', // Font disamakan
+              ),
               filled: true,
               fillColor: _paperBg,
               contentPadding: const EdgeInsets.all(16),
@@ -417,7 +427,11 @@ class DetailkisahView extends GetView<DetailkisahController> {
               ),
               child: const Text(
                 "Kirim Ulasan",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  fontFamily: 'Serif', // Font disamakan
+                ),
               ),
             ),
           ),

@@ -41,7 +41,7 @@ class LeaderboardView extends GetView<LeaderboardController> {
             const Text(
               "PAPAN PERINGKAT",
               style: TextStyle(
-                fontFamily: 'Serif',
+                fontFamily: 'Serif', // Font disamakan
                 fontWeight: FontWeight.bold,
                 letterSpacing: 2.0,
                 color: primaryDark,

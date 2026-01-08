@@ -115,6 +115,7 @@ class DetailWayangView extends GetView<DetailWayangController> {
               fontWeight: FontWeight.w800,
               fontSize: 14,
               letterSpacing: 2.0,
+              fontFamily: 'Serif', // Font disamakan
             ),
           ),
 
@@ -157,6 +158,7 @@ class DetailWayangView extends GetView<DetailWayangController> {
               color: color,
               letterSpacing: 1.5,
               height: 1.1,
+              fontFamily: 'Serif', // Font disamakan
             ),
           ),
           const SizedBox(height: 12),
@@ -252,6 +254,7 @@ class DetailWayangView extends GetView<DetailWayangController> {
               fontWeight: FontWeight.w700,
               color: color,
               letterSpacing: 0.5,
+              fontFamily: 'Serif', // Font disamakan
             ),
           ),
         ],
@@ -299,6 +302,7 @@ class DetailWayangView extends GetView<DetailWayangController> {
                   fontWeight: FontWeight.w900,
                   color: primary,
                   letterSpacing: 1.0,
+                  fontFamily: 'Serif', // Font disamakan
                 ),
               ),
             ],
@@ -311,6 +315,7 @@ class DetailWayangView extends GetView<DetailWayangController> {
               height: 1.8,
               color: primary.withOpacity(0.8), // Warna teks coklat agak pudar
               fontWeight: FontWeight.w400,
+              fontFamily: 'Serif', // Font disamakan
             ),
             textAlign: TextAlign.justify,
           ),

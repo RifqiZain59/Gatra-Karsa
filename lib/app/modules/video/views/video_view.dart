@@ -92,6 +92,7 @@ class _VideoViewState extends State<VideoView> {
               color: isActive ? activeColor : inactiveColor,
               fontSize: 16,
               fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+              fontFamily: 'Serif', // Font disamakan
             ),
           ),
           if (isActive)
@@ -235,6 +236,7 @@ class _ReelsItemState extends State<ReelsItem> {
                   color: uiColor,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
+                  fontFamily: 'Serif', // Font disamakan
                   shadows: widget.isMaterialTab
                       ? []
                       : [const Shadow(blurRadius: 10, color: Colors.black)],
@@ -250,6 +252,7 @@ class _ReelsItemState extends State<ReelsItem> {
                     style: TextStyle(
                       color: uiColor,
                       fontSize: 12,
+                      fontFamily: 'Serif', // Font disamakan
                       shadows: widget.isMaterialTab
                           ? []
                           : [const Shadow(blurRadius: 10, color: Colors.black)],
@@ -281,6 +284,7 @@ class _ReelsItemState extends State<ReelsItem> {
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
+                fontFamily: 'Serif', // Font disamakan
               ),
             ),
             const SizedBox(height: 20),
@@ -291,6 +295,7 @@ class _ReelsItemState extends State<ReelsItem> {
                 fontSize: 18,
                 fontStyle: FontStyle.italic,
                 color: Colors.black54,
+                fontFamily: 'Serif', // Font disamakan
               ),
             ),
           ],
@@ -319,6 +324,7 @@ class _ReelsItemState extends State<ReelsItem> {
             color: labelColor,
             fontSize: 12,
             fontWeight: FontWeight.w500,
+            fontFamily: 'Serif', // Font disamakan
           ),
         ),
       ],
@@ -343,6 +349,7 @@ class _ReelsItemState extends State<ReelsItem> {
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
                 color: Colors.black,
+                fontFamily: 'Serif', // Font disamakan
               ),
             ),
             const SizedBox(height: 25),
@@ -371,7 +378,11 @@ class _ReelsItemState extends State<ReelsItem> {
         const SizedBox(height: 8),
         Text(
           label,
-          style: const TextStyle(fontSize: 12, color: Colors.black87),
+          style: const TextStyle(
+            fontSize: 12,
+            color: Colors.black87,
+            fontFamily: 'Serif', // Font disamakan
+          ),
         ),
       ],
     );

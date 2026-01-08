@@ -1,9 +1,17 @@
+import 'dart:convert'; // Untuk decode Base64
+import 'dart:typed_data'; // Untuk tipe data Uint8List
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:gatrakarsa/app/modules/detail_wayang/views/detail_wayang_view.dart';
-import 'package:gatrakarsa/app/modules/detaildalang/views/detaildalang_view.dart';
+import 'package:gatrakarsa/app/data/service/api_service.dart';
 import 'package:get/get.dart';
 import 'package:ionicons/ionicons.dart';
+
+// --- IMPORT VIEW, CONTROLLER, & SERVICE ---
+// Sesuaikan path import di bawah ini dengan struktur folder project Anda
+import 'package:gatrakarsa/app/modules/detail_wayang/views/detail_wayang_view.dart';
+import 'package:gatrakarsa/app/modules/detaildalang/views/detaildalang_view.dart';
+import 'package:gatrakarsa/app/modules/detaildalang/controllers/detaildalang_controller.dart'; // PENTING: Import Controller Detail
+import 'package:gatrakarsa/app/modules/tokoh/controllers/tokoh_controller.dart';
 
 class TokohView extends StatefulWidget {
   const TokohView({super.key});
@@ -13,91 +21,20 @@ class TokohView extends StatefulWidget {
 }
 
 class _TokohViewState extends State<TokohView> {
-  // --- PALET WARNA ---
-  final Color _primaryColor = const Color(0xFF4E342E); // Coklat Tua
-  final Color _accentColor = const Color(0xFFD4AF37); // Emas
-  final Color _bgColor = const Color(0xFFFAFAF5); // Krem
-  final Color _secondaryColor = const Color(0xFF8D6E63); // Coklat Susu
+  // --- INJEKSI CONTROLLER TOKOH ---
+  final TokohController controller = Get.put(TokohController());
 
-  // --- STATE VARIABLES ---
+  // --- PALET WARNA ---
+  final Color _primaryColor = const Color(0xFF4E342E);
+  final Color _accentColor = const Color(0xFFD4AF37);
+  final Color _bgColor = const Color(0xFFFAFAF5);
+  final Color _secondaryColor = const Color(0xFF8D6E63);
+
+  // --- STATE VARIABLES UI ---
   int _activeTab = 0; // 0: Tokoh Wayang, 1: Tokoh Dalang
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
   String _selectedCategory = "Semua";
-
-  // --- DATA DUMMY WAYANG ---
-  final List<Map<String, dynamic>> wayangList = [
-    {
-      'name': 'Yudhistira',
-      'role': 'Pandawa',
-      'trait': 'Jujur & Adil',
-      'image': 'assets/wayang purwa.png',
-    },
-    {
-      'name': 'Bima',
-      'role': 'Pandawa',
-      'trait': 'Gagah Berani',
-      'image': 'assets/Wayang Madya.png',
-    },
-    {
-      'name': 'Arjuna',
-      'role': 'Pandawa',
-      'trait': 'Lemah Lembut',
-      'image': 'assets/wayang purwa.png',
-    },
-    {
-      'name': 'Semar',
-      'role': 'Punakawan',
-      'trait': 'Bijaksana',
-      'image': 'assets/Wayang Kulit.png',
-    },
-    {
-      'name': 'Gatotkaca',
-      'role': 'Pringgondani',
-      'trait': 'Otot Kawat',
-      'image': 'assets/Wayang Kulit.png',
-    },
-    {
-      'name': 'Rahwana',
-      'role': 'Kurawa',
-      'trait': 'Angkara Murka',
-      'image': 'assets/Wayang Madya.png',
-    },
-    {
-      'name': 'Karna',
-      'role': 'Kurawa',
-      'trait': 'Dermawan',
-      'image': 'assets/Wayang Madya.png',
-    },
-  ];
-
-  // --- DATA DUMMY DALANG ---
-  final List<Map<String, dynamic>> dalangList = [
-    {
-      'name': 'Ki Manteb Soedharsono',
-      'title': 'Dalang Setan',
-      'origin': 'Surakarta',
-      'image': 'assets/Dalang.png',
-    },
-    {
-      'name': 'Ki Anom Suroto',
-      'title': 'Maestro',
-      'origin': 'Surakarta',
-      'image': 'assets/Dalang.png',
-    },
-    {
-      'name': 'Ki Seno Nugroho',
-      'title': 'Wayang Gaul',
-      'origin': 'Yogyakarta',
-      'image': 'assets/Dalang.png',
-    },
-    {
-      'name': 'Ki Enthus Susmono',
-      'title': 'Dalang Edan',
-      'origin': 'Tegal',
-      'image': 'assets/Dalang.png',
-    },
-  ];
 
   @override
   void dispose() {
@@ -105,28 +42,49 @@ class _TokohViewState extends State<TokohView> {
     super.dispose();
   }
 
-  // --- LOGIKA FILTER DINAMIS ---
-  List<String> get _currentFilters {
-    if (_activeTab == 0) {
-      return ['Semua', 'Pandawa', 'Kurawa', 'Punakawan', 'Pringgondani'];
+  // --- HELPER: DECODE BASE64 IMAGE ---
+  Uint8List? _decodeImage(String? base64String) {
+    if (base64String == null || base64String.isEmpty) return null;
+    try {
+      if (base64String.contains(',')) {
+        return base64Decode(base64String.split(',').last);
+      }
+      return base64Decode(base64String);
+    } catch (e) {
+      print("Gagal decode gambar: $e");
+      return null;
     }
-    return ['Semua', 'Surakarta', 'Yogyakarta', 'Tegal'];
   }
 
-  List<Map<String, dynamic>> get _filteredData {
-    List<Map<String, dynamic>> source = _activeTab == 0
-        ? wayangList
-        : dalangList;
+  // --- LOGIKA FILTER KATEGORI ---
+  List<String> get _currentFilters {
+    if (_activeTab == 0) {
+      return [
+        'Semua',
+        'Wayang Kulit',
+        'Wayang Golek',
+        'Wayang Orang',
+        'Lainnya',
+      ];
+    }
+    return ['Semua', 'Dalang', 'Maestro', 'Legend', 'Dalang Muda'];
+  }
+
+  // --- LOGIKA FILTER DATA ---
+  List<ContentModel> get _filteredData {
+    List<ContentModel> source = _activeTab == 0
+        ? controller.wayangList
+        : controller.dalangList;
 
     return source.where((item) {
-      bool matchesSearch = item['name'].toString().toLowerCase().contains(
+      // Filter Pencarian
+      bool matchesSearch = item.title.toLowerCase().contains(
         _searchQuery.toLowerCase(),
       );
 
-      String categoryKey = _activeTab == 0 ? 'role' : 'origin';
+      // Filter Kategori
       bool matchesCategory =
-          _selectedCategory == "Semua" ||
-          item[categoryKey] == _selectedCategory;
+          _selectedCategory == "Semua" || item.category == _selectedCategory;
 
       return matchesSearch && matchesCategory;
     }).toList();
@@ -149,11 +107,26 @@ class _TokohViewState extends State<TokohView> {
               // --- HEADER SECTION ---
               _buildHeaderSection(),
 
-              // --- CONTENT GRID ---
+              // --- CONTENT GRID (Reactive with Obx) ---
               Expanded(
-                child: _filteredData.isEmpty
-                    ? _buildEmptyState()
-                    : _buildContentGrid(_filteredData),
+                child: Obx(() {
+                  // Cek Loading State
+                  bool isLoading = _activeTab == 0
+                      ? controller.isLoadingWayang.value
+                      : controller.isLoadingDalang.value;
+
+                  if (isLoading) {
+                    return Center(
+                      child: CircularProgressIndicator(color: _primaryColor),
+                    );
+                  }
+
+                  if (_filteredData.isEmpty) {
+                    return _buildEmptyState();
+                  }
+
+                  return _buildContentGrid(_filteredData);
+                }),
               ),
             ],
           ),
@@ -162,6 +135,7 @@ class _TokohViewState extends State<TokohView> {
     );
   }
 
+  // --- HEADER WIDGETS ---
   Widget _buildHeaderSection() {
     return Container(
       padding: const EdgeInsets.only(bottom: 20),
@@ -184,6 +158,7 @@ class _TokohViewState extends State<TokohView> {
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: _primaryColor,
+                    fontFamily: 'Serif',
                   ),
                 ),
                 const SizedBox(width: 24),
@@ -232,7 +207,11 @@ class _TokohViewState extends State<TokohView> {
                   hintText: _activeTab == 0
                       ? 'Cari wayang...'
                       : 'Cari dalang...',
-                  hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                  hintStyle: TextStyle(
+                    color: Colors.grey[400],
+                    fontSize: 14,
+                    fontFamily: 'Serif',
+                  ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 14),
                   suffixIcon: _searchQuery.isNotEmpty
@@ -254,14 +233,13 @@ class _TokohViewState extends State<TokohView> {
 
           const SizedBox(height: 15),
 
-          // 4. FILTER TABS (NEW STYLE: Text + Underline)
+          // 4. FILTER TABS
           _buildFilterTabs(),
         ],
       ),
     );
   }
 
-  // --- WIDGET TOMBOL TAB UTAMA ---
   Widget _buildMainTabButton(String label, int index) {
     bool isActive = _activeTab == index;
     return GestureDetector(
@@ -270,7 +248,7 @@ class _TokohViewState extends State<TokohView> {
           _activeTab = index;
           _searchQuery = "";
           _searchController.clear();
-          _selectedCategory = "Semua"; // Reset filter
+          _selectedCategory = "Semua";
         });
       },
       child: Column(
@@ -281,6 +259,7 @@ class _TokohViewState extends State<TokohView> {
               color: isActive ? _primaryColor : Colors.grey,
               fontSize: 16,
               fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+              fontFamily: 'Serif',
             ),
           ),
           const SizedBox(height: 6),
@@ -298,20 +277,22 @@ class _TokohViewState extends State<TokohView> {
     );
   }
 
-  // --- WIDGET FILTER TABS (Pengganti Chips) ---
   Widget _buildFilterTabs() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        // Generate list berdasarkan filter aktif (Wayang/Dalang)
-        children: List.generate(_currentFilters.length, (index) {
-          return Padding(
-            padding: const EdgeInsets.only(right: 30), // Jarak antar item
-            child: _buildFilterTabItem(_currentFilters[index]),
-          );
-        }),
+    return SizedBox(
+      width: double.infinity,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: List.generate(_currentFilters.length, (index) {
+            return Padding(
+              padding: const EdgeInsets.only(right: 30),
+              child: _buildFilterTabItem(_currentFilters[index]),
+            );
+          }),
+        ),
       ),
     );
   }
@@ -328,10 +309,10 @@ class _TokohViewState extends State<TokohView> {
               color: isSelected ? _primaryColor : Colors.grey,
               fontSize: 14,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              fontFamily: 'Serif',
             ),
           ),
           const SizedBox(height: 4),
-          // Garis Bawah Filter
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             height: 2,
@@ -359,7 +340,10 @@ class _TokohViewState extends State<TokohView> {
           const SizedBox(height: 10),
           Text(
             "Data tidak ditemukan",
-            style: TextStyle(color: _secondaryColor.withOpacity(0.5)),
+            style: TextStyle(
+              color: _secondaryColor.withOpacity(0.5),
+              fontFamily: 'Serif',
+            ),
           ),
         ],
       ),
@@ -367,7 +351,7 @@ class _TokohViewState extends State<TokohView> {
   }
 
   // --- GRID BUILDER ---
-  Widget _buildContentGrid(List<Map<String, dynamic>> data) {
+  Widget _buildContentGrid(List<ContentModel> data) {
     return GridView.builder(
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       physics: const BouncingScrollPhysics(),
@@ -385,9 +369,13 @@ class _TokohViewState extends State<TokohView> {
   }
 
   // --- CARD: TOKOH WAYANG ---
-  Widget _buildWayangCard(Map<String, dynamic> item) {
+  Widget _buildWayangCard(ContentModel item) {
+    // Decode image
+    Uint8List? imageBytes = _decodeImage(item.imageUrl);
+
     return GestureDetector(
       onTap: () {
+        // Navigasi ke Detail Wayang
         Get.to(() => const DetailWayangView(), arguments: item);
       },
       child: Container(
@@ -414,11 +402,21 @@ class _TokohViewState extends State<TokohView> {
                     top: Radius.circular(15),
                   ),
                 ),
-                child: Image.asset(
-                  item['image'],
-                  fit: BoxFit.contain,
-                  errorBuilder: (c, e, s) =>
-                      Icon(Ionicons.person, size: 40, color: _secondaryColor),
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(15),
+                  ),
+                  child: imageBytes != null
+                      ? Image.memory(
+                          imageBytes,
+                          fit: BoxFit.cover,
+                          errorBuilder: (c, e, s) => Icon(
+                            Ionicons.person,
+                            size: 40,
+                            color: _secondaryColor,
+                          ),
+                        )
+                      : Icon(Ionicons.person, size: 40, color: _secondaryColor),
                 ),
               ),
             ),
@@ -431,23 +429,25 @@ class _TokohViewState extends State<TokohView> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      item['role'].toUpperCase(),
+                      item.category.toUpperCase(),
                       style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.bold,
                         color: _accentColor,
                         letterSpacing: 0.5,
+                        fontFamily: 'Serif',
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      item['name'],
+                      item.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: _primaryColor,
+                        fontFamily: 'Serif',
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -456,12 +456,13 @@ class _TokohViewState extends State<TokohView> {
                       children: [
                         Expanded(
                           child: Text(
-                            item['trait'],
+                            item.subtitle,
                             maxLines: 1,
                             style: const TextStyle(
                               fontSize: 10,
                               color: Colors.grey,
                               fontStyle: FontStyle.italic,
+                              fontFamily: 'Serif',
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -484,10 +485,22 @@ class _TokohViewState extends State<TokohView> {
   }
 
   // --- CARD: TOKOH DALANG ---
-  Widget _buildDalangCard(Map<String, dynamic> item) {
+  Widget _buildDalangCard(ContentModel item) {
+    // Decode image
+    Uint8List? imageBytes = _decodeImage(item.imageUrl);
+
     return GestureDetector(
       onTap: () {
-        Get.to(() => const DetaildalangView(), arguments: item);
+        // PERBAIKAN PENTING:
+        // Menggunakan Binding untuk menginisialisasi DetaildalangController
+        // Agar tidak terjadi error "Controller not found"
+        Get.to(
+          () => const DetaildalangView(),
+          arguments: item,
+          binding: BindingsBuilder(() {
+            Get.put(DetaildalangController());
+          }),
+        );
       },
       child: Container(
         decoration: BoxDecoration(
@@ -514,49 +527,57 @@ class _TokohViewState extends State<TokohView> {
               child: CircleAvatar(
                 radius: 35,
                 backgroundColor: _bgColor,
-                backgroundImage: AssetImage(item['image']),
-                child: Image.asset(
-                  item['image'],
-                  errorBuilder: (c, e, s) => Icon(
-                    Ionicons.mic_outline,
-                    size: 25,
-                    color: _secondaryColor,
-                  ),
-                ),
+                backgroundImage: imageBytes != null
+                    ? MemoryImage(imageBytes)
+                    : null,
+                child: imageBytes == null
+                    ? Icon(
+                        Ionicons.mic_outline,
+                        size: 25,
+                        color: _secondaryColor,
+                      )
+                    : null,
               ),
             ),
             const SizedBox(height: 10),
             Text(
-              item['name'],
+              item.title,
               textAlign: TextAlign.center,
               maxLines: 2,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
                 color: _primaryColor,
+                fontFamily: 'Serif',
               ),
             ),
             const SizedBox(height: 4),
             Text(
-              item['title'],
+              item.subtitle,
               style: TextStyle(
                 fontSize: 10,
                 color: _accentColor,
                 fontWeight: FontWeight.w600,
+                fontFamily: 'Serif',
               ),
             ),
             const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: _secondaryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(4),
+            if (item.location != null && item.location!.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: _secondaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  item.location!,
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: _secondaryColor,
+                    fontFamily: 'Serif',
+                  ),
+                ),
               ),
-              child: Text(
-                item['origin'],
-                style: TextStyle(fontSize: 9, color: _secondaryColor),
-              ),
-            ),
           ],
         ),
       ),

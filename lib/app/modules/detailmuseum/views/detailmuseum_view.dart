@@ -121,7 +121,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                         Text(
                           name,
                           style: TextStyle(
-                            fontFamily: 'Serif',
+                            fontFamily: 'Serif', // Font disamakan
                             fontSize: 26,
                             fontWeight: FontWeight.w800,
                             color: _primaryBrown,
@@ -140,6 +140,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                               child: Text(
                                 address,
                                 style: TextStyle(
+                                  fontFamily: 'Serif', // Font disamakan
                                   color: Colors.grey[600],
                                   fontSize: 14,
                                 ),
@@ -179,6 +180,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                         Text(
                           "Tentang Museum",
                           style: TextStyle(
+                            fontFamily: 'Serif', // Font disamakan
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: _primaryBrown,
@@ -189,6 +191,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                           description,
                           textAlign: TextAlign.justify,
                           style: TextStyle(
+                            fontFamily: 'Serif', // Font disamakan
                             fontSize: 15,
                             height: 1.6,
                             color: _textBody,
@@ -205,6 +208,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                               Text(
                                 "Koleksi Unggulan",
                                 style: TextStyle(
+                                  fontFamily: 'Serif', // Font disamakan
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                   color: _primaryBrown,
@@ -213,6 +217,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                               Text(
                                 "Lihat Semua",
                                 style: TextStyle(
+                                  fontFamily: 'Serif', // Font disamakan
                                   fontSize: 12,
                                   color: _goldAccent,
                                   fontWeight: FontWeight.bold,
@@ -277,6 +282,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                             label: const Text(
                               "Petunjuk Arah",
                               style: TextStyle(
+                                fontFamily: 'Serif', // Font disamakan
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -331,11 +337,19 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
             child: Icon(icon, color: _primaryBrown, size: 20),
           ),
           const SizedBox(height: 12),
-          Text(title, style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+          Text(
+            title,
+            style: TextStyle(
+              fontFamily: 'Serif', // Font disamakan
+              fontSize: 11,
+              color: Colors.grey[500],
+            ),
+          ),
           const SizedBox(height: 4),
           Text(
             value,
             style: TextStyle(
+              fontFamily: 'Serif', // Font disamakan
               fontSize: 14,
               fontWeight: FontWeight.bold,
               color: _textBody,
@@ -369,6 +383,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
           Text(
             "Bagaimana pengalamanmu?",
             style: TextStyle(
+              fontFamily: 'Serif', // Font disamakan
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: _primaryBrown,
@@ -408,7 +423,11 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
             maxLines: 3,
             decoration: InputDecoration(
               hintText: "Tulis ulasan Anda di sini...",
-              hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+              hintStyle: TextStyle(
+                fontFamily: 'Serif', // Font disamakan
+                color: Colors.grey[400],
+                fontSize: 14,
+              ),
               filled: true,
               fillColor: _paperBg,
               contentPadding: const EdgeInsets.all(16),
@@ -444,7 +463,10 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
               ),
               child: const Text(
                 "Kirim Ulasan",
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontFamily: 'Serif', // Font disamakan
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),

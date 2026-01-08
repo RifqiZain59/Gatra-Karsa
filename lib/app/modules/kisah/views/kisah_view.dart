@@ -214,6 +214,7 @@ class _KisahViewState extends State<KisahView> {
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: _primaryColor,
+                    fontFamily: 'Serif', // Font disamakan
                   ),
                 ),
                 const SizedBox(width: 24),
@@ -260,7 +261,11 @@ class _KisahViewState extends State<KisahView> {
                     color: _secondaryColor.withOpacity(0.5),
                   ),
                   hintText: 'Cari judul kisah...',
-                  hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                  hintStyle: TextStyle(
+                    color: Colors.grey[400],
+                    fontSize: 14,
+                    fontFamily: 'Serif', // Font disamakan
+                  ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 14),
                   suffixIcon: _searchQuery.isNotEmpty
@@ -310,6 +315,7 @@ class _KisahViewState extends State<KisahView> {
               color: isActive ? _primaryColor : Colors.grey,
               fontSize: 16,
               fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+              fontFamily: 'Serif', // Font disamakan
             ),
           ),
           const SizedBox(height: 6),
@@ -361,6 +367,7 @@ class _KisahViewState extends State<KisahView> {
               color: isActive ? _primaryColor : Colors.grey,
               fontSize: 14, // Lebih kecil dari Main Tab
               fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+              fontFamily: 'Serif', // Font disamakan
             ),
           ),
           const SizedBox(height: 4),
@@ -391,7 +398,10 @@ class _KisahViewState extends State<KisahView> {
           const SizedBox(height: 10),
           Text(
             _activeTab == 0 ? "Kisah tidak ditemukan" : "Belum ada koleksi",
-            style: TextStyle(color: _secondaryColor.withOpacity(0.5)),
+            style: TextStyle(
+              color: _secondaryColor.withOpacity(0.5),
+              fontFamily: 'Serif', // Font disamakan
+            ),
           ),
         ],
       ),
@@ -471,6 +481,7 @@ class _KisahViewState extends State<KisahView> {
                                 fontSize: 9,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 0.5,
+                                fontFamily: 'Serif', // Font disamakan
                               ),
                             ),
                           ),
@@ -488,6 +499,7 @@ class _KisahViewState extends State<KisahView> {
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
                                   color: _primaryColor,
+                                  fontFamily: 'Serif', // Font disamakan
                                 ),
                               ),
                               const SizedBox(width: 10),
@@ -517,6 +529,7 @@ class _KisahViewState extends State<KisahView> {
                           fontWeight: FontWeight.bold,
                           color: _primaryColor,
                           height: 1.2,
+                          fontFamily: 'Serif', // Font disamakan
                         ),
                       ),
                       const SizedBox(height: 6),
@@ -528,6 +541,7 @@ class _KisahViewState extends State<KisahView> {
                           fontSize: 11,
                           color: Colors.grey[600],
                           height: 1.4,
+                          fontFamily: 'Serif', // Font disamakan
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -544,6 +558,7 @@ class _KisahViewState extends State<KisahView> {
                             style: TextStyle(
                               fontSize: 10,
                               color: _secondaryColor,
+                              fontFamily: 'Serif', // Font disamakan
                             ),
                           ),
                           const Spacer(),
@@ -553,6 +568,7 @@ class _KisahViewState extends State<KisahView> {
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
                               color: _primaryColor,
+                              fontFamily: 'Serif', // Font disamakan
                             ),
                           ),
                           const SizedBox(width: 4),

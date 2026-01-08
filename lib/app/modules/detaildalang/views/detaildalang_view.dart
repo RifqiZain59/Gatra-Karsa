@@ -1,52 +1,58 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:gatrakarsa/app/data/service/api_service.dart';
 import 'package:get/get.dart';
 import 'package:ionicons/ionicons.dart';
 
+// Import Controller
 import '../controllers/detaildalang_controller.dart';
 
 class DetaildalangView extends GetView<DetaildalangController> {
   const DetaildalangView({super.key});
 
-  // --- PALET WARNA WAYANG ---
+  // --- PALET WARNA ---
   final Color _primaryBrown = const Color(0xFF3E2723);
   final Color _goldAccent = const Color(0xFFC5A059);
   final Color _paperBg = const Color(0xFFFDFBF7);
   final Color _textSecondary = const Color(0xFF5D4037);
 
+  // --- HELPER: DECODE GAMBAR BASE64 ---
+  Uint8List? _decodeImage(String base64String) {
+    if (base64String.isEmpty) return null;
+    try {
+      if (base64String.contains(',')) {
+        return base64Decode(base64String.split(',').last);
+      }
+      return base64Decode(base64String);
+    } catch (e) {
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Data Dummy
-    final Map<String, dynamic> dalang =
-        Get.arguments ??
-        {
-          'name': 'Ki Nartosabdo',
-          'title': 'Maestro Karawitan & Dalang',
-          'origin': 'Klaten, Jawa Tengah',
-          'image': 'assets/Dalang.png',
-          'bio':
-              'Ki Nartosabdo adalah seorang seniman musik dan dalang wayang kulit legendaris dari Jawa Tengah. Beliau dikenal karena pembaharuan dalam seni pedalangan.',
-        };
+    // Ambil data ContentModel dari controller
+    final ContentModel dalang = controller.dalang;
 
-    // 1. PERBAIKAN SYSTEM UI (Navigasi Bar Putih)
+    // Decode gambar
+    final Uint8List? imageBytes = _decodeImage(dalang.imageUrl);
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
-        // Status Bar (Atas)
-        statusBarColor: Colors.transparent, // Transparan agar gambar terlihat
-        statusBarIconBrightness: Brightness.light, // Ikon putih (jam, baterai)
-        // Navigation Bar (Bawah) - SESUAI REQUEST
-        systemNavigationBarColor:
-            Colors.white, // Warna background Nav Bar Putih
-        systemNavigationBarIconBrightness:
-            Brightness.dark, // Ikon (Back/Home) Hitam
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: Colors.white,
+        systemNavigationBarIconBrightness: Brightness.dark,
         systemNavigationBarDividerColor: Colors.transparent,
       ),
       child: Scaffold(
         backgroundColor: _paperBg,
-        extendBodyBehindAppBar: true, // Gambar tetap tembus ke atas
+        extendBodyBehindAppBar: true,
         body: Stack(
           children: [
-            // Background Ornament
+            // Ornamen Background
             Positioned(
               top: 300,
               right: -50,
@@ -59,7 +65,7 @@ class DetaildalangView extends GetView<DetaildalangController> {
             CustomScrollView(
               physics: const BouncingScrollPhysics(),
               slivers: [
-                _buildSliverAppBar(dalang),
+                _buildSliverAppBar(imageBytes),
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -67,13 +73,15 @@ class DetaildalangView extends GetView<DetaildalangController> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 24),
-                        Center(child: _buildCategoryBadge()),
-                        const SizedBox(height: 16),
 
-                        // Nama & Gelar
+                        // 1. Kategori Badge
+                        Center(child: _buildCategoryBadge(dalang.category)),
+                        const SizedBox(height: 20),
+
+                        // 2. Nama Tokoh (Title)
                         Center(
                           child: Text(
-                            dalang['name'].toString().toUpperCase(),
+                            dalang.title.toUpperCase(),
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontFamily: 'Serif',
@@ -84,42 +92,36 @@ class DetaildalangView extends GetView<DetaildalangController> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Center(
-                          child: Text(
-                            dalang['title'],
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: _goldAccent,
-                              fontStyle: FontStyle.italic,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
 
+                        // --- TULISAN DI BAWAH NAMA DIHAPUS ---
                         const SizedBox(height: 32),
 
-                        // Info Row
+                        // 3. --- KOTAK INFO (ASAL DAERAH & NOMOR HP) ---
                         Row(
                           children: [
                             _buildInfoCard(
                               Ionicons.map_outline,
                               "Asal Daerah",
-                              dalang['origin'],
+                              // Menampilkan location, jika kosong baru subtitle
+                              (dalang.location != null &&
+                                      dalang.location!.isNotEmpty)
+                                  ? dalang.location!
+                                  : (dalang.subtitle.isNotEmpty
+                                        ? dalang.subtitle
+                                        : "-"),
                             ),
                             const SizedBox(width: 16),
                             _buildInfoCard(
-                              Ionicons.trophy_outline,
-                              "Status",
-                              "Legenda",
+                              Ionicons.call_outline,
+                              "Nomor HP",
+                              dalang.phone ?? "-",
                             ),
                           ],
                         ),
 
                         const SizedBox(height: 32),
 
-                        // Divider
+                        // Divider Ornamen
                         Row(
                           children: [
                             Expanded(
@@ -147,10 +149,11 @@ class DetaildalangView extends GetView<DetaildalangController> {
 
                         const SizedBox(height: 24),
 
-                        // Biography
+                        // 4. Riwayat Singkat (Deskripsi)
                         Text(
                           "Riwayat Singkat",
                           style: TextStyle(
+                            fontFamily: 'Serif',
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: _primaryBrown,
@@ -158,23 +161,19 @@ class DetaildalangView extends GetView<DetaildalangController> {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          dalang['bio'] ?? "",
+                          dalang.description,
                           textAlign: TextAlign.justify,
                           style: TextStyle(
+                            fontFamily: 'Serif',
                             fontSize: 15,
                             height: 1.8,
                             color: _textSecondary,
                           ),
                         ),
 
-                        const SizedBox(height: 40),
-
-                        _buildPlayButton(),
-
-                        // 2. PERBAIKAN PADDING BAWAH (Agar tidak tabrakan)
-                        // Mengambil tinggi safe area bawah (nav bar) + spasi tambahan
+                        // Jarak bawah setelah deskripsi
                         SizedBox(
-                          height: MediaQuery.of(context).padding.bottom + 30,
+                          height: MediaQuery.of(context).padding.bottom + 40,
                         ),
                       ],
                     ),
@@ -188,9 +187,9 @@ class DetaildalangView extends GetView<DetaildalangController> {
     );
   }
 
-  // --- WIDGET BUILDERS (Sama seperti sebelumnya) ---
+  // --- WIDGET BUILDERS ---
 
-  Widget _buildSliverAppBar(Map<String, dynamic> dalang) {
+  Widget _buildSliverAppBar(Uint8List? imageBytes) {
     return SliverAppBar(
       expandedHeight: 380,
       pinned: true,
@@ -216,19 +215,15 @@ class DetaildalangView extends GetView<DetaildalangController> {
         background: Stack(
           fit: StackFit.expand,
           children: [
-            Image.asset(
-              dalang['image'],
-              fit: BoxFit.cover,
-              alignment: Alignment.topCenter,
-              errorBuilder: (c, e, s) => Container(
-                color: _primaryBrown,
-                child: const Icon(
-                  Ionicons.person,
-                  size: 80,
-                  color: Colors.white24,
-                ),
-              ),
-            ),
+            imageBytes != null
+                ? Image.memory(
+                    imageBytes,
+                    fit: BoxFit.cover,
+                    alignment: Alignment.topCenter,
+                    errorBuilder: (c, e, s) => _buildImageError(),
+                  )
+                : _buildImageError(),
+
             DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -250,7 +245,14 @@ class DetaildalangView extends GetView<DetaildalangController> {
     );
   }
 
-  Widget _buildCategoryBadge() {
+  Widget _buildImageError() {
+    return Container(
+      color: _primaryBrown,
+      child: const Icon(Ionicons.person, size: 80, color: Colors.white24),
+    );
+  }
+
+  Widget _buildCategoryBadge(String category) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
@@ -259,8 +261,9 @@ class DetaildalangView extends GetView<DetaildalangController> {
         color: _goldAccent.withOpacity(0.1),
       ),
       child: Text(
-        "MAESTRO DALANG",
+        category.toUpperCase(),
         style: TextStyle(
+          fontFamily: 'Serif',
           color: _primaryBrown,
           fontWeight: FontWeight.bold,
           fontSize: 10,
@@ -300,12 +303,17 @@ class DetaildalangView extends GetView<DetaildalangController> {
             const SizedBox(height: 12),
             Text(
               label,
-              style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+              style: TextStyle(
+                fontFamily: 'Serif',
+                fontSize: 11,
+                color: Colors.grey[500],
+              ),
             ),
             const SizedBox(height: 4),
             Text(
               value,
               style: TextStyle(
+                fontFamily: 'Serif',
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: _textSecondary,
@@ -314,62 +322,6 @@ class DetaildalangView extends GetView<DetaildalangController> {
               overflow: TextOverflow.ellipsis,
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPlayButton() {
-    return Container(
-      width: double.infinity,
-      height: 60,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [_primaryBrown, const Color(0xFF5D4037)],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: _primaryBrown.withOpacity(0.4),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            Get.snackbar(
-              "Info",
-              "Fitur audio akan segera hadir",
-              backgroundColor: Colors.white,
-              colorText: _primaryBrown,
-            );
-          },
-          borderRadius: BorderRadius.circular(16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                ),
-                child: const Icon(Ionicons.play, color: Colors.white, size: 16),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                "Dengarkan Cuplikan",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );

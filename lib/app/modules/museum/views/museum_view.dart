@@ -132,6 +132,7 @@ class _MuseumViewState extends State<MuseumView> {
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: _primaryColor,
+                fontFamily: 'Serif', // Font disamakan
               ),
             ),
           ),
@@ -169,6 +170,7 @@ class _MuseumViewState extends State<MuseumView> {
           color: _primaryColor,
           fontWeight: FontWeight.bold,
           fontSize: 20,
+          fontFamily: 'Serif', // Font disamakan
         ),
       ),
       actions: [],
@@ -201,7 +203,11 @@ class _MuseumViewState extends State<MuseumView> {
           decoration: InputDecoration(
             icon: Icon(Ionicons.search_outline, color: _secondaryColor),
             hintText: 'Cari museum wayang...',
-            hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+            hintStyle: TextStyle(
+              color: Colors.grey[400],
+              fontSize: 14,
+              fontFamily: 'Serif', // Font disamakan
+            ),
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(vertical: 14),
             suffixIcon: _searchQuery.isNotEmpty
@@ -256,6 +262,7 @@ class _MuseumViewState extends State<MuseumView> {
               color: isActive ? _primaryColor : Colors.grey,
               fontSize: 16,
               fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+              fontFamily: 'Serif', // Font disamakan
             ),
           ),
           const SizedBox(height: 6),
@@ -283,7 +290,10 @@ class _MuseumViewState extends State<MuseumView> {
           const SizedBox(height: 10),
           Text(
             "Museum tidak ditemukan",
-            style: TextStyle(color: _secondaryColor.withOpacity(0.5)),
+            style: TextStyle(
+              color: _secondaryColor.withOpacity(0.5),
+              fontFamily: 'Serif', // Font disamakan
+            ),
           ),
         ],
       ),
@@ -366,6 +376,7 @@ class _MuseumViewState extends State<MuseumView> {
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               color: _primaryColor,
+                              fontFamily: 'Serif', // Font disamakan
                             ),
                           ),
                         ],
@@ -390,6 +401,7 @@ class _MuseumViewState extends State<MuseumView> {
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: _primaryColor,
+                              fontFamily: 'Serif', // Font disamakan
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -412,6 +424,7 @@ class _MuseumViewState extends State<MuseumView> {
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 13,
+                            fontFamily: 'Serif', // Font disamakan
                           ),
                         ),
                         const Spacer(),
@@ -427,6 +440,7 @@ class _MuseumViewState extends State<MuseumView> {
                             color: _accentColor,
                             fontWeight: FontWeight.bold,
                             fontSize: 12,
+                            fontFamily: 'Serif', // Font disamakan
                           ),
                         ),
                       ],
@@ -452,6 +466,7 @@ class _MuseumViewState extends State<MuseumView> {
                                 fontSize: 12,
                                 color: _primaryColor,
                                 fontWeight: FontWeight.w500,
+                                fontFamily: 'Serif', // Font disamakan
                               ),
                             ),
                           ],
@@ -471,6 +486,7 @@ class _MuseumViewState extends State<MuseumView> {
                               fontSize: 12,
                               color: _primaryColor,
                               fontWeight: FontWeight.bold,
+                              fontFamily: 'Serif', // Font disamakan
                             ),
                           ),
                         ),

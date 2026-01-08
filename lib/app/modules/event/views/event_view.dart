@@ -177,6 +177,7 @@ class _EventViewState extends State<EventView> {
                             fontSize: 12,
                             color: _primaryColor,
                             fontWeight: FontWeight.bold,
+                            fontFamily: 'Serif', // Font disamakan
                           ),
                         ),
                         const SizedBox(width: 5),
@@ -230,6 +231,7 @@ class _EventViewState extends State<EventView> {
           color: _primaryColor,
           fontWeight: FontWeight.bold,
           fontSize: 18,
+          fontFamily: 'Serif', // Font disamakan
         ),
       ),
       actions: [
@@ -271,7 +273,11 @@ class _EventViewState extends State<EventView> {
         decoration: InputDecoration(
           icon: Icon(Ionicons.search_outline, color: _secondaryColor),
           hintText: 'Cari acara wayang...',
-          hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+          hintStyle: TextStyle(
+            color: Colors.grey[400],
+            fontSize: 14,
+            fontFamily: 'Serif', // Font disamakan
+          ),
           border: InputBorder.none,
           suffixIcon: _searchQuery.isNotEmpty
               ? GestureDetector(
@@ -325,6 +331,7 @@ class _EventViewState extends State<EventView> {
               color: isActive ? _primaryColor : Colors.grey,
               fontSize: 16,
               fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+              fontFamily: 'Serif', // Font disamakan
             ),
           ),
           const SizedBox(height: 6),
@@ -356,7 +363,10 @@ class _EventViewState extends State<EventView> {
           const SizedBox(height: 10),
           Text(
             "Event tidak ditemukan",
-            style: TextStyle(color: _secondaryColor.withOpacity(0.5)),
+            style: TextStyle(
+              color: _secondaryColor.withOpacity(0.5),
+              fontFamily: 'Serif', // Font disamakan
+            ),
           ),
         ],
       ),
@@ -423,6 +433,7 @@ class _EventViewState extends State<EventView> {
                         color: Colors.white,
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
+                        fontFamily: 'Serif', // Font disamakan
                       ),
                     ),
                   ),
@@ -440,6 +451,7 @@ class _EventViewState extends State<EventView> {
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: _primaryColor,
+                    fontFamily: 'Serif', // Font disamakan
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -455,7 +467,11 @@ class _EventViewState extends State<EventView> {
                       child: Text(
                         event['location'],
                         maxLines: 1,
-                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 13,
+                          fontFamily: 'Serif', // Font disamakan
+                        ),
                       ),
                     ),
                   ],
@@ -476,7 +492,12 @@ class _EventViewState extends State<EventView> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    child: const Text("Lihat Detail"),
+                    child: const Text(
+                      "Lihat Detail",
+                      style: TextStyle(
+                        fontFamily: 'Serif', // Font disamakan
+                      ),
+                    ),
                   ),
                 ),
               ],

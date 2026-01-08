@@ -134,6 +134,7 @@ class DetaileventView extends GetView<DetaileventController> {
                           fontWeight: FontWeight.bold,
                           fontSize: 10,
                           letterSpacing: 1.2,
+                          fontFamily: 'Serif', // Font disamakan
                         ),
                       ),
                     ),
@@ -143,7 +144,7 @@ class DetaileventView extends GetView<DetaileventController> {
                     Text(
                       title,
                       style: TextStyle(
-                        fontFamily: 'Serif',
+                        fontFamily: 'Serif', // Font disamakan
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
                         color: _primaryBrown,
@@ -171,6 +172,7 @@ class DetaileventView extends GetView<DetaileventController> {
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: _primaryBrown,
+                        fontFamily: 'Serif', // Font disamakan
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -202,6 +204,7 @@ class DetaileventView extends GetView<DetaileventController> {
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
                                     color: _textBody,
+                                    fontFamily: 'Serif', // Font disamakan
                                   ),
                                 ),
                                 const Text(
@@ -209,6 +212,7 @@ class DetaileventView extends GetView<DetaileventController> {
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: Colors.grey,
+                                    fontFamily: 'Serif', // Font disamakan
                                   ),
                                 ),
                               ],
@@ -227,6 +231,7 @@ class DetaileventView extends GetView<DetaileventController> {
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: _primaryBrown,
+                        fontFamily: 'Serif', // Font disamakan
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -237,6 +242,7 @@ class DetaileventView extends GetView<DetaileventController> {
                         fontSize: 15,
                         height: 1.6,
                         color: _textBody,
+                        fontFamily: 'Serif', // Font disamakan
                       ),
                     ),
 
@@ -280,7 +286,11 @@ class DetaileventView extends GetView<DetaileventController> {
                 children: [
                   Text(
                     "Harga Tiket",
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                      fontFamily: 'Serif', // Font disamakan
+                    ),
                   ),
                   Text(
                     price,
@@ -288,6 +298,7 @@ class DetaileventView extends GetView<DetaileventController> {
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: _primaryBrown,
+                      fontFamily: 'Serif', // Font disamakan
                     ),
                   ),
                 ],
@@ -311,7 +322,11 @@ class DetaileventView extends GetView<DetaileventController> {
                 icon: const Icon(Ionicons.map),
                 label: const Text(
                   "Petunjuk Arah",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    fontFamily: 'Serif', // Font disamakan
+                  ),
                 ),
               ),
             ],
@@ -345,6 +360,7 @@ class DetaileventView extends GetView<DetaileventController> {
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: _primaryBrown,
+              fontFamily: 'Serif', // Font disamakan
             ),
           ),
           const SizedBox(height: 15),
@@ -381,7 +397,11 @@ class DetaileventView extends GetView<DetaileventController> {
             maxLines: 3,
             decoration: InputDecoration(
               hintText: "Bagikan pendapat Anda tentang acara ini...",
-              hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+              hintStyle: TextStyle(
+                color: Colors.grey[400],
+                fontSize: 14,
+                fontFamily: 'Serif', // Font disamakan
+              ),
               filled: true,
               fillColor: _paperBg,
               contentPadding: const EdgeInsets.all(16),
@@ -418,7 +438,11 @@ class DetaileventView extends GetView<DetaileventController> {
               ),
               child: const Text(
                 "Kirim Ulasan",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  fontFamily: 'Serif', // Font disamakan
+                ),
               ),
             ),
           ),
@@ -437,7 +461,12 @@ class DetaileventView extends GetView<DetaileventController> {
         Expanded(
           child: Text(
             text,
-            style: TextStyle(fontSize: 15, color: _textBody, height: 1.2),
+            style: TextStyle(
+              fontSize: 15,
+              color: _textBody,
+              height: 1.2,
+              fontFamily: 'Serif', // Font disamakan
+            ),
           ),
         ),
       ],

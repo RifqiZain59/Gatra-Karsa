@@ -23,7 +23,7 @@ class ProfileView extends StatelessWidget {
       title: 'Profile Gatra Karsa',
       theme: ThemeData(
         useMaterial3: true,
-        fontFamily: 'Georgia',
+        fontFamily: 'Serif', // Set font global
         scaffoldBackgroundColor: WayangColors.background,
         primaryColor: WayangColors.primaryDark,
         appBarTheme: const AppBarTheme(
@@ -145,6 +145,7 @@ class CustomerProfileScreen extends StatelessWidget {
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
+                            fontFamily: 'Serif', // Font disamakan
                           ),
                         ),
                       ),
@@ -293,6 +294,7 @@ class CustomerProfileScreen extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                       letterSpacing: 0.5,
+                      fontFamily: 'Serif', // Font disamakan
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -307,7 +309,11 @@ class CustomerProfileScreen extends StatelessWidget {
                     ),
                     child: const Text(
                       'alex.richards@example.com',
-                      style: TextStyle(fontSize: 14, color: Colors.white),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white,
+                        fontFamily: 'Serif', // Font disamakan
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -342,7 +348,7 @@ class CustomerProfileScreen extends StatelessWidget {
           fontSize: 16,
           fontWeight: FontWeight.bold,
           color: WayangColors.primaryDark.withOpacity(0.8),
-          fontFamily: 'Sans',
+          fontFamily: 'Serif', // Font disamakan (sebelumnya 'Sans')
         ),
       ),
     );
@@ -395,6 +401,7 @@ class CustomerProfileScreen extends StatelessWidget {
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: WayangColors.textPrimary,
+                    fontFamily: 'Serif', // Font disamakan
                   ),
                 ),
               ),

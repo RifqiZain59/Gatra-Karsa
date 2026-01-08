@@ -23,7 +23,8 @@ class DeteksiView extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(fontFamily: 'Roboto'),
+      // MENGUBAH FONT GLOBAL MENJADI SERIF
+      theme: ThemeData(fontFamily: 'Serif'),
       home: const FaceDetectionScreen(),
     );
   }
@@ -113,13 +114,21 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
             const SizedBox(height: 16),
             const Text(
               "Deteksi Selesai!",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Serif', // Font disamakan
+              ),
             ),
             const SizedBox(height: 12),
             const Text(
               "Karakter: Gatotkaca\nJenis: Wayang Kulit Purwa",
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, height: 1.5),
+              style: TextStyle(
+                fontSize: 16,
+                height: 1.5,
+                fontFamily: 'Serif', // Font disamakan
+              ),
             ),
             const SizedBox(height: 25),
             SizedBox(
@@ -138,6 +147,7 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
+                    fontFamily: 'Serif', // Font disamakan
                   ),
                 ),
               ),
@@ -155,11 +165,20 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
       appBar: AppBar(
         title: const Text(
           'Deteksi Gambar Wayang',
-          style: TextStyle(color: _darkText, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: _darkText,
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Serif', // Font disamakan
+          ),
         ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
+        // Tombol Back agar bisa kembali ke HomeView
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: _darkText),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -216,7 +235,10 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
                             SizedBox(height: 12),
                             Text(
                               "Pilih Gambar dari Galeri",
-                              style: TextStyle(color: Colors.grey),
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontFamily: 'Serif', // Font disamakan
+                              ),
                             ),
                           ],
                         ),
@@ -251,7 +273,13 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
       child: ElevatedButton.icon(
         onPressed: isEnabled ? _processImage : null,
         icon: const Icon(Icons.analytics_outlined),
-        label: Text(_imageFile == null ? "Belum Ada Gambar" : "Mulai Deteksi"),
+        label: Text(
+          _imageFile == null ? "Belum Ada Gambar" : "Mulai Deteksi",
+          style: const TextStyle(
+            fontFamily: 'Serif', // Font disamakan
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         style: ElevatedButton.styleFrom(
           backgroundColor: _primaryGreen,
           foregroundColor: Colors.white,
@@ -285,7 +313,11 @@ class _FaceDetectionScreenState extends State<FaceDetectionScreen> {
               _imageFile == null
                   ? "Masukkan foto wayang untuk memulai proses identifikasi."
                   : "Gambar siap dianalisis.",
-              style: const TextStyle(color: Colors.white70, fontSize: 13),
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 13,
+                fontFamily: 'Serif', // Font disamakan
+              ),
             ),
           ),
         ],

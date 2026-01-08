@@ -1,23 +1,35 @@
+import 'package:gatrakarsa/app/data/service/api_service.dart';
 import 'package:get/get.dart';
 
 class DetaildalangController extends GetxController {
-  //TODO: Implement DetaildalangController
+  // Menggunakan 'late' karena data pasti diinisialisasi di onInit
+  // Pastikan model di api_service.dart sudah memiliki field 'location'
+  late ContentModel dalang;
 
-  final count = 0.obs;
   @override
   void onInit() {
     super.onInit();
-  }
 
-  @override
-  void onReady() {
-    super.onReady();
-  }
+    // Mengambil data yang dikirimkan melalui Get.to(..., arguments: item)
+    if (Get.arguments != null && Get.arguments is ContentModel) {
+      dalang = Get.arguments as ContentModel;
+    } else {
+      // Jika terjadi kesalahan navigasi (argumen kosong),
+      // kita buat objek kosong agar aplikasi tidak crash saat mencoba membaca 'dalang'
+      dalang = ContentModel(
+        id: '',
+        title: 'Data Tidak Tersedia',
+        subtitle: '',
+        category: '',
+        description: 'Gagal memuat detail data.',
+        imageUrl: '',
+        location: '-', // Sesuai permintaan untuk kotak asal daerah
+      );
 
-  @override
-  void onClose() {
-    super.onClose();
+      // Memberikan pesan error di console untuk debugging
+      print(
+        "Error: DetaildalangController tidak menerima Get.arguments yang valid.",
+      );
+    }
   }
-
-  void increment() => count.value++;
 }

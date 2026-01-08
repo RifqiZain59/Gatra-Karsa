@@ -13,7 +13,7 @@ import '../../video/views/video_view.dart';
 import '../../leaderboard/views/leaderboard_view.dart';
 import '../../quiz/views/quiz_view.dart';
 
-// --- IMPORT HALAMAN MENU BARU (Pastikan file ini sudah dibuat) ---
+// --- IMPORT HALAMAN MENU BARU ---
 import '../../tokoh/views/tokoh_view.dart';
 import '../../kisah/views/kisah_view.dart';
 import '../../museum/views/museum_view.dart';
@@ -193,6 +193,7 @@ class _HomeViewState extends State<HomeView> {
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: _primaryColor,
+                fontFamily: 'Serif', // Font disamakan
               ),
             ),
           ),
@@ -250,7 +251,11 @@ class _HomeViewState extends State<HomeView> {
             children: [
               Text(
                 'Sugeng Rawuh,',
-                style: TextStyle(fontSize: 12, color: _secondaryColor),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: _secondaryColor,
+                  fontFamily: 'Serif', // Font disamakan
+                ),
               ),
               Text(
                 'Marina',
@@ -258,6 +263,7 @@ class _HomeViewState extends State<HomeView> {
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: _primaryColor,
+                  fontFamily: 'Serif', // Font disamakan
                 ),
               ),
             ],
@@ -342,6 +348,7 @@ class _HomeViewState extends State<HomeView> {
                                   color: Colors.white,
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
+                                  fontFamily: 'Serif', // Font disamakan
                                 ),
                               ),
                             ),
@@ -352,6 +359,7 @@ class _HomeViewState extends State<HomeView> {
                                 color: Colors.white,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
+                                fontFamily: 'Serif', // Font disamakan
                               ),
                             ),
                           ],
@@ -417,9 +425,7 @@ class _HomeViewState extends State<HomeView> {
             width: 70,
             child: GestureDetector(
               onTap: () {
-                // Logika Navigasi Berdasarkan Label Menu
                 final label = cat['label'];
-
                 if (label == 'Tokoh') {
                   Get.to(() => const TokohView());
                 } else if (label == 'Kisah') {
@@ -464,6 +470,7 @@ class _HomeViewState extends State<HomeView> {
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: _primaryColor,
+                      fontFamily: 'Serif', // Font disamakan
                     ),
                   ),
                 ],
@@ -487,6 +494,7 @@ class _HomeViewState extends State<HomeView> {
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: _primaryColor,
+              fontFamily: 'Serif', // Font disamakan
             ),
           ),
           if (action.isNotEmpty)
@@ -496,6 +504,7 @@ class _HomeViewState extends State<HomeView> {
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
                 color: _secondaryColor,
+                fontFamily: 'Serif', // Font disamakan
               ),
             ),
         ],
@@ -559,6 +568,7 @@ class _HomeViewState extends State<HomeView> {
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1,
+                            fontFamily: 'Serif', // Font disamakan
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -571,6 +581,7 @@ class _HomeViewState extends State<HomeView> {
                                 color: _primaryColor,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
+                                fontFamily: 'Serif', // Font disamakan
                               ),
                             ),
                             Icon(
@@ -645,6 +656,7 @@ class _HomeViewState extends State<HomeView> {
                           fontSize: 10,
                           color: _secondaryColor,
                           fontWeight: FontWeight.bold,
+                          fontFamily: 'Serif', // Font disamakan
                         ),
                       ),
                     ),
@@ -657,12 +669,17 @@ class _HomeViewState extends State<HomeView> {
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: _primaryColor,
+                        fontFamily: 'Serif', // Font disamakan
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       article['date'],
-                      style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey[500],
+                        fontFamily: 'Serif', // Font disamakan
+                      ),
                     ),
                   ],
                 ),
@@ -766,6 +783,7 @@ class _HomeViewState extends State<HomeView> {
               color: isSelected ? _primaryColor : Colors.grey[400],
               fontSize: 10,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              fontFamily: 'Serif', // Font disamakan
             ),
           ),
         ],
