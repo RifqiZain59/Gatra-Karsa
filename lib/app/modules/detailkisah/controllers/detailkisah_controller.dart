@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class DetailkisahController extends GetxController {
-  // --- LOGIKA SIMPAN (YANG SUDAH ADA) ---
+  // --- LOGIKA SIMPAN ---
   var isSaved = false.obs;
 
   void toggleSave() {
@@ -12,40 +12,43 @@ class DetailkisahController extends GetxController {
         "Disimpan",
         "Kisah masuk ke koleksi",
         backgroundColor: Colors.white,
+        colorText: Colors.black87,
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.all(20),
       );
     } else {
       Get.snackbar(
         "Dihapus",
         "Kisah dihapus dari koleksi",
         backgroundColor: Colors.white,
+        colorText: Colors.black87,
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.all(20),
       );
     }
   }
 
-  // --- TAMBAHAN BARU: LOGIKA RATING ---
-  var userRating = 0.obs; // Menyimpan jumlah bintang (0-5)
+  // --- LOGIKA RATING ---
+  var userRating = 0.obs;
   final TextEditingController reviewController = TextEditingController();
 
-  // Fungsi set bintang saat diklik
   void setRating(int rating) {
     userRating.value = rating;
   }
 
-  // Fungsi kirim ulasan
   void submitReview() {
     if (userRating.value == 0) {
       Get.snackbar(
         "Peringatan",
         "Mohon berikan rating bintang terlebih dahulu.",
-        backgroundColor: Colors.white,
-        colorText: Colors.red,
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
         snackPosition: SnackPosition.TOP,
         margin: const EdgeInsets.all(20),
       );
       return;
     }
 
-    // Simulasi kirim data
     Get.snackbar(
       "Terima Kasih",
       "Ulasan Anda berhasil dikirim!",
@@ -56,10 +59,9 @@ class DetailkisahController extends GetxController {
       margin: const EdgeInsets.all(20),
     );
 
-    // Reset Form
     userRating.value = 0;
     reviewController.clear();
-    FocusManager.instance.primaryFocus?.unfocus(); // Tutup keyboard
+    FocusManager.instance.primaryFocus?.unfocus();
   }
 
   @override

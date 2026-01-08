@@ -1,105 +1,119 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:ionicons/ionicons.dart';
-
+import 'package:gatrakarsa/app/data/service/api_service.dart'; // Pastikan path import ini sesuai
 import '../controllers/detailevent_controller.dart';
 
 class DetaileventView extends GetView<DetaileventController> {
   const DetaileventView({super.key});
 
-  // --- PALET WARNA TEMA WAYANG ---
-  final Color _primaryBrown = const Color(0xFF3E2723); // Coklat Tua
-  final Color _goldAccent = const Color(0xFFC5A059); // Emas
-  final Color _paperBg = const Color(0xFFFDFBF7); // Krem Kertas
-  final Color _textBody = const Color(0xFF4E342E); // Coklat Teks
-  final Color _cardBg = const Color(0xFFFFFFFF); // Putih
+  final Color _primaryBrown = const Color(0xFF3E2723);
+  final Color _goldAccent = const Color(0xFFC5A059);
+  final Color _paperBg = const Color(0xFFFDFBF7);
+  final Color _textBody = const Color(0xFF4E342E);
+  final Color _cardBg = const Color(0xFFFFFFFF);
 
   @override
   Widget build(BuildContext context) {
-    // Injeksi Controller
-    Get.put(DetaileventController());
+    // Safety check: Memastikan controller ter-inject
+    if (!Get.isRegistered<DetaileventController>()) {
+      Get.put(DetaileventController());
+    }
 
-    // --- 1. DATA HANDLING ---
-    final Map<String, dynamic> args = Get.arguments ?? {};
+    final ContentModel event = controller.event;
 
-    final String title = args['title'] ?? 'Pagelaran Wayang Kulit: Baratayuda';
-    final String image = args['image'] ?? '';
-    final String date = args['date'] ?? 'Sabtu, 24 Oktober 2024';
-    final String time = args['time'] ?? '19.30 - 23.00 WIB';
-    final String location = args['location'] ?? 'Alun-Alun Kidul, Yogyakarta';
-    final String price = args['price'] ?? 'Rp 50.000';
-    final String dalang =
-        args['dalang'] ?? 'Ki Manteb Sudarsono (Alm. Tribute)';
-    final String description =
-        args['description'] ??
-        'Saksikan pagelaran wayang kulit spektakuler yang menceritakan puncak perang Baratayuda. Acara ini menggabungkan tata cahaya modern dengan gamelan tradisional.';
+    // --- SETUP DATA ---
+    final String title = event.title;
+    final String image = event.imageUrl;
+
+    // Subtitle digunakan sebagai Tanggal
+    final String date = event.subtitle.isNotEmpty
+        ? event.subtitle
+        : "Tanggal Belum Tersedia";
+
+    final String time = event.time ?? "Waktu Belum Tersedia";
+
+    // Prioritas Lokasi: location -> address -> alamat (di handle di Model)
+    // Di sini kita hanya menampilkan teksnya
+    final String location =
+        (event.location != null && event.location!.isNotEmpty)
+        ? event.location!
+        : "Lokasi Belum Tersedia";
+
+    final String price = event.price ?? "Gratis";
+    final String performer = event.performer ?? "-";
+    final String description = event.description.isNotEmpty
+        ? event.description
+        : "Deskripsi belum tersedia.";
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: Colors.white,
-        systemNavigationBarIconBrightness: Brightness.dark,
       ),
       child: Scaffold(
         backgroundColor: _paperBg,
-
-        // --- CONTENT BODY ---
         body: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
-            // A. HEADER IMAGE
+            // --- A. HEADER IMAGE & APPBAR ---
             SliverAppBar(
-              expandedHeight: 280,
+              expandedHeight: 300,
               pinned: true,
               backgroundColor: _primaryBrown,
-
-              // Tombol Back (Kiri)
+              elevation: 0,
               leading: Container(
                 margin: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withOpacity(0.4),
                 ),
                 child: IconButton(
                   icon: const Icon(Ionicons.arrow_back, color: Colors.white),
                   onPressed: () => Get.back(),
                 ),
               ),
-
-              // [DIHAPUS] Tombol Simpan di kanan sudah dihilangkan
-              actions: const [],
-
+              actions: [
+                Obx(
+                  () => Container(
+                    margin: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.black.withOpacity(0.4),
+                    ),
+                    child: IconButton(
+                      icon: Icon(
+                        controller.isSaved.value
+                            ? Ionicons.bookmark
+                            : Ionicons.bookmark_outline,
+                        color: _goldAccent,
+                      ),
+                      onPressed: () => controller.toggleSave(),
+                    ),
+                  ),
+                ),
+              ],
               flexibleSpace: FlexibleSpaceBar(
                 stretchModes: const [StretchMode.zoomBackground],
                 background: Stack(
                   fit: StackFit.expand,
                   children: [
-                    // Gambar Utama
-                    if (image.isNotEmpty)
-                      Image.asset(
-                        image,
-                        fit: BoxFit.cover,
-                        errorBuilder: (c, e, s) =>
-                            Container(color: _primaryBrown),
-                      )
-                    else
-                      Container(color: _primaryBrown),
-
-                    // Gradient Overlay
+                    _buildImage(image),
                     DecoratedBox(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          begin: Alignment.bottomCenter,
-                          end: Alignment.topCenter,
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
                           colors: [
-                            _paperBg,
-                            _paperBg.withOpacity(0.5),
+                            Colors.black.withOpacity(0.3),
                             Colors.transparent,
-                            Colors.black45,
+                            _paperBg.withOpacity(0.1),
+                            _paperBg,
                           ],
-                          stops: const [0.0, 0.15, 0.5, 1.0],
+                          stops: const [0.0, 0.4, 0.8, 1.0],
                         ),
                       ),
                     ),
@@ -108,14 +122,14 @@ class DetaileventView extends GetView<DetaileventController> {
               ),
             ),
 
-            // B. KONTEN DETAIL
+            // --- B. KONTEN DETAIL ---
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 20),
 
                     // Badge Kategori
                     Container(
@@ -126,103 +140,118 @@ class DetaileventView extends GetView<DetaileventController> {
                       decoration: BoxDecoration(
                         color: _primaryBrown.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: _primaryBrown.withOpacity(0.2),
+                        ),
                       ),
                       child: Text(
-                        "SENI PERTUNJUKAN",
+                        event.category.toUpperCase(),
                         style: TextStyle(
                           color: _primaryBrown,
                           fontWeight: FontWeight.bold,
-                          fontSize: 10,
+                          fontSize: 11,
                           letterSpacing: 1.2,
-                          fontFamily: 'Serif', // Font disamakan
+                          fontFamily: 'Serif',
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
 
-                    // Judul Acara
+                    // Judul
                     Text(
                       title,
                       style: TextStyle(
-                        fontFamily: 'Serif', // Font disamakan
-                        fontSize: 24,
+                        fontFamily: 'Serif',
+                        fontSize: 26,
                         fontWeight: FontWeight.w800,
                         color: _primaryBrown,
                         height: 1.2,
                       ),
                     ),
-
                     const SizedBox(height: 24),
 
-                    // Info Waktu & Lokasi
+                    // Info Rows
                     _buildInfoRow(Ionicons.calendar_outline, date),
                     const SizedBox(height: 12),
                     _buildInfoRow(Ionicons.time_outline, time),
                     const SizedBox(height: 12),
-                    _buildInfoRow(Ionicons.location_outline, location),
+                    _buildInfoRow(
+                      Ionicons.location_outline,
+                      location,
+                    ), // Tampilkan teks lokasi
 
                     const SizedBox(height: 30),
-                    const Divider(),
+                    const Divider(thickness: 1, height: 1),
                     const SizedBox(height: 20),
 
-                    // Bagian Dalang / Penampil
-                    Text(
-                      "Dalang Utama",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: _primaryBrown,
-                        fontFamily: 'Serif', // Font disamakan
+                    // Section Performer
+                    if (performer != "-" && performer.isNotEmpty) ...[
+                      Text(
+                        "Penampil / Tokoh",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: _primaryBrown,
+                          fontFamily: 'Serif',
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: _cardBg,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey.withOpacity(0.2)),
-                      ),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 24,
-                            backgroundColor: _goldAccent,
-                            child: const Icon(
-                              Ionicons.person,
-                              color: Colors.white,
-                            ),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: _cardBg,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.grey.withOpacity(0.2),
                           ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  dalang,
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                    color: _textBody,
-                                    fontFamily: 'Serif', // Font disamakan
-                                  ),
-                                ),
-                                const Text(
-                                  "Maestro Pedalangan",
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey,
-                                    fontFamily: 'Serif', // Font disamakan
-                                  ),
-                                ),
-                              ],
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 5),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 24,
+                              backgroundColor: _goldAccent,
+                              child: const Icon(
+                                Ionicons.person,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    performer,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                      color: _textBody,
+                                      fontFamily: 'Serif',
+                                    ),
+                                  ),
+                                  const Text(
+                                    "Artis Utama / Dalang",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                      fontFamily: 'Serif',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-
-                    const SizedBox(height: 30),
+                      const SizedBox(height: 30),
+                    ],
 
                     // Deskripsi
                     Text(
@@ -231,7 +260,7 @@ class DetaileventView extends GetView<DetaileventController> {
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: _primaryBrown,
-                        fontFamily: 'Serif', // Font disamakan
+                        fontFamily: 'Serif',
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -242,16 +271,14 @@ class DetaileventView extends GetView<DetaileventController> {
                         fontSize: 15,
                         height: 1.6,
                         color: _textBody,
-                        fontFamily: 'Serif', // Font disamakan
+                        fontFamily: 'Serif',
                       ),
                     ),
-
                     const SizedBox(height: 30),
 
-                    // --- INPUT RATING & ULASAN ---
+                    // Rating
                     _buildRatingSection(context),
-
-                    const SizedBox(height: 100), // Spacer bawah
+                    const SizedBox(height: 100),
                   ],
                 ),
               ),
@@ -259,26 +286,27 @@ class DetaileventView extends GetView<DetaileventController> {
           ],
         ),
 
-        // --- BOTTOM BAR (NAVIGASI PETA) ---
+        // --- C. BOTTOM BAR (TOMBOL BUKA MAPS) ---
         bottomNavigationBar: Container(
           padding: EdgeInsets.fromLTRB(
             20,
+            16,
             20,
-            20,
-            20 + MediaQuery.of(context).padding.bottom,
+            16 + MediaQuery.of(context).padding.bottom,
           ),
           decoration: BoxDecoration(
             color: Colors.white,
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
+                blurRadius: 20,
                 offset: const Offset(0, -5),
               ),
             ],
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Column(
                 mainAxisSize: MainAxisSize.min,
@@ -289,7 +317,7 @@ class DetaileventView extends GetView<DetaileventController> {
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey[600],
-                      fontFamily: 'Serif', // Font disamakan
+                      fontFamily: 'Serif',
                     ),
                   ),
                   Text(
@@ -298,20 +326,20 @@ class DetaileventView extends GetView<DetaileventController> {
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: _primaryBrown,
-                      fontFamily: 'Serif', // Font disamakan
+                      fontFamily: 'Serif',
                     ),
                   ),
                 ],
               ),
-              const Spacer(),
-
+              // TOMBOL PETUNJUK ARAH
+              // Fungsi ini memanggil controller.openMap() yang sudah menggunakan 'maps_url'
               ElevatedButton.icon(
                 onPressed: () => controller.openMap(),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _primaryBrown,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
+                    horizontal: 20,
                     vertical: 12,
                   ),
                   shape: RoundedRectangleBorder(
@@ -319,13 +347,13 @@ class DetaileventView extends GetView<DetaileventController> {
                   ),
                   elevation: 2,
                 ),
-                icon: const Icon(Ionicons.map),
+                icon: const Icon(Ionicons.map, size: 20),
                 label: const Text(
                   "Petunjuk Arah",
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    fontFamily: 'Serif', // Font disamakan
+                    fontSize: 14,
+                    fontFamily: 'Serif',
                   ),
                 ),
               ),
@@ -336,7 +364,66 @@ class DetaileventView extends GetView<DetaileventController> {
     );
   }
 
-  // --- WIDGET HELPER: INPUT RATING ---
+  // --- WIDGET HELPERS ---
+
+  Widget _buildInfoRow(IconData icon, String text) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 20, color: _goldAccent),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 15,
+              color: _textBody,
+              height: 1.3,
+              fontFamily: 'Serif',
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildImage(String imageUrl) {
+    if (imageUrl.isEmpty) {
+      return Container(color: _primaryBrown);
+    }
+    try {
+      if (imageUrl.startsWith('http')) {
+        return Image.network(
+          imageUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (c, e, s) => Container(color: _primaryBrown),
+        );
+      } else if (imageUrl.startsWith('assets/')) {
+        return Image.asset(imageUrl, fit: BoxFit.cover);
+      } else {
+        // Pembersihan Base64
+        String cleanBase64 = imageUrl;
+        if (cleanBase64.contains(',')) {
+          cleanBase64 = cleanBase64.split(',').last;
+        }
+        cleanBase64 = cleanBase64.replaceAll(RegExp(r'\s+'), '');
+        int mod4 = cleanBase64.length % 4;
+        if (mod4 > 0) {
+          cleanBase64 += '=' * (4 - mod4);
+        }
+        Uint8List bytes = base64Decode(cleanBase64);
+        return Image.memory(
+          bytes,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) =>
+              Container(color: _primaryBrown),
+        );
+      }
+    } catch (e) {
+      return Container(color: _primaryBrown);
+    }
+  }
+
   Widget _buildRatingSection(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -360,12 +447,10 @@ class DetaileventView extends GetView<DetaileventController> {
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: _primaryBrown,
-              fontFamily: 'Serif', // Font disamakan
+              fontFamily: 'Serif',
             ),
           ),
           const SizedBox(height: 15),
-
-          // Row Bintang Interaktif
           Center(
             child: Obx(
               () => Row(
@@ -379,8 +464,8 @@ class DetaileventView extends GetView<DetaileventController> {
                         index < controller.userRating.value
                             ? Ionicons.star
                             : Ionicons.star_outline,
-                        color: const Color(0xFFD4AF37), // Emas
-                        size: 36,
+                        color: const Color(0xFFD4AF37),
+                        size: 32,
                       ),
                     ),
                   );
@@ -388,19 +473,17 @@ class DetaileventView extends GetView<DetaileventController> {
               ),
             ),
           ),
-
           const SizedBox(height: 20),
-
-          // Input Text
           TextField(
             controller: controller.reviewController,
             maxLines: 3,
+            style: const TextStyle(fontFamily: 'Serif'),
             decoration: InputDecoration(
-              hintText: "Bagikan pendapat Anda tentang acara ini...",
+              hintText: "Bagikan pendapat Anda...",
               hintStyle: TextStyle(
                 color: Colors.grey[400],
                 fontSize: 14,
-                fontFamily: 'Serif', // Font disamakan
+                fontFamily: 'Serif',
               ),
               filled: true,
               fillColor: _paperBg,
@@ -419,10 +502,7 @@ class DetaileventView extends GetView<DetaileventController> {
               ),
             ),
           ),
-
           const SizedBox(height: 16),
-
-          // Tombol Kirim
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -433,7 +513,7 @@ class DetaileventView extends GetView<DetaileventController> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 14),
                 elevation: 2,
               ),
               child: const Text(
@@ -441,35 +521,13 @@ class DetaileventView extends GetView<DetaileventController> {
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
-                  fontFamily: 'Serif', // Font disamakan
+                  fontFamily: 'Serif',
                 ),
               ),
             ),
           ),
         ],
       ),
-    );
-  }
-
-  // Widget Helper untuk Baris Info (Icon + Text)
-  Widget _buildInfoRow(IconData icon, String text) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 20, color: _goldAccent),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 15,
-              color: _textBody,
-              height: 1.2,
-              fontFamily: 'Serif', // Font disamakan
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

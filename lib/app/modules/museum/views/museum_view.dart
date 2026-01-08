@@ -17,205 +17,277 @@ class MuseumView extends GetView<MuseumController> {
   final Color _bgColor = const Color(0xFFFAFAF5);
   final Color _secondaryColor = const Color(0xFF8D6E63);
 
+  List<String> get _dynamicFilters {
+    if (controller.allMuseums.isEmpty) return ['Semua'];
+    Set<String> locations = controller.allMuseums
+        .map((e) => e.subtitle.trim())
+        .where((s) => s.isNotEmpty)
+        .toSet();
+    List<String> sortedList = locations.toList()..sort();
+    return ['Semua', ...sortedList];
+  }
+
   @override
   Widget build(BuildContext context) {
-    // TIPS: Sebaiknya letakkan Get.put di Binding.
-    // Namun untuk quick-fix agar tidak error jika tanpa binding:
     if (!Get.isRegistered<MuseumController>()) {
       Get.put(MuseumController());
     }
 
     return Scaffold(
       backgroundColor: _bgColor,
-      appBar: _buildAppBar(),
-      body: Column(
+      body: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildHeaderSection(),
+
+              Expanded(
+                child: Obx(() {
+                  if (controller.isLoading.value) {
+                    return Center(
+                      child: CircularProgressIndicator(color: _primaryColor),
+                    );
+                  }
+
+                  if (controller.filteredMuseums.isEmpty) {
+                    return _buildEmptyState();
+                  }
+
+                  return RefreshIndicator(
+                    onRefresh: controller.refreshData,
+                    color: _primaryColor,
+                    child: ListView.builder(
+                      // PERBAIKAN: Padding Top 0 (karena Header sudah punya padding bottom 20)
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: controller.filteredMuseums.length,
+                      itemBuilder: (context, index) {
+                        return _buildMuseumCard(
+                          controller.filteredMuseums[index],
+                        );
+                      },
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // --- HEADER SECTION ---
+  Widget _buildHeaderSection() {
+    return Container(
+      // Padding bottom 20 (Sama dengan KisahView)
+      padding: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(color: _bgColor),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 10),
-          _buildSearchBar(),
-          const SizedBox(height: 15),
-          _buildCategoryTabs(),
-          const SizedBox(height: 10),
+          // 1. Top Nav
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  "Destinasi Terpopuler",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: _primaryColor,
-                    fontFamily: 'Serif',
-                  ),
+                GestureDetector(
+                  onTap: () => Get.back(),
+                  child: Icon(Ionicons.arrow_back, color: _primaryColor),
                 ),
-                // Optional: Menampilkan jumlah data
                 Obx(
                   () => Text(
-                    "${controller.filteredMuseums.length} Tempat",
-                    style: TextStyle(fontSize: 12, color: _secondaryColor),
+                    controller.isCollectionMode.value
+                        ? 'Koleksi Museum'
+                        : 'Jelajah Museum',
+                    style: TextStyle(
+                      color: _primaryColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                      fontFamily: 'Serif',
+                    ),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => controller.refreshData(),
+                  child: Icon(Ionicons.refresh, color: _primaryColor),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 25),
+
+          // 2. SEARCH BAR + SAVE BUTTON
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 50,
+                    padding: const EdgeInsets.symmetric(horizontal: 15),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(15),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _primaryColor.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: TextField(
+                      controller: controller.searchC,
+                      onChanged: (value) => controller.updateSearch(value),
+                      textInputAction: TextInputAction.search,
+                      style: const TextStyle(fontFamily: 'Serif'),
+                      decoration: InputDecoration(
+                        prefixIcon: Icon(
+                          Ionicons.search_outline,
+                          color: _secondaryColor.withOpacity(0.5),
+                        ),
+                        hintText: 'Cari museum...',
+                        hintStyle: TextStyle(
+                          color: Colors.grey[400],
+                          fontSize: 14,
+                          fontFamily: 'Serif',
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 10,
+                        ),
+                        suffixIcon: Obx(
+                          () => controller.searchQuery.value.isNotEmpty
+                              ? GestureDetector(
+                                  onTap: () => controller.clearSearch(),
+                                  child: Icon(
+                                    Ionicons.close_circle,
+                                    color: _secondaryColor.withOpacity(0.5),
+                                  ),
+                                )
+                              : const SizedBox.shrink(),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: 12),
+
+                GestureDetector(
+                  onTap: () => controller.toggleCollectionMode(),
+                  child: Obx(
+                    () => Container(
+                      height: 50,
+                      width: 50,
+                      decoration: BoxDecoration(
+                        color: controller.isCollectionMode.value
+                            ? _primaryColor
+                            : Colors.white,
+                        borderRadius: BorderRadius.circular(15),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _primaryColor.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                        border: controller.isCollectionMode.value
+                            ? null
+                            : Border.all(color: _primaryColor.withOpacity(0.1)),
+                      ),
+                      child: Icon(
+                        controller.isCollectionMode.value
+                            ? Ionicons.bookmark
+                            : Ionicons.bookmark_outline,
+                        color: controller.isCollectionMode.value
+                            ? _accentColor
+                            : _primaryColor,
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          Expanded(
-            child: Obx(() {
-              if (controller.isLoading.value) {
-                return Center(
-                  child: CircularProgressIndicator(color: _primaryColor),
-                );
-              }
-              if (controller.filteredMuseums.isEmpty) {
-                return _buildEmptyState();
-              }
-              return RefreshIndicator(
-                onRefresh: controller.refreshData,
-                color: _primaryColor,
-                child: ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: controller.filteredMuseums.length,
-                  itemBuilder: (context, index) {
-                    return _buildMuseumCard(controller.filteredMuseums[index]);
-                  },
-                ),
+
+          // 3. Filter Tabs (Hanya muncul jika BUKAN mode koleksi)
+          Obx(() {
+            if (!controller.isCollectionMode.value) {
+              return Column(
+                children: [
+                  const SizedBox(height: 15),
+                  _buildFilterTabs(),
+                  // Jarak ekstra 5px agar tidak terlalu mepet dengan list (Sama dengan KisahView)
+                  const SizedBox(height: 5),
+                ],
               );
-            }),
-          ),
+            } else {
+              return const SizedBox(height: 5);
+            }
+          }),
         ],
       ),
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      backgroundColor: _bgColor,
-      elevation: 0,
-      centerTitle: true,
-      leading: IconButton(
-        icon: Icon(Ionicons.arrow_back, color: _primaryColor),
-        onPressed: () => Get.back(),
-      ),
-      title: Text(
-        'Jelajah Museum',
-        style: TextStyle(
-          color: _primaryColor,
-          fontWeight: FontWeight.bold,
-          fontSize: 22,
-          fontFamily: 'Serif',
-        ),
-      ),
-      actions: [
-        IconButton(
-          onPressed: () => controller.refreshData(),
-          icon: Icon(Ionicons.refresh, color: _primaryColor),
-          tooltip: 'Refresh Data',
-        ),
-      ],
-      systemOverlayStyle: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-      ),
-    );
-  }
+  // --- FILTER TABS ---
+  Widget _buildFilterTabs() {
+    return Obx(() {
+      final filters = _dynamicFilters;
 
-  Widget _buildSearchBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-              color: _primaryColor.withOpacity(0.08),
-              blurRadius: 15,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: TextField(
-          onChanged: (value) => controller.updateSearch(value),
-          textInputAction:
-              TextInputAction.search, // Menambahkan action search di keyboard
-          style: TextStyle(fontFamily: 'Serif', color: _primaryColor),
-          decoration: InputDecoration(
-            prefixIcon: Icon(Ionicons.search_outline, color: _secondaryColor),
-            hintText: 'Cari museum atau kota...',
-            hintStyle: TextStyle(
-              color: Colors.grey[400],
-              fontSize: 14,
-              fontFamily: 'Serif',
-            ),
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(
-              vertical: 14,
-              horizontal: 15,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+      return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: filters.map((filterName) {
+            final bool isSelected =
+                controller.selectedFilter.value == filterName;
 
-  Widget _buildCategoryTabs() {
-    final List<String> categories = [
-      'Semua',
-      'Yogyakarta',
-      'Jawa Tengah',
-      'Jakarta',
-      'Jawa Barat',
-      'Jawa Timur',
-    ];
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: List.generate(categories.length, (index) {
-          return Padding(
-            padding: const EdgeInsets.only(right: 25),
-            child: Obx(
-              () => GestureDetector(
-                onTap: () =>
-                    controller.changeCategory(index, categories[index]),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: controller.activeTabIndex.value == index
-                        ? _primaryColor
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(20),
-                    border: controller.activeTabIndex.value == index
-                        ? null
-                        : Border.all(color: Colors.grey.withOpacity(0.3)),
-                  ),
-                  child: Text(
-                    categories[index],
-                    style: TextStyle(
-                      color: controller.activeTabIndex.value == index
-                          ? Colors.white
-                          : Colors.grey[600],
-                      fontSize: 14,
-                      fontWeight: controller.activeTabIndex.value == index
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                      fontFamily: 'Serif',
+            return Padding(
+              padding: const EdgeInsets.only(right: 30),
+              child: GestureDetector(
+                onTap: () => controller.changeFilter(filterName),
+                child: Column(
+                  children: [
+                    Text(
+                      filterName,
+                      style: TextStyle(
+                        color: isSelected ? _primaryColor : Colors.grey[400],
+                        fontSize: 14,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                        fontFamily: 'Serif',
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 4),
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      height: 2,
+                      width: isSelected ? 20 : 0,
+                      decoration: BoxDecoration(
+                        color: _accentColor,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          );
-        }),
-      ),
-    );
+            );
+          }).toList(),
+        ),
+      );
+    });
   }
 
   Widget _buildEmptyState() {
@@ -224,24 +296,21 @@ class MuseumView extends GetView<MuseumController> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Ionicons.search,
+            controller.isCollectionMode.value
+                ? Ionicons.bookmark_outline
+                : Ionicons.map_outline,
             size: 80,
             color: _secondaryColor.withOpacity(0.2),
           ),
           const SizedBox(height: 15),
           Text(
-            "Tidak ditemukan",
+            controller.isCollectionMode.value
+                ? "Belum ada koleksi"
+                : "Tidak ditemukan",
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: _secondaryColor,
-              fontFamily: 'Serif',
-            ),
-          ),
-          Text(
-            "Coba kata kunci atau kategori lain",
-            style: TextStyle(
-              color: _secondaryColor.withOpacity(0.6),
               fontFamily: 'Serif',
             ),
           ),
@@ -285,40 +354,36 @@ class MuseumView extends GetView<MuseumController> {
                       child: _buildImage(item.imageUrl),
                     ),
                   ),
-                  // Badge Rating / Kategori
+
+                  // ICON SAVE
                   Positioned(
                     top: 15,
                     right: 15,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.95),
-                        borderRadius: BorderRadius.circular(15),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black12,
-                            blurRadius: 4,
-                            offset: Offset(0, 2),
+                    child: GestureDetector(
+                      onTap: () => controller.toggleSave(item.id),
+                      child: Obx(() {
+                        bool isSaved = controller.savedIds.contains(item.id);
+                        return Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.9),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 5,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Ionicons.star, color: _accentColor, size: 14),
-                          const SizedBox(width: 4),
-                          Text(
-                            "4.8",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: _primaryColor,
-                            ),
+                          child: Icon(
+                            isSaved
+                                ? Ionicons.bookmark
+                                : Ionicons.bookmark_outline,
+                            color: isSaved ? _accentColor : _primaryColor,
+                            size: 18,
                           ),
-                        ],
-                      ),
+                        );
+                      }),
                     ),
                   ),
                 ],
@@ -330,7 +395,6 @@ class MuseumView extends GetView<MuseumController> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // JUDUL
                     Text(
                       item.title,
                       style: TextStyle(
@@ -344,8 +408,6 @@ class MuseumView extends GetView<MuseumController> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
-
-                    // LOKASI (Menggunakan Subtitle + Location)
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -357,8 +419,6 @@ class MuseumView extends GetView<MuseumController> {
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            // Logic: Tampilkan subtitle (Kota/Wilayah).
-                            // Jika ada lokasi detail, gabungkan.
                             item.subtitle.isNotEmpty
                                 ? item.subtitle
                                 : (item.location ?? "Lokasi tidak tersedia"),
@@ -373,26 +433,22 @@ class MuseumView extends GetView<MuseumController> {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 12),
                     const Divider(height: 1, color: Color(0xFFF0F0F0)),
                     const SizedBox(height: 12),
-
-                    // BOTTOM ROW (Time & Price)
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Jam Operasional
                         Row(
                           children: [
                             Icon(
-                              Ionicons.time_outline,
+                              Ionicons.pricetag_outline,
                               size: 14,
                               color: _secondaryColor,
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              item.time ?? "08.00 - 16.00",
+                              item.category,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: _secondaryColor,
@@ -401,7 +457,6 @@ class MuseumView extends GetView<MuseumController> {
                             ),
                           ],
                         ),
-                        // Harga / Label
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 10,
@@ -435,63 +490,36 @@ class MuseumView extends GetView<MuseumController> {
   }
 
   Widget _buildImage(String imageUrl) {
-    // Placeholder default
-    const String assetPlaceholder = 'assets/banner1.jpg';
-
     if (imageUrl.isEmpty) {
-      return Image.asset(assetPlaceholder, fit: BoxFit.cover);
+      return Container(color: Colors.grey[200]);
     }
-
     try {
-      // 1. URL HTTP/HTTPS
       if (imageUrl.startsWith('http')) {
         return Image.network(
           imageUrl,
           fit: BoxFit.cover,
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return Container(
-              color: Colors.grey[200],
-              child: Center(
-                child: Icon(Ionicons.image_outline, color: Colors.grey[400]),
-              ),
-            );
-          },
-          errorBuilder: (context, error, stackTrace) {
-            return Image.asset(assetPlaceholder, fit: BoxFit.cover);
-          },
+          errorBuilder: (c, e, s) => Container(color: Colors.grey[200]),
         );
-      }
-      // 2. ASSETS LOCAL
-      else if (imageUrl.startsWith('assets/')) {
+      } else if (imageUrl.startsWith('assets/')) {
         return Image.asset(
           imageUrl,
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) =>
-              Container(color: Colors.grey),
+          errorBuilder: (c, e, s) => Container(color: Colors.grey[200]),
         );
-      }
-      // 3. BASE64 STRING
-      else {
-        // Membersihkan string base64 dari prefix data:image jika ada
+      } else {
         String base64String = imageUrl;
-        if (base64String.contains(',')) {
+        if (base64String.contains(','))
           base64String = base64String.split(',').last;
-        }
-
-        // Dekode
+        base64String = base64String.replaceAll(RegExp(r'\s+'), '');
         Uint8List bytes = base64Decode(base64String);
         return Image.memory(
           bytes,
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return Image.asset(assetPlaceholder, fit: BoxFit.cover);
-          },
+          errorBuilder: (c, e, s) => Container(color: Colors.grey[200]),
         );
       }
     } catch (e) {
-      // Fallback jika format string benar-benar rusak
-      return Image.asset(assetPlaceholder, fit: BoxFit.cover);
+      return Container(color: Colors.grey[200]);
     }
   }
 }

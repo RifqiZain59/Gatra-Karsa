@@ -1,23 +1,41 @@
 import 'package:get/get.dart';
+import 'package:gatrakarsa/app/data/service/api_service.dart'; // Pastikan path import ini sesuai
 
 class KisahController extends GetxController {
-  //TODO: Implement KisahController
+  // 1. Inisialisasi API Service
+  final ApiService _apiService = ApiService();
 
-  final count = 0.obs;
+  // 2. Variabel Reactive (Obs)
+  var isLoading = true.obs; // Untuk status loading (berputar)
+  var kisahList = <ContentModel>[].obs; // List untuk menampung data kisah
+
   @override
   void onInit() {
     super.onInit();
+    // 3. Panggil data otomatis saat halaman dibuka
+    fetchKisahData();
   }
 
-  @override
-  void onReady() {
-    super.onReady();
+  /// Fungsi untuk mengambil data dari Firebase via ApiService
+  void fetchKisahData() async {
+    try {
+      isLoading(true); // Mulai loading
+
+      // Panggil getKisah() yang sudah memfilter data (bukan Event/Museum/Wayang)
+      List<ContentModel> data = await _apiService.getKisah();
+
+      // Masukkan data ke list
+      kisahList.assignAll(data);
+    } catch (e) {
+      print("Error fetching Kisah: $e");
+      Get.snackbar("Maaf", "Gagal memuat data kisah.");
+    } finally {
+      isLoading(false); // Selesai loading
+    }
   }
 
-  @override
-  void onClose() {
-    super.onClose();
+  /// Fungsi Refresh (Opsional: jika ingin pakai Pull-to-Refresh)
+  Future<void> refreshData() async {
+    fetchKisahData();
   }
-
-  void increment() => count.value++;
 }

@@ -1,32 +1,43 @@
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:ionicons/ionicons.dart';
-
+import 'package:gatrakarsa/app/data/service/api_service.dart'; // Import Model PENTING
 import '../controllers/detailkisah_controller.dart';
 
 class DetailkisahView extends GetView<DetailkisahController> {
   const DetailkisahView({super.key});
 
   // --- PALET WARNA TEMA WAYANG ---
-  final Color _primaryBrown = const Color(0xFF3E2723); // Coklat Tua
-  final Color _goldAccent = const Color(0xFFC5A059); // Emas
-  final Color _paperBg = const Color(0xFFFDFBF7); // Krem Kertas
-  final Color _textBody = const Color(0xFF4E342E); // Coklat Teks
+  final Color _primaryBrown = const Color(0xFF3E2723);
+  final Color _goldAccent = const Color(0xFFC5A059);
+  final Color _paperBg = const Color(0xFFFDFBF7);
+  final Color _textBody = const Color(0xFF4E342E);
 
   @override
   Widget build(BuildContext context) {
     // Injeksi Controller
     Get.put(DetailkisahController());
 
-    // --- DATA HANDLING ---
-    final Map<String, dynamic> args = Get.arguments ?? {};
-    final String title = args['title'] ?? 'Judul Tidak Tersedia';
-    final String category = args['category'] ?? 'Cerita Wayang';
-    final String image = args['image'] ?? '';
-    final String moral = args['moral'] ?? 'Hikmah cerita belum tersedia.';
-    final String content = args['content'] ?? 'Isi cerita belum tersedia.';
-    final List characters = (args['characters'] as List?) ?? [];
+    // --- TERIMA DATA SEBAGAI CONTENTMODEL ---
+    final ContentModel story = Get.arguments as ContentModel;
+
+    // --- MAPPING DATA MODEL KE UI ---
+    final String title = story.title;
+    final String category = story.category;
+    final String image = story.imageUrl;
+
+    // Moral value (subtitle atau default)
+    final String moral = story.subtitle.isNotEmpty
+        ? story.subtitle
+        : "Hikmah cerita ini mengajarkan tentang keberanian dan kebenaran.";
+
+    // Isi Cerita
+    final String content = story.description;
+
+    // (BAGIAN TOKOH/CHARACTERS SUDAH DIHAPUS DARI SINI)
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
@@ -108,15 +119,9 @@ class DetailkisahView extends GetView<DetailkisahController> {
                     background: Stack(
                       fit: StackFit.expand,
                       children: [
-                        if (image.isNotEmpty)
-                          Image.asset(
-                            image,
-                            fit: BoxFit.cover,
-                            errorBuilder: (c, e, s) =>
-                                Container(color: _primaryBrown),
-                          )
-                        else
-                          Container(color: _primaryBrown),
+                        // Helper Image
+                        _buildImage(image),
+
                         DecoratedBox(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
@@ -162,7 +167,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 1.5,
-                                fontFamily: 'Serif', // Font disamakan
+                                fontFamily: 'Serif',
                               ),
                             ),
                           ),
@@ -172,7 +177,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
                           title,
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontFamily: 'Serif', // Font disamakan
+                            fontFamily: 'Serif',
                             fontSize: 28,
                             fontWeight: FontWeight.w800,
                             color: _primaryBrown,
@@ -210,7 +215,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
                                       color: _primaryBrown,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
-                                      fontFamily: 'Serif', // Font disamakan
+                                      fontFamily: 'Serif',
                                     ),
                                   ),
                                 ],
@@ -223,7 +228,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
                                   fontSize: 15,
                                   color: _textBody,
                                   height: 1.4,
-                                  fontFamily: 'Serif', // Font disamakan
+                                  fontFamily: 'Serif',
                                 ),
                               ),
                             ],
@@ -240,7 +245,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
                             fontSize: 16,
                             height: 1.8,
                             color: _textBody,
-                            fontFamily: 'Serif', // Font disamakan
+                            fontFamily: 'Serif',
                           ),
                         ),
 
@@ -248,66 +253,9 @@ class DetailkisahView extends GetView<DetailkisahController> {
                         const Divider(),
                         const SizedBox(height: 20),
 
-                        // 4. List Tokoh
-                        if (characters.isNotEmpty) ...[
-                          Text(
-                            "Tokoh dalam Kisah",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: _primaryBrown,
-                              fontFamily: 'Serif', // Font disamakan
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          SizedBox(
-                            height: 90,
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              physics: const BouncingScrollPhysics(),
-                              itemCount: characters.length,
-                              itemBuilder: (context, index) {
-                                return Container(
-                                  margin: const EdgeInsets.only(right: 16),
-                                  child: Column(
-                                    children: [
-                                      Container(
-                                        width: 50,
-                                        height: 50,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: Colors.white,
-                                          border: Border.all(
-                                            color: _goldAccent,
-                                            width: 1,
-                                          ),
-                                        ),
-                                        child: const Icon(
-                                          Ionicons.person,
-                                          size: 20,
-                                          color: Colors.grey,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        characters[index].toString(),
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: _textBody,
-                                          fontFamily: 'Serif', // Font disamakan
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ],
+                        // (BAGIAN LIST TOKOH SUDAH DIHAPUS DARI SINI)
 
-                        const SizedBox(height: 40),
-
-                        // --- 5. INPUT RATING & ULASAN (BARU) ---
+                        // 4. Input Rating
                         _buildRatingSection(context),
 
                         SizedBox(
@@ -325,7 +273,6 @@ class DetailkisahView extends GetView<DetailkisahController> {
     );
   }
 
-  // Widget Input Rating
   Widget _buildRatingSection(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -349,12 +296,10 @@ class DetailkisahView extends GetView<DetailkisahController> {
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: _primaryBrown,
-              fontFamily: 'Serif', // Font disamakan
+              fontFamily: 'Serif',
             ),
           ),
           const SizedBox(height: 15),
-
-          // Row Bintang Interaktif
           Center(
             child: Obx(
               () => Row(
@@ -368,7 +313,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
                         index < controller.userRating.value
                             ? Ionicons.star
                             : Ionicons.star_outline,
-                        color: const Color(0xFFD4AF37), // Emas
+                        color: const Color(0xFFD4AF37),
                         size: 36,
                       ),
                     ),
@@ -377,10 +322,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
               ),
             ),
           ),
-
           const SizedBox(height: 20),
-
-          // Input Text
           TextField(
             controller: controller.reviewController,
             maxLines: 3,
@@ -389,7 +331,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
               hintStyle: TextStyle(
                 color: Colors.grey[400],
                 fontSize: 14,
-                fontFamily: 'Serif', // Font disamakan
+                fontFamily: 'Serif',
               ),
               filled: true,
               fillColor: _paperBg,
@@ -408,10 +350,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
               ),
             ),
           ),
-
           const SizedBox(height: 16),
-
-          // Tombol Kirim
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -430,7 +369,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
-                  fontFamily: 'Serif', // Font disamakan
+                  fontFamily: 'Serif',
                 ),
               ),
             ),
@@ -438,5 +377,43 @@ class DetailkisahView extends GetView<DetailkisahController> {
         ],
       ),
     );
+  }
+
+  // HELPER UNTUK GAMBAR (Base64 Safe)
+  Widget _buildImage(String imageUrl) {
+    if (imageUrl.isEmpty) {
+      return Container(color: _primaryBrown);
+    }
+    try {
+      if (imageUrl.startsWith('http')) {
+        return Image.network(
+          imageUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (c, e, s) => Container(color: _primaryBrown),
+        );
+      } else if (imageUrl.startsWith('assets/')) {
+        return Image.asset(imageUrl, fit: BoxFit.cover);
+      } else {
+        // Base64 logic
+        String cleanBase64 = imageUrl;
+        if (cleanBase64.contains(',')) {
+          cleanBase64 = cleanBase64.split(',').last;
+        }
+        cleanBase64 = cleanBase64.replaceAll(RegExp(r'\s+'), '');
+        int mod4 = cleanBase64.length % 4;
+        if (mod4 > 0) {
+          cleanBase64 += '=' * (4 - mod4);
+        }
+        Uint8List bytes = base64Decode(cleanBase64);
+        return Image.memory(
+          bytes,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) =>
+              Container(color: _primaryBrown),
+        );
+      }
+    } catch (e) {
+      return Container(color: _primaryBrown);
+    }
   }
 }

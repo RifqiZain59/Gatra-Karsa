@@ -1,94 +1,117 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:gatrakarsa/app/data/service/api_service.dart'; // Pastikan import ContentModel benar
+import 'package:url_launcher/url_launcher.dart'; // Jangan lupa tambahkan package ini di pubspec.yaml
 
 class DetaileventController extends GetxController {
-  // --- 1. FITUR BOOKMARK / SIMPAN ---
-  var isSaved = false.obs;
+  // --- DATA DARI HALAMAN SEBELUMNYA ---
+  late ContentModel event;
 
-  void toggleSave() {
-    isSaved.value = !isSaved.value;
-    if (isSaved.value) {
-      Get.snackbar(
-        "Disimpan",
-        "Acara ditambahkan ke jadwal saya",
-        backgroundColor: Colors.white,
-        colorText: const Color(0xFF3E2723),
-        icon: const Icon(Icons.bookmark, color: Color(0xFFC5A059)),
-        snackPosition: SnackPosition.TOP,
-        margin: const EdgeInsets.all(20),
-      );
+  @override
+  void onInit() {
+    super.onInit();
+    // 1. Tangkap data yang dikirim dari halaman list
+    if (Get.arguments is ContentModel) {
+      event = Get.arguments;
     } else {
+      // Fallback jika data error
+      event = ContentModel(
+        id: '0',
+        title: 'Error',
+        subtitle: '-',
+        category: '-',
+        description: 'Gagal memuat data.',
+        imageUrl: '',
+      );
+    }
+  }
+
+  // --- 1. FITUR BUKA PETA (FOKUS PERBAIKAN) ---
+  Future<void> openMap() async {
+    // AMBIL DATA DARI 'maps_url' milik object 'event'
+    final String? url = event.mapsUrl;
+
+    print("Mencoba membuka maps: $url"); // Debugging di console
+
+    // Validasi: Pastikan URL ada isinya
+    if (url != null && url.isNotEmpty) {
+      final Uri uri = Uri.parse(url);
+
+      try {
+        // Buka di aplikasi eksternal (Google Maps / Browser)
+        if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+          throw 'Could not launch $uri';
+        }
+      } catch (e) {
+        Get.snackbar(
+          "Gagal Membuka Peta",
+          "Link peta rusak atau tidak valid.",
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+          icon: const Icon(Icons.broken_image, color: Colors.white),
+          snackPosition: SnackPosition.BOTTOM,
+          margin: const EdgeInsets.all(20),
+        );
+      }
+    } else {
+      // Jika maps_url kosong (null) di database
       Get.snackbar(
-        "Dihapus",
-        "Acara dihapus dari jadwal",
-        backgroundColor: Colors.white,
-        colorText: Colors.grey[800],
-        icon: const Icon(Icons.delete_outline, color: Colors.grey),
-        snackPosition: SnackPosition.TOP,
+        "Info",
+        "Lokasi peta belum tersedia untuk acara ini.",
+        backgroundColor: Colors.orange[800],
+        colorText: Colors.white,
+        icon: const Icon(Icons.map_outlined, color: Colors.white),
+        snackPosition: SnackPosition.BOTTOM,
         margin: const EdgeInsets.all(20),
       );
     }
   }
 
-  // --- 2. FITUR BUKA PETA ---
-  void openMap() {
-    // Simulasi membuka peta
+  // --- 2. FITUR BOOKMARK ---
+  var isSaved = false.obs;
+  void toggleSave() {
+    isSaved.value = !isSaved.value;
+    String message = isSaved.value
+        ? "Acara disimpan"
+        : "Acara dihapus dari simpanan";
     Get.snackbar(
-      "Membuka Peta",
-      "Mengarahkan ke lokasi acara...",
+      "Berhasil",
+      message,
       backgroundColor: Colors.white,
-      colorText: const Color(0xFF3E2723),
-      icon: const Icon(Icons.map, color: Colors.blue),
-      snackPosition: SnackPosition.BOTTOM,
+      colorText: Colors.black87,
+      snackPosition: SnackPosition.TOP,
       margin: const EdgeInsets.all(20),
+      duration: const Duration(seconds: 1),
     );
   }
 
-  // --- 3. FITUR RATING & ULASAN ---
-  var userRating = 0.obs; // Menyimpan status bintang (0-5)
+  // --- 3. FITUR RATING ---
+  var userRating = 0.obs;
   final TextEditingController reviewController = TextEditingController();
 
-  // Fungsi mengubah bintang saat diklik
-  void setRating(int rating) {
-    userRating.value = rating;
-  }
+  void setRating(int rating) => userRating.value = rating;
 
-  // Fungsi kirim ulasan
   void submitReview() {
-    // Validasi input
     if (userRating.value == 0) {
       Get.snackbar(
         "Peringatan",
-        "Harap berikan rating bintang terlebih dahulu.",
+        "Beri bintang dulu ya!",
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
-        margin: const EdgeInsets.all(20),
-        icon: const Icon(Icons.warning, color: Colors.white),
       );
       return;
     }
-
-    // Simulasi Sukses
     Get.snackbar(
       "Terima Kasih",
-      "Ulasan acara berhasil dikirim!",
-      backgroundColor: Colors.white,
-      colorText: const Color(0xFF3E2723),
-      icon: const Icon(Icons.check_circle, color: Colors.green),
-      snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(20),
+      "Ulasan Anda telah dikirim.",
+      backgroundColor: Colors.green,
+      colorText: Colors.white,
     );
-
-    // Reset Form setelah kirim
     userRating.value = 0;
     reviewController.clear();
-
-    // Tutup keyboard
     FocusManager.instance.primaryFocus?.unfocus();
   }
 
-  // --- 4. MEMBERSIHKAN MEMORI ---
   @override
   void onClose() {
     reviewController.dispose();

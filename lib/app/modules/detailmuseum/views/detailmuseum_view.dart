@@ -4,13 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:ionicons/ionicons.dart';
-import 'package:gatrakarsa/app/data/service/api_service.dart'; // Import Model
+import 'package:gatrakarsa/app/data/service/api_service.dart';
 import '../controllers/detailmuseum_controller.dart';
 
 class DetailmuseumView extends GetView<DetailmuseumController> {
   const DetailmuseumView({super.key});
 
-  // --- PALET WARNA ---
   final Color _primaryBrown = const Color(0xFF3E2723);
   final Color _goldAccent = const Color(0xFFC5A059);
   final Color _paperBg = const Color(0xFFFDFBF7);
@@ -19,13 +18,10 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
 
   @override
   Widget build(BuildContext context) {
-    // Pastikan controller di-put (atau gunakan Binding)
-    // Jika sudah ada binding, baris ini bisa dihapus
     if (!Get.isRegistered<DetailmuseumController>()) {
       Get.put(DetailmuseumController());
     }
 
-    // Ambil data object dari controller
     final ContentModel museum = controller.museum;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -63,7 +59,6 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                     ),
                   ),
                   actions: [
-                    // Tombol Bookmark di AppBar
                     Obx(
                       () => Container(
                         margin: const EdgeInsets.all(8),
@@ -96,11 +91,11 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                               end: Alignment.topCenter,
                               colors: [
                                 _paperBg,
-                                _paperBg.withOpacity(0.2),
+                                _paperBg.withOpacity(0.1),
                                 Colors.transparent,
                                 Colors.black45,
                               ],
-                              stops: const [0.0, 0.2, 0.6, 1.0],
+                              stops: const [0.0, 0.1, 0.5, 1.0],
                             ),
                           ),
                         ),
@@ -116,9 +111,9 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 15),
 
-                        // 1. Judul & Lokasi
+                        // 1. JUDUL
                         Text(
                           museum.title,
                           style: TextStyle(
@@ -126,24 +121,32 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                             fontSize: 26,
                             fontWeight: FontWeight.w800,
                             color: _primaryBrown,
+                            height: 1.2,
                           ),
                         ),
-                        const SizedBox(height: 8),
+
+                        const SizedBox(height: 16),
+
+                        // 2. SUBTITLE (Menggantikan Lokasi)
                         Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Icon(
                               Ionicons.location_sharp,
-                              size: 16,
+                              size: 20,
                               color: _goldAccent,
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                museum.location ?? "Lokasi belum tersedia",
+                                (museum.subtitle.isNotEmpty)
+                                    ? museum.subtitle
+                                    : "Lokasi tidak tersedia",
                                 style: TextStyle(
                                   fontFamily: 'Serif',
-                                  color: Colors.grey[600],
-                                  fontSize: 14,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: _textBody,
                                 ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
@@ -154,22 +157,28 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
 
                         const SizedBox(height: 24),
 
-                        // 2. Info Grid (Jam & Harga)
+                        // 4. INFO GRID (KATEGORI & TIKET MASUK)
                         Row(
                           children: [
+                            // KOTAK KIRI: KATEGORI
                             Expanded(
                               child: _buildInfoCard(
-                                icon: Ionicons.time_outline,
-                                title: "Jam Buka",
-                                value: museum.time ?? "09.00 - 15.00 WIB",
+                                icon: Ionicons.time_outline, // Icon Jam
+                                title: "Kategori",
+                                value: museum.category,
                               ),
                             ),
                             const SizedBox(width: 16),
+                            // KOTAK KANAN: TIKET MASUK
                             Expanded(
                               child: _buildInfoCard(
                                 icon: Ionicons.ticket_outline,
                                 title: "Tiket Masuk",
-                                value: museum.price ?? "Rp 5.000",
+                                value:
+                                    (museum.price != null &&
+                                        museum.price!.isNotEmpty)
+                                    ? museum.price!
+                                    : "Gratis",
                               ),
                             ),
                           ],
@@ -177,7 +186,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
 
                         const SizedBox(height: 24),
 
-                        // 3. Deskripsi
+                        // 5. DESKRIPSI
                         Text(
                           "Tentang Museum",
                           style: TextStyle(
@@ -189,7 +198,9 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          museum.description,
+                          (museum.description.isNotEmpty)
+                              ? museum.description
+                              : "Deskripsi belum tersedia.",
                           textAlign: TextAlign.justify,
                           style: TextStyle(
                             fontFamily: 'Serif',
@@ -201,12 +212,12 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
 
                         const SizedBox(height: 30),
 
-                        // 4. INPUT RATING & ULASAN
+                        // 6. INPUT RATING
                         _buildRatingInput(context),
 
                         const SizedBox(height: 30),
 
-                        // 5. Tombol Petunjuk Arah
+                        // 7. TOMBOL ARAH
                         SizedBox(
                           width: double.infinity,
                           height: 55,
@@ -258,6 +269,10 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
         return Image.network(
           imageUrl,
           fit: BoxFit.cover,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Center(child: CircularProgressIndicator(color: _goldAccent));
+          },
           errorBuilder: (c, e, s) => Container(color: _primaryBrown),
         );
       } else if (imageUrl.startsWith('assets/')) {
@@ -322,7 +337,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
               fontWeight: FontWeight.bold,
               color: _textBody,
             ),
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
         ],
@@ -383,6 +398,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
           TextField(
             controller: controller.reviewController,
             maxLines: 3,
+            style: TextStyle(fontFamily: 'Serif', color: _textBody),
             decoration: InputDecoration(
               hintText: "Tulis ulasan Anda di sini...",
               hintStyle: TextStyle(
@@ -425,6 +441,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                 style: TextStyle(
                   fontFamily: 'Serif',
                   fontWeight: FontWeight.bold,
+                  fontSize: 16,
                 ),
               ),
             ),
