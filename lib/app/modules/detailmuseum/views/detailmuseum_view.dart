@@ -1,6 +1,7 @@
-import 'dart:async'; // Wajib untuk Timer Auto Slide
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
+import 'dart:ui'; // Diperlukan untuk ImageFilter
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,12 +13,12 @@ import '../controllers/detailmuseum_controller.dart';
 class DetailmuseumView extends GetView<DetailmuseumController> {
   const DetailmuseumView({super.key});
 
-  // Warna Tema
-  final Color _primaryBrown = const Color(0xFF3E2723);
-  final Color _goldAccent = const Color(0xFFC5A059);
-  final Color _paperBg = const Color(0xFFFDFBF7);
-  final Color _textBody = const Color(0xFF4E342E);
-  final Color _cardBg = const Color(0xFFFFFFFF);
+  // --- PALET WARNA MODERN ---
+  final Color _primaryBrown = const Color(0xFF4E342E);
+  final Color _goldAccent = const Color(0xFFD4AF37);
+  final Color _bgSoft = const Color(0xFFFAFAFA); // Putih tulang sangat muda
+  final Color _textHeading = const Color(0xFF1A1A1A);
+  final Color _textBody = const Color(0xFF616161);
 
   @override
   Widget build(BuildContext context) {
@@ -29,233 +30,228 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
+        // Status Bar (Atas)
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: Colors.white,
-        systemNavigationBarIconBrightness: Brightness.dark,
+        statusBarIconBrightness: Brightness.dark, // Icon Hitam
+        statusBarBrightness: Brightness.light, // Untuk iOS
+        // Navigation Bar (Bawah HP)
+        systemNavigationBarColor: Colors.white, // Background Putih
+        systemNavigationBarIconBrightness: Brightness.dark, // Icon Tombol Hitam
+        systemNavigationBarDividerColor: Colors.transparent,
       ),
       child: Scaffold(
-        backgroundColor: _paperBg,
-        extendBodyBehindAppBar: true,
-        // 1. FIX: Mencegah layout hancur saat keyboard muncul
-        resizeToAvoidBottomInset: false,
-
-        // 2. FITUR: STICKY FOOTER (Tombol Navigasi Menempel di Bawah)
-        bottomNavigationBar: Container(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 20,
-            bottom: MediaQuery.of(context).padding.bottom + 16,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 20,
-                offset: const Offset(0, -5),
-              ),
-            ],
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: SizedBox(
-            height: 56,
-            child: ElevatedButton.icon(
-              onPressed: () => controller.openMap(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _primaryBrown,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              icon: const Icon(Ionicons.navigate, size: 20),
-              label: const Text(
-                "Navigasi ke Lokasi",
-                style: TextStyle(
-                  fontFamily: 'Serif',
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-          ),
-        ),
-
-        body: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            // --- A. HEADER IMAGE ---
-            SliverAppBar(
-              expandedHeight: 300,
-              pinned: true,
-              backgroundColor: _primaryBrown,
-              leading: Container(
-                margin: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.black.withOpacity(0.3),
-                ),
-                child: IconButton(
-                  icon: const Icon(Ionicons.arrow_back, color: Colors.white),
-                  onPressed: () => Get.back(),
-                ),
-              ),
-              actions: [
-                Obx(
-                  () => Container(
+        backgroundColor: Colors.white,
+        body: Stack(
+          children: [
+            CustomScrollView(
+              // FIX: ClampingScrollPhysics mencegah scroll berlebih di atas gambar
+              physics: const ClampingScrollPhysics(),
+              slivers: [
+                // --- 1. HEADER IMAGE (Sliver App Bar) ---
+                SliverAppBar(
+                  expandedHeight: 320,
+                  pinned: true,
+                  backgroundColor: Colors.white,
+                  elevation: 0,
+                  leading: Container(
                     margin: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.black.withOpacity(0.3),
+                      color: Colors.white.withOpacity(0.9), // Glassy White
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                        ),
+                      ],
                     ),
                     child: IconButton(
-                      icon: Icon(
-                        controller.isSaved.value
-                            ? Ionicons.bookmark
-                            : Ionicons.bookmark_outline,
-                        color: _goldAccent,
+                      icon: const Icon(
+                        Ionicons.arrow_back,
+                        color: Colors.black,
                       ),
-                      onPressed: () => controller.toggleSave(),
+                      onPressed: () => Get.back(),
+                    ),
+                  ),
+                  actions: [
+                    Container(
+                      margin: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.9),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                      child: Obx(
+                        () => IconButton(
+                          icon: Icon(
+                            controller.isSaved.value
+                                ? Ionicons.bookmark
+                                : Ionicons.bookmark_outline,
+                            color: controller.isSaved.value
+                                ? _goldAccent
+                                : Colors.black,
+                          ),
+                          onPressed: () => controller.toggleSave(),
+                        ),
+                      ),
+                    ),
+                  ],
+                  flexibleSpace: FlexibleSpaceBar(
+                    stretchModes: const [StretchMode.zoomBackground],
+                    background: Stack(
+                      fit: StackFit.expand,
+                      children: [_buildHeaderImage(museum.imageUrl)],
+                    ),
+                  ),
+                ),
+
+                // --- 2. KONTEN BODY ---
+                SliverToBoxAdapter(
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(30),
+                      ),
+                    ),
+                    child: Padding(
+                      // Padding top 30 agar rapi karena garis dihapus
+                      padding: const EdgeInsets.fromLTRB(24, 30, 24, 160),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // FIX: Garis abu-abu (handle bar) DIHAPUS DISINI
+
+                          // A. JUDUL BESAR
+                          Text(
+                            museum.title,
+                            style: TextStyle(
+                              fontFamily: 'Serif',
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
+                              color: _textHeading,
+                              height: 1.1,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // B. INFO GRID (Lokasi, Kategori, Tiket)
+                          _buildLocationTile(
+                            museum.subtitle.isNotEmpty
+                                ? museum.subtitle
+                                : "Lokasi tidak tersedia",
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildInfoTile(
+                                  Ionicons.time_outline,
+                                  "Kategori",
+                                  museum.category,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildInfoTile(
+                                  Ionicons.ticket_outline,
+                                  "Tiket Masuk",
+                                  (museum.price != null &&
+                                          museum.price!.isNotEmpty)
+                                      ? museum.price!
+                                      : "Gratis",
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 30),
+
+                          // C. DESKRIPSI
+                          Text("Tentang Museum", style: _headingStyle),
+                          const SizedBox(height: 10),
+                          Text(
+                            (museum.description.isNotEmpty)
+                                ? museum.description
+                                : "Deskripsi belum tersedia.",
+                            textAlign: TextAlign.justify,
+                            style: TextStyle(
+                              fontSize: 15,
+                              height: 1.8,
+                              color: _textBody,
+                              fontFamily: 'Serif',
+                            ),
+                          ),
+                          const SizedBox(height: 30),
+
+                          // D. SECTION ULASAN
+                          _buildReviewSection(context),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ],
-              flexibleSpace: FlexibleSpaceBar(
-                stretchModes: const [StretchMode.zoomBackground],
-                background: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    _buildImage(museum.imageUrl),
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.bottomCenter,
-                          end: Alignment.topCenter,
-                          colors: [
-                            _paperBg,
-                            _paperBg.withOpacity(0.1),
-                            Colors.transparent,
-                            Colors.black45,
-                          ],
-                          stops: const [0.0, 0.1, 0.5, 1.0],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ),
 
-            // --- B. KONTEN INFORMASI ---
-            SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 15),
-                        Text(
-                          museum.title,
-                          style: TextStyle(
-                            fontFamily: 'Serif',
-                            fontSize: 26,
-                            fontWeight: FontWeight.w800,
-                            color: _primaryBrown,
-                            height: 1.2,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Icon(
-                              Ionicons.location_sharp,
-                              size: 18,
-                              color: _goldAccent,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                (museum.subtitle.isNotEmpty)
-                                    ? museum.subtitle
-                                    : "Lokasi tidak tersedia",
-                                style: TextStyle(
-                                  fontFamily: 'Serif',
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                  color: _textBody,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildInfoCard(
-                                icon: Ionicons.time_outline,
-                                title: "Kategori",
-                                value: museum.category,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildInfoCard(
-                                icon: Ionicons.ticket_outline,
-                                title: "Tiket Masuk",
-                                value:
-                                    (museum.price != null &&
-                                        museum.price!.isNotEmpty)
-                                    ? museum.price!
-                                    : "Gratis",
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          "Tentang Museum",
-                          style: TextStyle(
-                            fontFamily: 'Serif',
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: _primaryBrown,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          (museum.description.isNotEmpty)
-                              ? museum.description
-                              : "Deskripsi belum tersedia.",
-                          textAlign: TextAlign.justify,
-                          style: TextStyle(
-                            fontFamily: 'Serif',
-                            fontSize: 15,
-                            height: 1.5,
-                            color: _textBody,
-                          ),
-                        ),
-                      ],
+            // --- 3. FLOATING BOTTOM BAR (STICKY) ---
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: EdgeInsets.fromLTRB(
+                  24,
+                  20,
+                  24,
+                  20 + MediaQuery.of(context).padding.bottom, // Safe Area Bawah
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 20,
+                      offset: const Offset(0, -5),
+                    ),
+                  ],
+                  border: Border(top: BorderSide(color: Colors.grey.shade100)),
+                ),
+                child: SizedBox(
+                  height: 56,
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => controller.openMap(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _primaryBrown,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 28,
+                        vertical: 16,
+                      ),
+                      elevation: 5,
+                      shadowColor: _primaryBrown.withOpacity(0.3),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    icon: const Icon(Ionicons.navigate_outline, size: 20),
+                    label: const Text(
+                      "Navigasi ke Lokasi",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        fontFamily: 'Serif',
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ),
-
-                  const SizedBox(height: 30),
-
-                  // --- C. BAGIAN ULASAN (AUTO SLIDE & DOTS) ---
-                  // Kita panggil widget terpisah di sini
-                  _buildReviewSection(context),
-
-                  const SizedBox(height: 40), // Jarak aman dari sticky footer
-                ],
+                ),
               ),
             ),
           ],
@@ -264,449 +260,463 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
     );
   }
 
-  // ==========================
-  //      WIDGET AREA
-  // ==========================
+  TextStyle get _headingStyle => TextStyle(
+    fontSize: 18,
+    fontWeight: FontWeight.bold,
+    color: _textHeading,
+    fontFamily: 'Serif',
+  );
 
-  Widget _buildReviewSection(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: controller.ulasanStream,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Container(
-              height: 150,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(16),
-              ),
+  // --- WIDGET HELPER ---
+
+  Widget _buildInfoTile(IconData icon, String label, String value) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _bgSoft,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: _goldAccent, size: 24),
+          const SizedBox(height: 10),
+          Text(label, style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: _textHeading,
+              fontSize: 14,
             ),
-          );
-        }
-
-        List<DocumentSnapshot> docs = snapshot.data?.docs ?? [];
-        int totalReviews = docs.length;
-        double averageRating = 0.0;
-        if (totalReviews > 0) {
-          double totalStars = 0;
-          for (var doc in docs) {
-            var data = doc.data() as Map<String, dynamic>;
-            totalStars += (data['rating'] ?? 0);
-          }
-          averageRating = totalStars / totalReviews;
-        }
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. KARTU RINGKASAN (SUMMARY)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: _primaryBrown,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _primaryBrown.withOpacity(0.3),
-                      blurRadius: 15,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          averageRating.toStringAsFixed(1),
-                          style: const TextStyle(
-                            fontSize: 48,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            fontFamily: 'Serif',
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: List.generate(5, (index) {
-                            return Icon(
-                              index < averageRating.round()
-                                  ? Ionicons.star
-                                  : Ionicons.star_outline,
-                              color: const Color(0xFFD4AF37),
-                              size: 18,
-                            );
-                          }),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          "dari $totalReviews ulasan",
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.7),
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    Container(
-                      width: 65,
-                      height: 65,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.2),
-                          width: 1,
-                        ),
-                      ),
-                      child: const Icon(
-                        Ionicons.chatbubbles_outline,
-                        color: Colors.white,
-                        size: 32,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 30),
-
-            // 2. HEADER & TOMBOL TULIS
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Ulasan Terbaru",
-                    style: TextStyle(
-                      fontFamily: 'Serif',
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: _primaryBrown,
-                    ),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: () => _openRatingBottomSheet(context),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: _goldAccent, width: 1.5),
-                      shape: const StadiumBorder(),
-                      foregroundColor: _textBody,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                    ),
-                    icon: Icon(
-                      Ionicons.create_outline,
-                      size: 18,
-                      color: _primaryBrown,
-                    ),
-                    label: Text(
-                      "Tulis Ulasan",
-                      style: TextStyle(
-                        fontFamily: 'Serif',
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                        color: _primaryBrown,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // 3. LOGIKA TAMPILAN ULASAN (KOSONG / ADA)
-            if (totalReviews == 0)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 40),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade200),
-                  ),
-                  child: Center(
-                    child: Column(
-                      children: [
-                        Icon(
-                          Ionicons.folder_open_outline,
-                          color: Colors.grey[300],
-                          size: 48,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          "Belum ada ulasan.",
-                          style: TextStyle(
-                            fontFamily: 'Serif',
-                            color: Colors.grey[500],
-                            fontStyle: FontStyle.italic,
-                            fontSize: 15,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              )
-            else
-              // 4. MEMANGGIL WIDGET SLIDER OTOMATIS (STATEFUL)
-              _AutoPlayReviewSlider(
-                docs: docs,
-                primaryBrown: _primaryBrown,
-                goldAccent: _goldAccent,
-                textBody: _textBody,
-                paperBg: _paperBg,
-              ),
-          ],
-        );
-      },
+          ),
+        ],
+      ),
     );
   }
 
-  void _openRatingBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Container(
-          // Padding viewInsets penting agar naik saat keyboard muncul
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+  Widget _buildLocationTile(String location) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _bgSoft,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Ionicons.location_outline, color: _goldAccent, size: 24),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Lokasi",
+                  style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  location,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: _textHeading,
+                    fontSize: 14,
                   ),
-                  const SizedBox(height: 25),
-                  Text(
-                    "Bagikan Pengalaman Anda",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Serif',
-                      color: _primaryBrown,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "Beri rating dan ulasan untuk museum ini",
-                    style: TextStyle(color: Colors.grey[500], fontSize: 14),
-                  ),
-                  const SizedBox(height: 25),
-                  Obx(
-                    () => Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(5, (index) {
-                        return GestureDetector(
-                          onTap: () => controller.setRating(index + 1),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 6),
-                            child: Icon(
-                              index < controller.userRating.value
-                                  ? Ionicons.star
-                                  : Ionicons.star_outline,
-                              color: const Color(0xFFD4AF37),
-                              size: 42,
-                            ),
-                          ),
-                        );
-                      }),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-                  TextField(
-                    controller: controller.reviewController,
-                    maxLines: 4,
-                    style: const TextStyle(fontFamily: 'Serif'),
-                    decoration: InputDecoration(
-                      hintText: "Tulis komentar Anda di sini...",
-                      hintStyle: TextStyle(
-                        color: Colors.grey[400],
-                        fontFamily: 'Serif',
-                      ),
-                      filled: true,
-                      fillColor: _paperBg,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: _primaryBrown),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 25),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 55,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Get.back();
-                        controller.submitReview();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _primaryBrown,
-                        foregroundColor: Colors.white,
-                        elevation: 3,
-                        shadowColor: _primaryBrown.withOpacity(0.4),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: const Text(
-                        "Kirim Ulasan",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Serif',
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-        );
-      },
+        ],
+      ),
     );
   }
 
-  // --- HELPER LAINNYA ---
-  Widget _buildImage(String imageUrl) {
-    if (imageUrl.isEmpty) return Container(color: Colors.grey.shade300);
+  Widget _buildHeaderImage(String imageUrl) {
+    if (imageUrl.isEmpty) return Container(color: _bgSoft);
     try {
       if (imageUrl.startsWith('http')) {
         return Image.network(
           imageUrl,
           fit: BoxFit.cover,
-          frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-            if (wasSynchronouslyLoaded) return child;
-            if (frame == null) return Container(color: Colors.grey.shade300);
-            return child;
-          },
-          errorBuilder: (c, e, s) => Container(color: _primaryBrown),
+          errorBuilder: (c, e, s) => Container(color: _bgSoft),
         );
       } else if (imageUrl.startsWith('assets/')) {
         return Image.asset(imageUrl, fit: BoxFit.cover);
       } else {
-        String cleanBase64 = imageUrl;
+        String cleanBase64 = imageUrl.replaceAll(RegExp(r'\s+'), '');
         if (cleanBase64.contains(',')) {
           cleanBase64 = cleanBase64.split(',').last;
         }
-        cleanBase64 = cleanBase64.replaceAll(RegExp(r'\s+'), '');
         int mod4 = cleanBase64.length % 4;
         if (mod4 > 0) cleanBase64 += '=' * (4 - mod4);
-        Uint8List bytes = base64Decode(cleanBase64);
-        return Image.memory(bytes, fit: BoxFit.cover);
+        return Image.memory(base64Decode(cleanBase64), fit: BoxFit.cover);
       }
     } catch (e) {
-      return Container(color: Colors.grey.shade300);
+      return Container(color: _bgSoft);
     }
   }
 
-  Widget _buildInfoCard({
-    required IconData icon,
-    required String title,
-    required String value,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: _cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _goldAccent.withOpacity(0.3)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(6),
+  // --- REVIEW SECTION ---
+  Widget _buildReviewSection(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: controller.ulasanStream,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container(
+            height: 150,
             decoration: BoxDecoration(
-              color: _primaryBrown.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(6),
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(icon, color: _primaryBrown, size: 18),
+          );
+        }
+
+        var docs = snapshot.data?.docs ?? [];
+        int totalReviews = docs.length;
+        double averageRating = 0.0;
+        if (totalReviews > 0) {
+          double totalStars = 0;
+          for (var doc in docs) {
+            totalStars += (doc.data() as Map<String, dynamic>)['rating'] ?? 0;
+          }
+          averageRating = totalStars / totalReviews;
+        }
+
+        return Column(
+          children: [
+            // A. KOTAK TOTAL ULASAN (Desain Gradien)
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [_primaryBrown, _primaryBrown.withOpacity(0.8)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: _primaryBrown.withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Stack(
+                children: [
+                  Positioned(
+                    right: -10,
+                    bottom: -10,
+                    child: Opacity(
+                      opacity: 0.1,
+                      child: Icon(
+                        Ionicons.chatbubbles,
+                        size: 100,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                averageRating.toStringAsFixed(1),
+                                style: TextStyle(
+                                  fontSize: 48,
+                                  fontWeight: FontWeight.bold,
+                                  color: _goldAccent,
+                                  fontFamily: 'Serif',
+                                  height: 1.0,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: Text(
+                                  "/ 5.0",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.white.withOpacity(0.6),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 24),
+                      Container(
+                        width: 1,
+                        height: 50,
+                        color: Colors.white.withOpacity(0.2),
+                      ),
+                      const SizedBox(width: 24),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: List.generate(
+                              5,
+                              (index) => Icon(
+                                index < averageRating.round()
+                                    ? Ionicons.star
+                                    : Ionicons.star_outline,
+                                color: _goldAccent,
+                                size: 20,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            "$totalReviews Ulasan",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            "Pengunjung",
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.6),
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 30),
+
+            // B. HEADER & TOMBOL TULIS (TEXT ONLY - TANPA GARIS BAWAH)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("Ulasan Terbaru", style: _headingStyle),
+                TextButton(
+                  onPressed: () => _openRatingBottomSheet(context),
+                  style: TextButton.styleFrom(foregroundColor: _goldAccent),
+                  child: const Text(
+                    "Tulis Ulasan",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      decoration: TextDecoration.none, // Hapus Garis Bawah
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+
+            // C. SLIDER
+            if (docs.isEmpty)
+              Container(
+                padding: const EdgeInsets.all(30),
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: _bgSoft,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      Ionicons.chatbubble_ellipses_outline,
+                      size: 40,
+                      color: Colors.grey[400],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      "Belum ada ulasan.",
+                      style: TextStyle(
+                        color: Colors.grey[500],
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              _AutoPlayReviewSlider(
+                docs: docs,
+                primaryBrown: _primaryBrown,
+                goldAccent: _goldAccent,
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  // --- MODAL POP-UP (BOTTOM SHEET) FIXED ---
+  void _openRatingBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled:
+          true, // WAJIB: Agar bisa full screen/terdorong keyboard
+      backgroundColor: Colors.transparent, // Transparan agar rounded terlihat
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            // Padding bawah dinamis mengikuti tinggi keyboard (viewInsets)
+            bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            style: TextStyle(
-              fontFamily: 'Serif',
-              fontSize: 10,
-              color: Colors.grey[500],
+          child: Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Handle Bar
+                    Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      "Bagikan Pengalaman",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: _primaryBrown,
+                        fontFamily: 'Serif',
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "Beri rating dan ulasan untuk museum ini",
+                      style: TextStyle(color: Colors.grey[500], fontSize: 14),
+                    ),
+                    const SizedBox(height: 25),
+
+                    // Input Rating Bintang
+                    Obx(
+                      () => Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(
+                          5,
+                          (index) => GestureDetector(
+                            onTap: () => controller.setRating(index + 1),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 5,
+                              ),
+                              child: Icon(
+                                index < controller.userRating.value
+                                    ? Ionicons.star
+                                    : Ionicons.star_outline,
+                                color: _goldAccent,
+                                size: 44,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+
+                    // Input Text Area
+                    TextField(
+                      controller: controller.reviewController,
+                      maxLines: 4,
+                      style: const TextStyle(fontFamily: 'Serif'),
+                      decoration: InputDecoration(
+                        hintText: "Ceritakan pengalaman Anda...",
+                        hintStyle: TextStyle(
+                          color: Colors.grey[400],
+                          fontFamily: 'Serif',
+                        ),
+                        filled: true,
+                        fillColor: _bgSoft,
+                        contentPadding: const EdgeInsets.all(16),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(color: _primaryBrown),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 25),
+
+                    // Tombol Kirim
+                    SizedBox(
+                      width: double.infinity,
+                      height: 55,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Get.back();
+                          controller.submitReview();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _primaryBrown,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: const Text(
+                          "Kirim Ulasan",
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Safe Area agar tidak mepet bawah layar di iPhone X+
+                    SizedBox(height: MediaQuery.of(context).padding.bottom),
+                  ],
+                ),
+              ),
             ),
           ),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            style: TextStyle(
-              fontFamily: 'Serif',
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: _textBody,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
-// ===============================================
-//   WIDGET KHUSUS: AUTO PLAY SLIDER + DOTS (FIXED)
-// ===============================================
+// --- SLIDER REUSABLE ---
 class _AutoPlayReviewSlider extends StatefulWidget {
   final List<DocumentSnapshot> docs;
   final Color primaryBrown;
   final Color goldAccent;
-  final Color textBody;
-  final Color paperBg;
 
   const _AutoPlayReviewSlider({
     required this.docs,
     required this.primaryBrown,
     required this.goldAccent,
-    required this.textBody,
-    required this.paperBg,
   });
 
   @override
@@ -721,8 +731,8 @@ class _AutoPlayReviewSliderState extends State<_AutoPlayReviewSlider> {
   @override
   void initState() {
     super.initState();
-    // viewportFraction 0.85 agar kartu sebelah sedikit terlihat
-    _pageController = PageController(viewportFraction: 0.85, initialPage: 0);
+    // Fraction 0.90 agar kartu terlihat lebar dan sedikit intip kartu sebelah
+    _pageController = PageController(viewportFraction: 0.90);
     _startAutoPlay();
   }
 
@@ -734,19 +744,17 @@ class _AutoPlayReviewSliderState extends State<_AutoPlayReviewSlider> {
   }
 
   void _startAutoPlay() {
-    // Geser setiap 3 detik
-    _timer = Timer.periodic(const Duration(seconds: 3), (Timer timer) {
+    _timer = Timer.periodic(const Duration(seconds: 4), (Timer timer) {
       if (_currentIndex < widget.docs.length - 1) {
         _currentIndex++;
       } else {
         _currentIndex = 0;
       }
-
       if (_pageController.hasClients) {
         _pageController.animateToPage(
           _currentIndex,
-          duration: const Duration(milliseconds: 600),
-          curve: Curves.easeInOutCubic,
+          duration: const Duration(milliseconds: 800),
+          curve: Curves.fastOutSlowIn,
         );
       }
     });
@@ -756,195 +764,182 @@ class _AutoPlayReviewSliderState extends State<_AutoPlayReviewSlider> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // 1. SLIDER (PageView)
         SizedBox(
-          height: 190,
+          height: 160,
           child: PageView.builder(
             controller: _pageController,
             itemCount: widget.docs.length,
-            onPageChanged: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
-            },
+            onPageChanged: (index) => setState(() => _currentIndex = index),
             itemBuilder: (context, index) {
               var data = widget.docs[index].data() as Map<String, dynamic>;
-              // Padding horizontal agar ada jarak antar kartu saat di-scroll
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: _buildCard(data),
+                padding: const EdgeInsets.only(right: 12),
+                child: _buildReviewCard(data),
               );
             },
           ),
         ),
-
-        const SizedBox(height: 16),
-
-        // 2. DOTS INDICATOR
+        const SizedBox(height: 12),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(
-            // Batasi dots maks 8 agar tidak kepanjangan jika ulasan banyak
-            widget.docs.length > 8 ? 8 : widget.docs.length,
-            (index) => _buildDot(index),
+            widget.docs.length > 5 ? 5 : widget.docs.length,
+            (index) => AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              height: 6,
+              width:
+                  (_currentIndex %
+                          (widget.docs.length > 5 ? 5 : widget.docs.length)) ==
+                      index
+                  ? 20
+                  : 6,
+              decoration: BoxDecoration(
+                color:
+                    (_currentIndex %
+                            (widget.docs.length > 5
+                                ? 5
+                                : widget.docs.length)) ==
+                        index
+                    ? widget.goldAccent
+                    : Colors.grey[300],
+                borderRadius: BorderRadius.circular(3),
+              ),
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildDot(int index) {
-    // Logika agar dot tetap menyala jika ulasan > 8 (looping indikator sederhana)
-    int displayIndex =
-        _currentIndex % (widget.docs.length > 8 ? 8 : widget.docs.length);
-    bool isActive = displayIndex == index;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      height: 8,
-      width: isActive ? 24 : 8, // Dot aktif melebar
-      decoration: BoxDecoration(
-        color: isActive ? widget.goldAccent : Colors.grey.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(4),
-      ),
-    );
-  }
-
-  // --- DESIGN CARD (SAMA SEPERTI YANG ANDA SUKA) ---
-  Widget _buildCard(Map<String, dynamic> data) {
-    String name = data['user_name'] ?? 'Pengguna';
+  Widget _buildReviewCard(Map<String, dynamic> data) {
+    String name = data['user_name'] ?? 'User';
     String photo = data['user_photo'] ?? '';
     String comment = data['comment'] ?? '';
-    int rating = data['rating'] ?? 0;
+    int rating = data['rating'] ?? 5;
 
+    // Format Tanggal
     String dateStr = "";
     if (data['created_at'] != null && data['created_at'] is Timestamp) {
       DateTime dt = (data['created_at'] as Timestamp).toDate();
-      String day = dt.day.toString().padLeft(2, '0');
-      String month = dt.month.toString().padLeft(2, '0');
-      String year = dt.year.toString();
-      dateStr = "$day/$month/$year";
+      dateStr =
+          "${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}";
     }
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade100),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+            color: Colors.grey.withOpacity(0.06),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
           ),
         ],
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          Row(
+          Positioned(
+            top: 0,
+            right: 0,
+            child: Icon(
+              Icons.format_quote_rounded,
+              size: 40,
+              color: widget.goldAccent.withOpacity(0.15),
+            ),
+          ),
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 45,
-                height: 45,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: widget.goldAccent, width: 1.5),
-                  image: photo.isNotEmpty
-                      ? DecorationImage(
-                          image: MemoryImage(base64Decode(photo)),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
-                  color: widget.paperBg,
-                ),
-                child: photo.isEmpty
-                    ? Center(
-                        child: Text(
-                          name.isNotEmpty ? name[0].toUpperCase() : "U",
-                          style: TextStyle(
+              Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: widget.goldAccent.withOpacity(0.1),
+                      image: photo.isNotEmpty
+                          ? DecorationImage(
+                              image: MemoryImage(
+                                base64Decode(
+                                  photo.replaceAll(RegExp(r'\s+'), ''),
+                                ),
+                              ),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
+                    ),
+                    child: photo.isEmpty
+                        ? Icon(
+                            Ionicons.person,
+                            size: 20,
+                            color: widget.goldAccent,
+                          )
+                        : null,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          style: const TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: widget.primaryBrown,
-                            fontSize: 18,
-                            fontFamily: 'Serif',
+                            fontSize: 14,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      )
-                    : null,
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            Row(
+                              children: List.generate(
+                                5,
+                                (i) => Icon(
+                                  i < rating
+                                      ? Ionicons.star
+                                      : Ionicons.star_outline,
+                                  size: 12,
+                                  color: widget.goldAccent,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              dateStr,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey[400],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 12),
+              const SizedBox(height: 12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      style: TextStyle(
-                        fontFamily: 'Serif',
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                        color: widget.textBody,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      dateStr,
-                      style: TextStyle(
-                        fontFamily: 'Serif',
-                        fontSize: 11,
-                        color: Colors.grey[500],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF8E1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Ionicons.star,
-                      size: 12,
-                      color: Color(0xFFD4AF37),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      "$rating.0",
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                        color: Color(0xFF8D6E63),
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  comment,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.grey[700],
+                    height: 1.5,
+                    fontFamily: 'Serif',
+                  ),
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 12),
-          Divider(color: Colors.grey.withOpacity(0.1), height: 1),
-          const SizedBox(height: 12),
-          Expanded(
-            child: Text(
-              comment,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontFamily: 'Serif',
-                fontSize: 14,
-                height: 1.5,
-                color: widget.textBody.withOpacity(0.9),
-              ),
-            ),
           ),
         ],
       ),
