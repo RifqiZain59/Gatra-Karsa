@@ -1,97 +1,84 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:gatrakarsa/app/data/service/api_service.dart'; // Pastikan import ContentModel benar
-import 'package:url_launcher/url_launcher.dart'; // Jangan lupa tambahkan package ini di pubspec.yaml
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:gatrakarsa/app/data/service/api_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class DetaileventController extends GetxController {
-  // --- DATA DARI HALAMAN SEBELUMNYA ---
+  final ApiService _apiService = ApiService();
   late ContentModel event;
 
   @override
   void onInit() {
     super.onInit();
-    // 1. Tangkap data yang dikirim dari halaman list
     if (Get.arguments is ContentModel) {
       event = Get.arguments;
     } else {
-      // Fallback jika data error
       event = ContentModel(
         id: '0',
         title: 'Error',
         subtitle: '-',
         category: '-',
-        description: 'Gagal memuat data.',
+        description: 'Error',
         imageUrl: '',
       );
     }
   }
 
-  // --- 1. FITUR BUKA PETA (FOKUS PERBAIKAN) ---
+  // Stream Ulasan
+  Stream<QuerySnapshot> get ulasanStream => _apiService.streamUlasan(event.id);
+
+  // --- FITUR MAPS ---
   Future<void> openMap() async {
-    // AMBIL DATA DARI 'maps_url' milik object 'event'
     final String? url = event.mapsUrl;
-
-    print("Mencoba membuka maps: $url"); // Debugging di console
-
-    // Validasi: Pastikan URL ada isinya
     if (url != null && url.isNotEmpty) {
-      final Uri uri = Uri.parse(url);
-
       try {
-        // Buka di aplikasi eksternal (Google Maps / Browser)
-        if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-          throw 'Could not launch $uri';
+        if (!await launchUrl(
+          Uri.parse(url),
+          mode: LaunchMode.externalApplication,
+        )) {
+          throw 'Could not launch $url';
         }
       } catch (e) {
         Get.snackbar(
-          "Gagal Membuka Peta",
-          "Link peta rusak atau tidak valid.",
+          "Gagal",
+          "Link peta tidak valid.",
           backgroundColor: Colors.redAccent,
           colorText: Colors.white,
-          icon: const Icon(Icons.broken_image, color: Colors.white),
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(20),
         );
       }
     } else {
-      // Jika maps_url kosong (null) di database
       Get.snackbar(
         "Info",
-        "Lokasi peta belum tersedia untuk acara ini.",
-        backgroundColor: Colors.orange[800],
+        "Lokasi peta tidak tersedia.",
+        backgroundColor: Colors.orange,
         colorText: Colors.white,
-        icon: const Icon(Icons.map_outlined, color: Colors.white),
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(20),
       );
     }
   }
 
-  // --- 2. FITUR BOOKMARK ---
+  // --- FITUR BOOKMARK ---
   var isSaved = false.obs;
   void toggleSave() {
     isSaved.value = !isSaved.value;
-    String message = isSaved.value
-        ? "Acara disimpan"
-        : "Acara dihapus dari simpanan";
     Get.snackbar(
       "Berhasil",
-      message,
+      isSaved.value ? "Acara disimpan" : "Dihapus dari simpanan",
       backgroundColor: Colors.white,
       colorText: Colors.black87,
       snackPosition: SnackPosition.TOP,
       margin: const EdgeInsets.all(20),
-      duration: const Duration(seconds: 1),
     );
   }
 
-  // --- 3. FITUR RATING ---
+  // --- FITUR RATING ---
   var userRating = 0.obs;
   final TextEditingController reviewController = TextEditingController();
 
   void setRating(int rating) => userRating.value = rating;
 
-  void submitReview() {
+  Future<void> submitReview() async {
     if (userRating.value == 0) {
       Get.snackbar(
         "Peringatan",
@@ -101,15 +88,50 @@ class DetaileventController extends GetxController {
       );
       return;
     }
-    Get.snackbar(
-      "Terima Kasih",
-      "Ulasan Anda telah dikirim.",
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-    );
-    userRating.value = 0;
-    reviewController.clear();
-    FocusManager.instance.primaryFocus?.unfocus();
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      Get.snackbar(
+        "Akses Ditolak",
+        "Login dulu untuk mengulas.",
+        backgroundColor: Colors.orange,
+      );
+      return;
+    }
+
+    try {
+      Get.dialog(
+        const Center(child: CircularProgressIndicator()),
+        barrierDismissible: false,
+      );
+
+      await _apiService.submitUlasan(
+        contentId: event.id,
+        targetName: event.title,
+        category: event.category,
+        subtitle: event.subtitle,
+        // imageUrl: event.imageUrl, <--- DIHAPUS
+        rating: userRating.value,
+        comment: reviewController.text,
+        userId: user.uid,
+        userName: user.displayName ?? "Pengguna",
+      );
+
+      Get.back();
+      Get.snackbar(
+        "Sukses",
+        "Ulasan terkirim!",
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+
+      // Reset Form
+      userRating.value = 0;
+      reviewController.clear();
+      FocusManager.instance.primaryFocus?.unfocus();
+    } catch (e) {
+      Get.back();
+      Get.snackbar("Gagal", "Error: $e", backgroundColor: Colors.red);
+    }
   }
 
   @override

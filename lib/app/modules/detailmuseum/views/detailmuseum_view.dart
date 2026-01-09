@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -127,7 +128,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
 
                         const SizedBox(height: 16),
 
-                        // 2. SUBTITLE (Menggantikan Lokasi)
+                        // 2. SUBTITLE (LOKASI)
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
@@ -157,19 +158,17 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
 
                         const SizedBox(height: 24),
 
-                        // 4. INFO GRID (KATEGORI & TIKET MASUK)
+                        // 3. INFO GRID
                         Row(
                           children: [
-                            // KOTAK KIRI: KATEGORI
                             Expanded(
                               child: _buildInfoCard(
-                                icon: Ionicons.time_outline, // Icon Jam
+                                icon: Ionicons.time_outline,
                                 title: "Kategori",
                                 value: museum.category,
                               ),
                             ),
                             const SizedBox(width: 16),
-                            // KOTAK KANAN: TIKET MASUK
                             Expanded(
                               child: _buildInfoCard(
                                 icon: Ionicons.ticket_outline,
@@ -186,7 +185,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
 
                         const SizedBox(height: 24),
 
-                        // 5. DESKRIPSI
+                        // 4. DESKRIPSI
                         Text(
                           "Tentang Museum",
                           style: TextStyle(
@@ -212,8 +211,13 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
 
                         const SizedBox(height: 30),
 
-                        // 6. INPUT RATING
-                        _buildRatingInput(context),
+                        // 5. LIST ULASAN (DI ATAS)
+                        _buildReviewList(),
+
+                        const SizedBox(height: 30),
+
+                        // 6. INPUT RATING (DI BAWAH)
+                        _buildRatingSection(context),
 
                         const SizedBox(height: 30),
 
@@ -263,7 +267,6 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
 
   Widget _buildImage(String imageUrl) {
     if (imageUrl.isEmpty) return Container(color: _primaryBrown);
-
     try {
       if (imageUrl.startsWith('http')) {
         return Image.network(
@@ -278,10 +281,16 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
       } else if (imageUrl.startsWith('assets/')) {
         return Image.asset(imageUrl, fit: BoxFit.cover);
       } else {
-        // Base64
-        Uint8List bytes = imageUrl.contains(',')
-            ? base64Decode(imageUrl.split(',').last)
-            : base64Decode(imageUrl);
+        String cleanBase64 = imageUrl;
+        if (cleanBase64.contains(',')) {
+          cleanBase64 = cleanBase64.split(',').last;
+        }
+        cleanBase64 = cleanBase64.replaceAll(RegExp(r'\s+'), '');
+        int mod4 = cleanBase64.length % 4;
+        if (mod4 > 0) {
+          cleanBase64 += '=' * (4 - mod4);
+        }
+        Uint8List bytes = base64Decode(cleanBase64);
         return Image.memory(bytes, fit: BoxFit.cover);
       }
     } catch (e) {
@@ -345,12 +354,12 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
     );
   }
 
-  Widget _buildRatingInput(BuildContext context) {
+  Widget _buildRatingSection(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: _primaryBrown.withOpacity(0.08),
@@ -363,15 +372,15 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Bagaimana pengalamanmu?",
+            "Bagaimana pengalaman Anda?",
             style: TextStyle(
-              fontFamily: 'Serif',
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: _primaryBrown,
+              fontFamily: 'Serif',
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 15),
           Center(
             child: Obx(
               () => Row(
@@ -385,8 +394,8 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                         index < controller.userRating.value
                             ? Ionicons.star
                             : Ionicons.star_outline,
-                        color: Colors.amber,
-                        size: 36,
+                        color: const Color(0xFFD4AF37),
+                        size: 32,
                       ),
                     ),
                   );
@@ -398,13 +407,13 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
           TextField(
             controller: controller.reviewController,
             maxLines: 3,
-            style: TextStyle(fontFamily: 'Serif', color: _textBody),
+            style: const TextStyle(fontFamily: 'Serif'),
             decoration: InputDecoration(
-              hintText: "Tulis ulasan Anda di sini...",
+              hintText: "Bagikan pendapat Anda...",
               hintStyle: TextStyle(
-                fontFamily: 'Serif',
                 color: Colors.grey[400],
                 fontSize: 14,
+                fontFamily: 'Serif',
               ),
               filled: true,
               fillColor: _paperBg,
@@ -434,16 +443,210 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                elevation: 2,
               ),
               child: const Text(
                 "Kirim Ulasan",
                 style: TextStyle(
-                  fontFamily: 'Serif',
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
+                  fontFamily: 'Serif',
                 ),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReviewList() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Ulasan Pengunjung",
+          style: TextStyle(
+            fontFamily: 'Serif',
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: _primaryBrown,
+          ),
+        ),
+        const SizedBox(height: 12),
+        StreamBuilder<QuerySnapshot>(
+          stream: controller.ulasanStream,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(20),
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            }
+
+            if (snapshot.hasError) {
+              return Text(
+                "Gagal memuat ulasan.",
+                style: TextStyle(color: Colors.red[300]),
+              );
+            }
+
+            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              return Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Center(
+                  child: Text(
+                    "Belum ada ulasan. Jadilah yang pertama!",
+                    style: TextStyle(
+                      fontFamily: 'Serif',
+                      color: Colors.grey[500],
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            return ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: snapshot.data!.docs.length,
+              separatorBuilder: (c, i) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                var data =
+                    snapshot.data!.docs[index].data() as Map<String, dynamic>;
+                return _buildReviewItem(data);
+              },
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  // --- WIDGET ITEM ULASAN (UPDATED: DATE FORMAT DD/MM/YYYY) ---
+  Widget _buildReviewItem(Map<String, dynamic> data) {
+    String name = data['user_name'] ?? 'Pengguna';
+    String photo = data['user_photo'] ?? '';
+    String comment = data['comment'] ?? '';
+    int rating = data['rating'] ?? 0;
+
+    // --- Format Tanggal (NUMERIK dengan Slash) ---
+    // Format: DD/MM/YYYY (Contoh: 10/01/2026)
+    String dateStr = "";
+    if (data['created_at'] != null && data['created_at'] is Timestamp) {
+      DateTime dt = (data['created_at'] as Timestamp).toDate();
+      // Menggunakan padLeft agar 1 digit menjadi 2 digit (e.g., 1 -> 01)
+      String day = dt.day.toString().padLeft(2, '0');
+      String month = dt.month.toString().padLeft(2, '0');
+      String year = dt.year.toString();
+
+      // PERUBAHAN DI SINI: Menggunakan '/'
+      dateStr = "$day/$month/$year";
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Avatar
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: _goldAccent.withOpacity(0.2),
+              image: photo.isNotEmpty
+                  ? DecorationImage(
+                      image: MemoryImage(base64Decode(photo)),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
+            child: photo.isEmpty
+                ? Center(
+                    child: Text(
+                      name.isNotEmpty ? name[0].toUpperCase() : "U",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: _primaryBrown,
+                      ),
+                    ),
+                  )
+                : null,
+          ),
+          const SizedBox(width: 12),
+
+          // Konten Text
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. HEADER: NAMA (Kiri) & TANGGAL (Kanan)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      name,
+                      style: TextStyle(
+                        fontFamily: 'Serif',
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: _textBody,
+                      ),
+                    ),
+                    Text(
+                      dateStr, // Menggunakan format DD/MM/YYYY
+                      style: TextStyle(
+                        fontFamily: 'Serif',
+                        fontSize: 11,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 4),
+
+                // 2. RATING BINTANG (Di bawah Username)
+                Row(
+                  children: List.generate(5, (index) {
+                    return Icon(
+                      index < rating ? Ionicons.star : Ionicons.star_outline,
+                      size: 14,
+                      color: Colors.amber,
+                    );
+                  }),
+                ),
+
+                const SizedBox(height: 6),
+
+                // 3. KOMENTAR
+                Text(
+                  comment,
+                  style: TextStyle(
+                    fontFamily: 'Serif',
+                    fontSize: 13,
+                    color: _textBody.withOpacity(0.8),
+                    height: 1.4,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

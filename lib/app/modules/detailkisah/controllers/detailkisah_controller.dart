@@ -1,67 +1,124 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+// Pastikan path ini benar sesuai struktur folder Anda
+import 'package:gatrakarsa/app/data/service/api_service.dart';
 
 class DetailkisahController extends GetxController {
-  // --- LOGIKA SIMPAN ---
-  var isSaved = false.obs;
+  final ApiService _apiService = ApiService();
+  late ContentModel story;
 
-  void toggleSave() {
-    isSaved.value = !isSaved.value;
-    if (isSaved.value) {
-      Get.snackbar(
-        "Disimpan",
-        "Kisah masuk ke koleksi",
-        backgroundColor: Colors.white,
-        colorText: Colors.black87,
-        snackPosition: SnackPosition.TOP,
-        margin: const EdgeInsets.all(20),
-      );
+  @override
+  void onInit() {
+    super.onInit();
+    // Validasi data arguments
+    if (Get.arguments is ContentModel) {
+      story = Get.arguments as ContentModel;
     } else {
-      Get.snackbar(
-        "Dihapus",
-        "Kisah dihapus dari koleksi",
-        backgroundColor: Colors.white,
-        colorText: Colors.black87,
-        snackPosition: SnackPosition.TOP,
-        margin: const EdgeInsets.all(20),
+      story = ContentModel(
+        id: '0',
+        title: 'Error',
+        subtitle: '-',
+        category: '-',
+        description: 'Error',
+        imageUrl: '',
       );
     }
   }
 
-  // --- LOGIKA RATING ---
+  // Stream untuk memantau ulasan secara realtime
+  Stream<QuerySnapshot> get ulasanStream => _apiService.streamUlasan(story.id);
+
+  // --- LOGIC SAVE / BOOKMARK ---
+  var isSaved = false.obs;
+  void toggleSave() {
+    isSaved.value = !isSaved.value;
+    Get.snackbar(
+      isSaved.value ? "Disimpan" : "Dihapus",
+      "",
+      backgroundColor: Colors.white,
+      snackPosition: SnackPosition.TOP,
+      margin: const EdgeInsets.all(20),
+    );
+  }
+
+  // --- LOGIC ULASAN / RATING ---
   var userRating = 0.obs;
   final TextEditingController reviewController = TextEditingController();
 
-  void setRating(int rating) {
-    userRating.value = rating;
-  }
+  void setRating(int rating) => userRating.value = rating;
 
-  void submitReview() {
+  Future<void> submitReview() async {
+    // 1. Validasi Rating
     if (userRating.value == 0) {
       Get.snackbar(
         "Peringatan",
-        "Mohon berikan rating bintang terlebih dahulu.",
+        "Beri bintang dulu ya!",
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
-        margin: const EdgeInsets.all(20),
       );
       return;
     }
 
-    Get.snackbar(
-      "Terima Kasih",
-      "Ulasan Anda berhasil dikirim!",
-      backgroundColor: Colors.white,
-      colorText: const Color(0xFF3E2723),
-      icon: const Icon(Icons.check_circle, color: Colors.green),
-      snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(20),
-    );
+    // 2. Cek Login User
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      Get.snackbar(
+        "Akses Ditolak",
+        "Login dulu untuk mengulas.",
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return;
+    }
 
-    userRating.value = 0;
-    reviewController.clear();
-    FocusManager.instance.primaryFocus?.unfocus();
+    try {
+      // Tampilkan Loading
+      Get.dialog(
+        const Center(child: CircularProgressIndicator()),
+        barrierDismissible: false,
+      );
+
+      // 3. Submit ke Firebase (PERBAIKAN DI SINI)
+      // Parameter 'imageUrl' sudah dihapus agar sesuai dengan ApiService
+      await _apiService.submitUlasan(
+        contentId: story.id,
+        targetName: story.title,
+        category: story.category,
+        subtitle: story.subtitle,
+        rating: userRating.value,
+        comment: reviewController.text,
+        userId: user.uid,
+        userName: user.displayName ?? "Pengguna",
+      );
+
+      // Tutup Loading
+      Get.back();
+
+      // Notifikasi Sukses
+      Get.snackbar(
+        "Sukses",
+        "Ulasan terkirim!",
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+
+      // Reset Form
+      userRating.value = 0;
+      reviewController.clear();
+      FocusManager.instance.primaryFocus?.unfocus(); // Tutup keyboard
+    } catch (e) {
+      // Pastikan loading tertutup jika error terjadi
+      if (Get.isDialogOpen ?? false) Get.back();
+
+      Get.snackbar(
+        "Gagal",
+        "Error: $e",
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
   }
 
   @override
