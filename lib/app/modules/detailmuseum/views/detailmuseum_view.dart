@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 import 'dart:ui'; // Diperlukan untuk ImageFilter
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -41,165 +40,137 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
       ),
       child: Scaffold(
         backgroundColor: Colors.white,
+        resizeToAvoidBottomInset: false,
         body: Stack(
           children: [
-            CustomScrollView(
-              // FIX: ClampingScrollPhysics mencegah scroll berlebih di atas gambar
-              physics: const ClampingScrollPhysics(),
-              slivers: [
-                // --- 1. HEADER IMAGE (Sliver App Bar) ---
-                SliverAppBar(
-                  expandedHeight: 320,
-                  pinned: true,
-                  backgroundColor: Colors.white,
-                  elevation: 0,
-                  leading: Container(
-                    margin: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.9), // Glassy White
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 10,
-                        ),
-                      ],
-                    ),
-                    child: IconButton(
-                      icon: const Icon(
-                        Ionicons.arrow_back,
-                        color: Colors.black,
-                      ),
-                      onPressed: () => Get.back(),
-                    ),
-                  ),
-                  actions: [
-                    Container(
-                      margin: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white.withOpacity(0.9),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 10,
-                          ),
-                        ],
-                      ),
-                      child: Obx(
-                        () => IconButton(
-                          icon: Icon(
-                            controller.isSaved.value
-                                ? Ionicons.bookmark
-                                : Ionicons.bookmark_outline,
-                            color: controller.isSaved.value
-                                ? _goldAccent
-                                : Colors.black,
-                          ),
-                          onPressed: () => controller.toggleSave(),
-                        ),
-                      ),
-                    ),
-                  ],
-                  flexibleSpace: FlexibleSpaceBar(
-                    stretchModes: const [StretchMode.zoomBackground],
-                    background: Stack(
-                      fit: StackFit.expand,
-                      children: [_buildHeaderImage(museum.imageUrl)],
-                    ),
-                  ),
-                ),
-
-                // --- 2. KONTEN BODY ---
-                SliverToBoxAdapter(
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(30),
-                      ),
-                    ),
-                    child: Padding(
-                      // Padding top 30 agar rapi karena garis dihapus
-                      padding: const EdgeInsets.fromLTRB(24, 30, 24, 160),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // FIX: Garis abu-abu (handle bar) DIHAPUS DISINI
-
-                          // A. JUDUL BESAR
-                          Text(
-                            museum.title,
-                            style: TextStyle(
-                              fontFamily: 'Serif',
-                              fontSize: 28,
-                              fontWeight: FontWeight.w800,
-                              color: _textHeading,
-                              height: 1.1,
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-
-                          // B. INFO GRID (Lokasi, Kategori, Tiket)
-                          _buildLocationTile(
-                            museum.subtitle.isNotEmpty
-                                ? museum.subtitle
-                                : "Lokasi tidak tersedia",
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildInfoTile(
-                                  Ionicons.time_outline,
-                                  "Kategori",
-                                  museum.category,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildInfoTile(
-                                  Ionicons.ticket_outline,
-                                  "Tiket Masuk",
-                                  (museum.price != null &&
-                                          museum.price!.isNotEmpty)
-                                      ? museum.price!
-                                      : "Gratis",
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 30),
-
-                          // C. DESKRIPSI
-                          Text("Tentang Museum", style: _headingStyle),
-                          const SizedBox(height: 10),
-                          Text(
-                            (museum.description.isNotEmpty)
-                                ? museum.description
-                                : "Deskripsi belum tersedia.",
-                            textAlign: TextAlign.justify,
-                            style: TextStyle(
-                              fontSize: 15,
-                              height: 1.8,
-                              color: _textBody,
-                              fontFamily: 'Serif',
-                            ),
-                          ),
-                          const SizedBox(height: 30),
-
-                          // D. SECTION ULASAN
-                          _buildReviewSection(context),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+            // --- 1. GAMBAR BACKGROUND (FIXED) ---
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: MediaQuery.of(context).size.height * 0.5,
+              child: _buildHeaderImage(museum.imageUrl),
             ),
 
-            // --- 3. FLOATING BOTTOM BAR (STICKY) ---
+            // --- 2. TOMBOL BACK & BOOKMARK ---
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 10,
+              left: 20,
+              right: 20,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _glassButton(
+                    icon: Ionicons.arrow_back,
+                    onTap: () => Get.back(),
+                  ),
+                  Obx(
+                    () => _glassButton(
+                      icon: controller.isSaved.value
+                          ? Ionicons.bookmark
+                          : Ionicons.bookmark_outline,
+                      color: controller.isSaved.value
+                          ? _goldAccent
+                          : Colors.black, // Icon hitam agar kontras di glass
+                      onTap: () => controller.toggleSave(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // --- 3. KONTEN UTAMA (SHEET SCROLLABLE) ---
+            Positioned.fill(
+              top: MediaQuery.of(context).size.height * 0.40,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  // FIX: borderRadius dihapus agar lurus (tidak melengkung)
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 30,
+                      offset: const Offset(0, -10),
+                    ),
+                  ],
+                ),
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  // Padding bawah besar agar scroll bisa mentok ke atas tombol navigasi bottom bar
+                  padding: const EdgeInsets.fromLTRB(24, 30, 24, 160),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // A. JUDUL BESAR
+                      Text(
+                        museum.title,
+                        style: TextStyle(
+                          fontFamily: 'Serif',
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                          color: _textHeading,
+                          height: 1.1,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // B. INFO GRID (Lokasi, Kategori, Tiket)
+                      _buildLocationTile(
+                        museum.subtitle.isNotEmpty
+                            ? museum.subtitle
+                            : "Lokasi tidak tersedia",
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildInfoTile(
+                              Ionicons.time_outline,
+                              "Kategori",
+                              museum.category,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildInfoTile(
+                              Ionicons.ticket_outline,
+                              "Tiket Masuk",
+                              (museum.price != null && museum.price!.isNotEmpty)
+                                  ? museum.price!
+                                  : "Gratis",
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 30),
+
+                      // C. DESKRIPSI
+                      Text("Tentang Museum", style: _headingStyle),
+                      const SizedBox(height: 10),
+                      Text(
+                        (museum.description.isNotEmpty)
+                            ? museum.description
+                            : "Deskripsi belum tersedia.",
+                        textAlign: TextAlign.justify,
+                        style: TextStyle(
+                          fontSize: 15,
+                          height: 1.8,
+                          color: _textBody,
+                          fontFamily: 'Serif',
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+
+                      // D. SECTION ULASAN
+                      _buildReviewSection(context),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // --- 4. FLOATING BOTTOM BAR (STICKY) ---
             Positioned(
               bottom: 0,
               left: 0,
@@ -268,6 +239,34 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
   );
 
   // --- WIDGET HELPER ---
+
+  Widget _glassButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    Color color = Colors.black,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(50),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+          child: Container(
+            width: 45,
+            height: 45,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.8), // Glassy white background
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10),
+              ],
+            ),
+            child: Icon(icon, color: color, size: 22),
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _buildInfoTile(IconData icon, String label, String value) {
     return Container(
