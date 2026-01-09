@@ -1,5 +1,7 @@
 import 'package:get/get.dart';
 
+import '../modules/daftarsave/bindings/daftarsave_binding.dart';
+import '../modules/daftarsave/views/daftarsave_view.dart';
 import '../modules/detail_wayang/bindings/detail_wayang_binding.dart';
 import '../modules/detail_wayang/views/detail_wayang_view.dart';
 import '../modules/detaildalang/bindings/detaildalang_binding.dart';
@@ -52,6 +54,8 @@ import '../modules/tentangkami/bindings/tentangkami_binding.dart';
 import '../modules/tentangkami/views/tentangkami_view.dart';
 import '../modules/tokoh/bindings/tokoh_binding.dart';
 import '../modules/tokoh/views/tokoh_view.dart';
+import '../modules/ulasan/bindings/ulasan_binding.dart';
+import '../modules/ulasan/views/ulasan_view.dart';
 import '../modules/verification/bindings/verification_binding.dart';
 import '../modules/verification/views/verification_view.dart';
 import '../modules/video/bindings/video_binding.dart';
@@ -204,6 +208,16 @@ class AppPages {
       name: _Paths.LUPAPASSWORD,
       page: () => const LupapasswordView(),
       binding: LupapasswordBinding(),
+    ),
+    GetPage(
+      name: _Paths.DAFTARSAVE,
+      page: () => const DaftarsaveView(),
+      binding: DaftarsaveBinding(),
+    ),
+    GetPage(
+      name: _Paths.ULASAN,
+      page: () => const UlasanView(),
+      binding: UlasanBinding(),
     ),
   ];
 }

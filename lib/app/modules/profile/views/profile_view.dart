@@ -6,15 +6,17 @@ import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-// --- IMPORT HALAMAN TUJUAN (Sesuaikan path folder Anda) ---
+// --- IMPORT HALAMAN TUJUAN ---
 import 'package:gatrakarsa/app/modules/editprofile/views/editprofile_view.dart';
 import 'package:gatrakarsa/app/modules/gantikatasandi/views/gantikatasandi_view.dart';
 import 'package:gatrakarsa/app/modules/riwayatlogin/views/riwayatlogin_view.dart';
-
-// --- IMPORT HALAMAN MENU BARU ---
 import 'package:gatrakarsa/app/modules/tentangkami/views/tentangkami_view.dart';
 import 'package:gatrakarsa/app/modules/ketentuanpemakaian/views/ketentuanpemakaian_view.dart';
 import 'package:gatrakarsa/app/modules/kebijakanprivasi/views/kebijakanprivasi_view.dart';
+import 'package:gatrakarsa/app/modules/daftarsave/views/daftarsave_view.dart';
+
+// --- [BARU] IMPORT HALAMAN ULASAN ---
+import 'package:gatrakarsa/app/modules/ulasan/views/ulasan_view.dart';
 
 // --- TEMA WARNA ---
 class WayangColors {
@@ -102,7 +104,39 @@ class _ProfileViewState extends State<ProfileView> {
                   children: [
                     const SizedBox(height: 24),
 
-                    // --- BAGIAN 1: PENGATURAN AKUN ---
+                    // ==========================================
+                    // 1. KOTAK PENYIMPANAN (BOOKMARK)
+                    // ==========================================
+                    _buildSectionTitle('Koleksi Saya'),
+                    _buildMenuCard(context, [
+                      _buildMenuItem(
+                        Ionicons.bookmark_outline,
+                        'Daftar Simpanan',
+                        onTap: () => Get.to(() => const DaftarsaveView()),
+                      ),
+                    ]),
+
+                    const SizedBox(height: 24),
+
+                    // ==========================================
+                    // 2. KOTAK RATING (AKTIVITAS)
+                    // ==========================================
+                    _buildSectionTitle('Aktivitas Saya'),
+                    _buildMenuCard(context, [
+                      _buildMenuItem(
+                        Ionicons.star_outline,
+                        'Ulasan & Rating',
+                        onTap: () => Get.to(
+                          () => const UlasanView(),
+                        ), // <-- SUDAH DIARAHKAN KE ULASAN VIEW
+                      ),
+                    ]),
+
+                    const SizedBox(height: 32),
+
+                    // ==========================================
+                    // 3. PENGATURAN AKUN
+                    // ==========================================
                     _buildSectionTitle('Pengaturan Akun'),
                     _buildMenuCard(context, [
                       _buildMenuItem(
@@ -128,37 +162,36 @@ class _ProfileViewState extends State<ProfileView> {
 
                     const SizedBox(height: 32),
 
-                    // --- BAGIAN 2: TENTANG (NAVIGASI AKTIF) ---
+                    // ==========================================
+                    // 4. TENTANG KAMI
+                    // ==========================================
                     _buildSectionTitle('Tentang Gatra Karsa'),
                     _buildMenuCard(context, [
                       _buildMenuItem(
                         Ionicons.information_circle_outline,
                         'Tentang Kami',
-                        onTap: () => Get.to(
-                          () => const TentangkamiView(),
-                        ), // ARAHKAN KE TENTANG KAMI
+                        onTap: () => Get.to(() => const TentangkamiView()),
                       ),
                       _buildDivider(),
                       _buildMenuItem(
                         Ionicons.document_text_outline,
                         'Ketentuan Pemakaian',
-                        onTap: () => Get.to(
-                          () => const KetentuanpemakaianView(),
-                        ), // ARAHKAN KE KETENTUAN
+                        onTap: () =>
+                            Get.to(() => const KetentuanpemakaianView()),
                       ),
                       _buildDivider(),
                       _buildMenuItem(
                         Ionicons.shield_checkmark_outline,
                         'Kebijakan Privasi',
-                        onTap: () => Get.to(
-                          () => const KebijakanprivasiView(),
-                        ), // ARAHKAN KE KEBIJAKAN
+                        onTap: () => Get.to(() => const KebijakanprivasiView()),
                       ),
                     ]),
 
                     const SizedBox(height: 32),
 
-                    // --- BAGIAN 3: BANTUAN ---
+                    // ==========================================
+                    // 5. PUSAT BANTUAN
+                    // ==========================================
                     _buildSectionTitle('Pusat Bantuan'),
                     _buildMenuCard(context, [
                       _buildMenuItem(
@@ -176,7 +209,9 @@ class _ProfileViewState extends State<ProfileView> {
 
                     const SizedBox(height: 40),
 
-                    // --- TOMBOL KELUAR ---
+                    // ==========================================
+                    // TOMBOL KELUAR
+                    // ==========================================
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
@@ -213,6 +248,7 @@ class _ProfileViewState extends State<ProfileView> {
   }
 
   // --- WIDGET HELPERS ---
+
   Widget _buildHeaderSection(BuildContext context) {
     ImageProvider? imageProvider;
     if (_photoBase64 != null && _photoBase64!.isNotEmpty) {
