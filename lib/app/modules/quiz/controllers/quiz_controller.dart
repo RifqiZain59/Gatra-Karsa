@@ -1,31 +1,37 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Tambahkan ini untuk Auth
 
-// --- MODEL DATA ---
+// ==========================================
+// 1. MODEL DATA (Tetap dalam satu file)
+// ==========================================
 class WordQuestion {
   final String originalWord;
   final String hint;
   List<String> scrambledLetters;
 
   WordQuestion({required this.originalWord, required this.hint})
-    : scrambledLetters = (originalWord.toUpperCase().split('')..shuffle());
+    : scrambledLetters = originalWord.toUpperCase().split('')..shuffle();
 }
 
-// --- CONTROLLER ---
+// ==========================================
+// 2. CONTROLLER
+// ==========================================
 class QuizController extends GetxController {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance; // Instance Auth
+
+  // --- STATE VARIABLES ---
   var currentIndex = 0.obs;
   var userIncompleteWord = <String>[].obs;
-
-  // VARIABLE BARU: Untuk melacak dari kotak mana huruf itu diambil
-  // Agar saat dikembalikan, dia balik ke tempat asalnya.
   var answerOriginIndices = <int>[].obs;
-
   var score = 0.obs;
   var isFinished = false.obs;
+  var isLoading = false.obs;
 
-  // --- BANK SOAL (Sampel) ---
+  // --- BANK SOAL ---
   var questions = <WordQuestion>[
-    // --- PANDAWA ---
     WordQuestion(
       originalWord: "YUDISTIRA",
       hint: "Sulung Pandawa yang tidak pernah berbohong",
@@ -54,146 +60,121 @@ class QuizController extends GetxController {
       originalWord: "ABIMANYU",
       hint: "Putra Arjuna yang gugur di medan Baratayuda",
     ),
-
-    // --- KURAWA ---
-    WordQuestion(
-      originalWord: "DURYUDANA",
-      hint: "Raja tertua dari 100 bersaudara Kurawa",
-    ),
-    WordQuestion(
-      originalWord: "SANGKUNI",
-      hint: "Patih Astina yang licik dan penuh tipu daya",
-    ),
-    WordQuestion(
-      originalWord: "KARNA",
-      hint: "Raja Awangga, saudara seibu Pandawa di pihak Kurawa",
-    ),
-
-    // --- PUNAKAWAN ---
-    WordQuestion(
-      originalWord: "SEMAR",
-      hint: "Tokoh tertua Punakawan, penjelmaan Dewa",
-    ),
-    WordQuestion(
-      originalWord: "PETRUK",
-      hint: "Punakawan yang hidungnya sangat panjang",
-    ),
-
-    // --- Tambahkan sisa soal Anda di sini ---
   ].obs;
 
-  // --- LOGIKA UTAMA ---
+  // --- LOGIKA GAME ---
 
-  // 1. Menambahkan Huruf (Dari Bawah ke Atas)
   void addLetter(String letter, int originalIndex) {
     var currentQ = questions[currentIndex.value];
-
-    // Cek apakah slot jawaban masih muat
     if (userIncompleteWord.length < currentQ.originalWord.length) {
-      // Masukkan huruf ke jawaban
       userIncompleteWord.add(letter);
-
-      // Simpan index asalnya (supaya nanti bisa dibalikin)
       answerOriginIndices.add(originalIndex);
-
-      // Kosongkan kotak di bawah (tapi posisinya tetap ada, jadi "")
       currentQ.scrambledLetters[originalIndex] = "";
-
-      // Update UI
       questions.refresh();
       userIncompleteWord.refresh();
     }
   }
 
-  // 2. Menghapus Huruf (Dari Atas ke Bawah - Fitur Baru)
   void removeLetter(int answerIndex) {
     if (answerIndex >= userIncompleteWord.length) return;
-
     var currentQ = questions[currentIndex.value];
-
-    // Ambil huruf yang mau dihapus
     String letterToRestore = userIncompleteWord[answerIndex];
-
-    // Ambil index asalnya dari list tracking
     int originIndex = answerOriginIndices[answerIndex];
 
-    // Kembalikan huruf ke kotak asalnya di bawah
     currentQ.scrambledLetters[originIndex] = letterToRestore;
-
-    // Hapus dari list jawaban & list tracking
     userIncompleteWord.removeAt(answerIndex);
     answerOriginIndices.removeAt(answerIndex);
 
-    // Update UI
     questions.refresh();
     userIncompleteWord.refresh();
   }
 
-  // 3. Reset Jawaban Saat Ini
   void resetWord() {
     var q = questions[currentIndex.value];
-
-    // Kosongkan jawaban user
     userIncompleteWord.clear();
     answerOriginIndices.clear();
-
-    // Kocok ulang huruf asli untuk soal ini
     q.scrambledLetters = q.originalWord.toUpperCase().split('')..shuffle();
-
     questions.refresh();
   }
 
-  // 4. Cek Jawaban (Submit)
-  void checkAnswer() {
+  // --- LOGIKA CEK JAWABAN & SIMPAN PER SOAL ---
+  void checkAnswer() async {
     String finalWord = userIncompleteWord.join();
     String correctWord = questions[currentIndex.value].originalWord
         .toUpperCase();
 
     if (finalWord == correctWord) {
-      // Jika Benar
+      // 1. TAMBAH SKOR
       score.value += 10;
+
+      // 2. LANGSUNG SIMPAN KE DATABASE (Per Soal)
+      // Kita panggil fungsi simpan tanpa menunggu (await) agar UI tidak nge-freeze lama,
+      // atau pakai await jika ingin memastikan tersimpan baru pindah soal.
+      await saveScorePerQuestion();
+
       Get.snackbar(
         "BENAR!",
-        "Jawaban kamu tepat.",
-        snackPosition: SnackPosition.TOP,
+        "Skor tersimpan. Lanjut...",
         backgroundColor: Colors.green,
         colorText: Colors.white,
-        duration: const Duration(seconds: 1),
-        margin: const EdgeInsets.all(20),
-        icon: const Icon(Icons.check_circle, color: Colors.white),
+        duration: const Duration(milliseconds: 1200),
       );
 
-      // Delay sedikit sebelum pindah soal agar user lihat notif
-      Future.delayed(const Duration(milliseconds: 1000), () {
+      // Delay sedikit sebelum pindah
+      Future.delayed(const Duration(seconds: 1), () {
         nextQuestion();
       });
     } else {
-      // Jika Salah
       Get.snackbar(
         "SALAH",
         "Susunan kata belum tepat, coba lagi!",
-        snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,
-        margin: const EdgeInsets.all(20),
-        icon: const Icon(Icons.error, color: Colors.white),
+        duration: const Duration(seconds: 1),
       );
       resetWord();
     }
   }
 
-  // 5. Pindah ke Soal Berikutnya
+  // --- FUNGSI SIMPAN KE FIREBASE ---
+  Future<void> saveScorePerQuestion() async {
+    User? user = _auth.currentUser;
+    // Jika user belum login (misal mode tamu), kita skip atau handle error
+    if (user == null) {
+      print("User belum login, skor tidak disimpan ke cloud.");
+      return;
+    }
+
+    try {
+      // Kita gunakan .doc(user.uid) agar satu user hanya punya 1 dokumen leaderboard yang terus di-update.
+      // SetOptions(merge: true) memastikan data lain (misal 'name') tidak hilang jika kita hanya update skor.
+      await _firestore.collection('leaderboard').doc(user.uid).set({
+        'uid': user.uid,
+        'name': user.displayName ?? 'Sobat Wayang', // Default name
+        'email': user.email,
+        'score': score.value, // UPDATE SKOR TERBARU DI SINI
+        'last_level_index':
+            currentIndex.value, // Simpan progress level terakhir
+        'last_updated': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      print("Berhasil update skor ke Firebase: ${score.value}");
+    } catch (e) {
+      print("Gagal menyimpan skor: $e");
+    }
+  }
+
   void nextQuestion() {
     if (currentIndex.value < questions.length - 1) {
       currentIndex.value++;
       userIncompleteWord.clear();
-      answerOriginIndices.clear(); // Jangan lupa bersihkan tracking index
+      answerOriginIndices.clear();
     } else {
       isFinished.value = true;
+      // Tidak perlu sendScoreToFirebase() lagi di sini karena sudah per soal.
     }
   }
 
-  // 6. Reset Seluruh Game (Main Lagi)
   void resetQuiz() {
     currentIndex.value = 0;
     score.value = 0;
@@ -201,10 +182,13 @@ class QuizController extends GetxController {
     userIncompleteWord.clear();
     answerOriginIndices.clear();
 
-    // Kocok ulang semua soal agar hurufnya beda posisi tiap main baru
+    // Reset skor di database juga jika ingin mulai dari 0 (Opsional)
+    // saveScorePerQuestion();
+
     for (var q in questions) {
       q.scrambledLetters = q.originalWord.toUpperCase().split('')..shuffle();
     }
+    questions.shuffle();
     questions.refresh();
   }
 }

@@ -1,65 +1,69 @@
-import 'package:gatrakarsa/app/data/service/api_service.dart';
 import 'package:get/get.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:gatrakarsa/app/data/service/api_service.dart';
 
 class TokohController extends GetxController {
-  // Instance ApiService
   final ApiService _apiService = ApiService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // State Variables (Observable)
-  // List untuk menampung data
+  // Data List
   var wayangList = <ContentModel>[].obs;
   var dalangList = <ContentModel>[].obs;
 
-  // Loading indicators untuk masing-masing kategori
-  var isLoadingWayang = false.obs;
-  var isLoadingDalang = false.obs;
+  // Loading States
+  var isLoadingWayang = true.obs;
+  var isLoadingDalang = true.obs;
+
+  // --- TAMBAHAN: LIST ID YANG DI-LIKE ---
+  var favoriteIds = <String>[].obs;
 
   @override
   void onInit() {
     super.onInit();
-    // Panggil data saat controller pertama kali diinisialisasi
-    fetchWayangData();
-    fetchDalangData();
+    fetchWayang();
+    fetchDalang();
+
+    // Panggil fungsi pemantau favorit
+    listenToFavorites();
   }
 
-  /// Mengambil data Tokoh Wayang
-  Future<void> fetchWayangData() async {
+  // --- LOGIKA MENGAMBIL DAFTAR FAVORIT (REALTIME) ---
+  void listenToFavorites() {
+    User? user = _auth.currentUser;
+    if (user != null) {
+      _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('favorites')
+          .snapshots()
+          .listen((snapshot) {
+            // Ambil semua ID dokumen yang ada di koleksi favorites
+            favoriteIds.value = snapshot.docs.map((doc) => doc.id).toList();
+          });
+    } else {
+      favoriteIds.clear();
+    }
+  }
+
+  void fetchWayang() async {
+    isLoadingWayang.value = true;
     try {
-      isLoadingWayang.value = true;
-
-      // Memanggil fungsi getTokohWayang dari ApiService
-      List<ContentModel> result = await _apiService.getTokohWayang();
-
-      // Memasukkan data ke dalam observable list
-      wayangList.assignAll(result);
-    } catch (e) {
-      print("Error di Controller (Wayang): $e");
-      Get.snackbar('Error', 'Gagal memuat data Wayang');
+      var data = await _apiService.getTokohWayang();
+      wayangList.assignAll(data);
     } finally {
       isLoadingWayang.value = false;
     }
   }
 
-  /// Mengambil data Tokoh Dalang
-  Future<void> fetchDalangData() async {
+  void fetchDalang() async {
+    isLoadingDalang.value = true;
     try {
-      isLoadingDalang.value = true;
-
-      // Memanggil fungsi getTokohDalang dari ApiService
-      List<ContentModel> result = await _apiService.getTokohDalang();
-
-      // Memasukkan data ke dalam observable list
-      dalangList.assignAll(result);
-    } catch (e) {
-      print("Error di Controller (Dalang): $e");
-      Get.snackbar('Error', 'Gagal memuat data Dalang');
+      var data = await _apiService.getTokohDalang();
+      dalangList.assignAll(data);
     } finally {
       isLoadingDalang.value = false;
     }
-  }
-
-  // Fungsi refresh (opsional, jika ingin pull-to-refresh di UI)
-  Future<void> refreshAll() async {
-    await Future.wait([fetchWayangData(), fetchDalangData()]);
   }
 }

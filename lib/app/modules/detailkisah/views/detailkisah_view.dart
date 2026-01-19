@@ -1,18 +1,18 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ui'; // Untuk ImageFilter
+import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:ionicons/ionicons.dart';
+import 'package:google_fonts/google_fonts.dart'; // IMPORT GOOGLE FONTS
 import 'package:gatrakarsa/app/data/service/api_service.dart';
-import '../controllers/detailkisah_controller.dart'; // Pastikan import ke controller Kisah
+import '../controllers/detailkisah_controller.dart';
 
 class DetailkisahView extends GetView<DetailkisahController> {
   const DetailkisahView({super.key});
 
-  // --- PALET WARNA MODERN ---
   final Color _primaryBrown = const Color(0xFF4E342E);
   final Color _goldAccent = const Color(0xFFD4AF37);
   final Color _bgSoft = const Color(0xFFFAFAFA);
@@ -30,15 +30,15 @@ class DetailkisahView extends GetView<DetailkisahController> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark, // Icon Hitam
-        systemNavigationBarColor: Colors.white, // Bawah Putih
+        statusBarIconBrightness: Brightness.dark,
+        systemNavigationBarColor: Colors.white,
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
       child: Scaffold(
         backgroundColor: Colors.white,
         body: Stack(
           children: [
-            // 1. GAMBAR BACKGROUND (Parallax)
+            // 1. GAMBAR BACKGROUND
             Positioned(
               top: 0,
               left: 0,
@@ -74,7 +74,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
               ),
             ),
 
-            // 3. KONTEN UTAMA (Sheet)
+            // 3. KONTEN UTAMA
             Positioned.fill(
               top: MediaQuery.of(context).size.height * 0.40,
               child: Container(
@@ -119,7 +119,8 @@ class DetailkisahView extends GetView<DetailkisahController> {
                         ),
                         child: Text(
                           story.category.toUpperCase(),
-                          style: TextStyle(
+                          style: GoogleFonts.mulish(
+                            // FONT KATEGORI
                             color: _primaryBrown,
                             fontSize: 11,
                             fontWeight: FontWeight.w800,
@@ -132,8 +133,8 @@ class DetailkisahView extends GetView<DetailkisahController> {
                       // B. JUDUL UTAMA
                       Text(
                         story.title,
-                        style: TextStyle(
-                          fontFamily: 'Serif',
+                        style: GoogleFonts.philosopher(
+                          // FONT JUDUL
                           fontSize: 28,
                           fontWeight: FontWeight.w800,
                           color: _textHeading,
@@ -142,17 +143,14 @@ class DetailkisahView extends GetView<DetailkisahController> {
                       ),
                       const SizedBox(height: 24),
 
-                      // --- FITUR BARU 1: KOTAK PUTIH SUBTITLE (HIKMAH) ---
+                      // C. KOTAK HIKMAH
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          color: Colors.white, // Kotak Putih
+                          color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: Colors.grey.shade100,
-                            width: 1,
-                          ),
+                          border: Border.all(color: Colors.grey.shade100),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.03),
@@ -171,7 +169,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
                             const SizedBox(height: 12),
                             Text(
                               "INTISARI & HIKMAH",
-                              style: TextStyle(
+                              style: GoogleFonts.mulish(
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 1.5,
@@ -184,9 +182,9 @@ class DetailkisahView extends GetView<DetailkisahController> {
                                   ? "\"${story.subtitle}\""
                                   : "\"Cerita ini mengajarkan nilai luhur kehidupan.\"",
                               textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontFamily: 'Serif',
-                                fontSize: 16,
+                              style: GoogleFonts.philosopher(
+                                // FONT KUTIPAN
+                                fontSize: 18, // Sedikit diperbesar
                                 fontStyle: FontStyle.italic,
                                 color: _primaryBrown,
                                 height: 1.5,
@@ -199,7 +197,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
 
                       const SizedBox(height: 30),
 
-                      // --- FITUR BARU 2: GENERATE SIMPULAN OTOMATIS (AI) ---
+                      // AI SUMMARY
                       _AiSummaryGenerator(
                         description: story.description,
                         primaryColor: _primaryBrown,
@@ -208,22 +206,22 @@ class DetailkisahView extends GetView<DetailkisahController> {
 
                       const SizedBox(height: 30),
 
-                      // D. ISI CERITA FULL
+                      // D. ISI CERITA
                       Text("Kisah Selengkapnya", style: _headingStyle),
                       const SizedBox(height: 12),
                       Text(
                         story.description,
                         textAlign: TextAlign.justify,
-                        style: TextStyle(
+                        style: GoogleFonts.mulish(
+                          // FONT BODY
                           fontSize: 16,
                           height: 1.8,
                           color: _textBody,
-                          fontFamily: 'Serif',
                         ),
                       ),
                       const SizedBox(height: 40),
 
-                      // E. SECTION ULASAN
+                      // E. ULASAN
                       _buildReviewSection(context),
                     ],
                   ),
@@ -236,15 +234,16 @@ class DetailkisahView extends GetView<DetailkisahController> {
     );
   }
 
-  TextStyle get _headingStyle => TextStyle(
-    fontSize: 18,
+  TextStyle get _headingStyle => GoogleFonts.philosopher(
+    // FONT SUB-JUDUL
+    fontSize: 20,
     fontWeight: FontWeight.bold,
     color: _textHeading,
-    fontFamily: 'Serif',
   );
 
-  // --- WIDGET HELPER ---
+  // ... (SISA KODE HELPER SAMA, HANYA GANTI DI TEXTSTYLE BAWAH INI)
 
+  // (Helper Button & Image tetap sama seperti kode Anda sebelumnya)
   Widget _glassButton({
     required IconData icon,
     required VoidCallback onTap,
@@ -286,9 +285,8 @@ class DetailkisahView extends GetView<DetailkisahController> {
         return Image.asset(imageUrl, fit: BoxFit.cover);
       } else {
         String cleanBase64 = imageUrl.replaceAll(RegExp(r'\s+'), '');
-        if (cleanBase64.contains(',')) {
+        if (cleanBase64.contains(','))
           cleanBase64 = cleanBase64.split(',').last;
-        }
         int mod4 = cleanBase64.length % 4;
         if (mod4 > 0) cleanBase64 += '=' * (4 - mod4);
         return Image.memory(
@@ -302,29 +300,26 @@ class DetailkisahView extends GetView<DetailkisahController> {
     }
   }
 
-  // --- REVIEW SECTION ---
+  // --- REVIEW SECTION UPDATE FONTS ---
   Widget _buildReviewSection(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
       stream: controller.ulasanStream,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        if (snapshot.connectionState == ConnectionState.waiting)
           return Container(height: 150, color: Colors.grey[100]);
-        }
 
         var docs = snapshot.data?.docs ?? [];
         int totalReviews = docs.length;
         double averageRating = 0.0;
         if (totalReviews > 0) {
           double totalStars = 0;
-          for (var doc in docs) {
+          for (var doc in docs)
             totalStars += (doc.data() as Map<String, dynamic>)['rating'] ?? 0;
-          }
           averageRating = totalStars / totalReviews;
         }
 
         return Column(
           children: [
-            // A. KOTAK TOTAL ULASAN
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
@@ -360,18 +355,17 @@ class DetailkisahView extends GetView<DetailkisahController> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
                                 averageRating.toStringAsFixed(1),
-                                style: TextStyle(
+                                style: GoogleFonts.philosopher(
+                                  // ANGKA RATING BESAR
                                   fontSize: 48,
                                   fontWeight: FontWeight.bold,
                                   color: _goldAccent,
-                                  fontFamily: 'Serif',
                                   height: 1.0,
                                 ),
                               ),
@@ -380,7 +374,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
                                 padding: const EdgeInsets.only(bottom: 8),
                                 child: Text(
                                   "/ 5.0",
-                                  style: TextStyle(
+                                  style: GoogleFonts.mulish(
                                     fontSize: 14,
                                     color: Colors.white.withOpacity(0.6),
                                     fontWeight: FontWeight.bold,
@@ -416,7 +410,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
                           const SizedBox(height: 6),
                           Text(
                             "$totalReviews Ulasan",
-                            style: const TextStyle(
+                            style: GoogleFonts.mulish(
                               color: Colors.white,
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -424,7 +418,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
                           ),
                           Text(
                             "Pembaca",
-                            style: TextStyle(
+                            style: GoogleFonts.mulish(
                               color: Colors.white.withOpacity(0.6),
                               fontSize: 11,
                             ),
@@ -437,8 +431,6 @@ class DetailkisahView extends GetView<DetailkisahController> {
               ),
             ),
             const SizedBox(height: 30),
-
-            // B. HEADER & TOMBOL TULIS
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -446,9 +438,9 @@ class DetailkisahView extends GetView<DetailkisahController> {
                 TextButton(
                   onPressed: () => _openRatingBottomSheet(context),
                   style: TextButton.styleFrom(foregroundColor: _goldAccent),
-                  child: const Text(
+                  child: Text(
                     "Tulis Ulasan",
-                    style: TextStyle(
+                    style: GoogleFonts.mulish(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                       decoration: TextDecoration.underline,
@@ -458,8 +450,6 @@ class DetailkisahView extends GetView<DetailkisahController> {
               ],
             ),
             const SizedBox(height: 10),
-
-            // C. SLIDER
             if (docs.isEmpty)
               Container(
                 padding: const EdgeInsets.all(30),
@@ -479,7 +469,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
                     const SizedBox(height: 10),
                     Text(
                       "Belum ada ulasan.",
-                      style: TextStyle(
+                      style: GoogleFonts.mulish(
                         color: Colors.grey[500],
                         fontStyle: FontStyle.italic,
                       ),
@@ -499,6 +489,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
     );
   }
 
+  // --- MODAL & SLIDER JUGA DIUPDATE FONT-NYA ---
   void _openRatingBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -530,17 +521,19 @@ class DetailkisahView extends GetView<DetailkisahController> {
               const SizedBox(height: 25),
               Text(
                 "Bagikan Pendapat",
-                style: TextStyle(
+                style: GoogleFonts.philosopher(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: _primaryBrown,
-                  fontFamily: 'Serif',
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 "Beri rating dan ulasan untuk cerita ini",
-                style: TextStyle(color: Colors.grey[500], fontSize: 14),
+                style: GoogleFonts.mulish(
+                  color: Colors.grey[500],
+                  fontSize: 14,
+                ),
               ),
               const SizedBox(height: 25),
               Obx(
@@ -568,13 +561,10 @@ class DetailkisahView extends GetView<DetailkisahController> {
               TextField(
                 controller: controller.reviewController,
                 maxLines: 4,
-                style: const TextStyle(fontFamily: 'Serif'),
+                style: GoogleFonts.mulish(),
                 decoration: InputDecoration(
                   hintText: "Tulis pendapat Anda di sini...",
-                  hintStyle: TextStyle(
-                    color: Colors.grey[400],
-                    fontFamily: 'Serif',
-                  ),
+                  hintStyle: GoogleFonts.mulish(color: Colors.grey[400]),
                   filled: true,
                   fillColor: _bgSoft,
                   border: OutlineInputBorder(
@@ -604,9 +594,12 @@ class DetailkisahView extends GetView<DetailkisahController> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     "Kirim Ulasan",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: GoogleFonts.mulish(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -619,18 +612,16 @@ class DetailkisahView extends GetView<DetailkisahController> {
   }
 }
 
-// --- WIDGET BARU: AI SUMMARY GENERATOR ---
+// --- AI SUMMARY GENERATOR (UPDATED FONTS) ---
 class _AiSummaryGenerator extends StatefulWidget {
   final String description;
   final Color primaryColor;
   final Color accentColor;
-
   const _AiSummaryGenerator({
     required this.description,
     required this.primaryColor,
     required this.accentColor,
   });
-
   @override
   State<_AiSummaryGenerator> createState() => _AiSummaryGeneratorState();
 }
@@ -644,13 +635,9 @@ class _AiSummaryGeneratorState extends State<_AiSummaryGenerator> {
     setState(() {
       _isLoading = true;
     });
-
-    // Simulasi Delay AI (2 Detik)
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
         setState(() {
-          // Logika sederhana: Mengambil 2 kalimat pertama sebagai "Simpulan"
-          // Di app nyata ini bisa diganti request ke OpenAI API
           List<String> sentences = widget.description.split('.');
           if (sentences.length > 2) {
             _generatedSummary = "${sentences[0]}. ${sentences[1]}.";
@@ -669,14 +656,13 @@ class _AiSummaryGeneratorState extends State<_AiSummaryGenerator> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: const Color(0xFFF0F4F8), // Warna background soft blue/grey
+        color: const Color(0xFFF0F4F8),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.blueGrey.withOpacity(0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header dengan Icon AI
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -685,7 +671,7 @@ class _AiSummaryGeneratorState extends State<_AiSummaryGenerator> {
                 const SizedBox(width: 8),
                 Text(
                   "AI Assistant",
-                  style: TextStyle(
+                  style: GoogleFonts.mulish(
                     fontWeight: FontWeight.bold,
                     color: widget.primaryColor,
                   ),
@@ -701,9 +687,9 @@ class _AiSummaryGeneratorState extends State<_AiSummaryGenerator> {
                       color: Colors.green.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: const Text(
+                    child: Text(
                       "Generated",
-                      style: TextStyle(
+                      style: GoogleFonts.mulish(
                         fontSize: 10,
                         color: Colors.green,
                         fontWeight: FontWeight.bold,
@@ -713,7 +699,6 @@ class _AiSummaryGeneratorState extends State<_AiSummaryGenerator> {
               ],
             ),
           ),
-
           if (!_hasGenerated && !_isLoading)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -734,11 +719,13 @@ class _AiSummaryGeneratorState extends State<_AiSummaryGenerator> {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                   icon: const Icon(Ionicons.flash_outline, size: 18),
-                  label: const Text("Generate Simpulan Otomatis"),
+                  label: Text(
+                    "Generate Simpulan Otomatis",
+                    style: GoogleFonts.mulish(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
             ),
-
           if (_isLoading)
             Padding(
               padding: const EdgeInsets.all(20),
@@ -757,7 +744,7 @@ class _AiSummaryGeneratorState extends State<_AiSummaryGenerator> {
                     const SizedBox(width: 12),
                     Text(
                       "Sedang memproses cerita...",
-                      style: TextStyle(
+                      style: GoogleFonts.mulish(
                         color: Colors.grey[600],
                         fontSize: 13,
                         fontStyle: FontStyle.italic,
@@ -767,7 +754,6 @@ class _AiSummaryGeneratorState extends State<_AiSummaryGenerator> {
                 ),
               ),
             ),
-
           if (_hasGenerated)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -778,7 +764,7 @@ class _AiSummaryGeneratorState extends State<_AiSummaryGenerator> {
                   const SizedBox(height: 8),
                   Text(
                     "Simpulan:",
-                    style: TextStyle(
+                    style: GoogleFonts.mulish(
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
                       color: Colors.grey[700],
@@ -787,10 +773,9 @@ class _AiSummaryGeneratorState extends State<_AiSummaryGenerator> {
                   const SizedBox(height: 4),
                   Text(
                     _generatedSummary,
-                    style: TextStyle(
+                    style: GoogleFonts.mulish(
                       color: widget.primaryColor,
                       height: 1.5,
-                      fontFamily: 'Serif',
                     ),
                   ),
                 ],
@@ -802,18 +787,16 @@ class _AiSummaryGeneratorState extends State<_AiSummaryGenerator> {
   }
 }
 
-// --- SLIDER (Reusable Logic) ---
+// --- SLIDER REUSABLE ---
 class _AutoPlayReviewSlider extends StatefulWidget {
   final List<DocumentSnapshot> docs;
   final Color primaryBrown;
   final Color goldAccent;
-
   const _AutoPlayReviewSlider({
     required this.docs,
     required this.primaryBrown,
     required this.goldAccent,
   });
-
   @override
   State<_AutoPlayReviewSlider> createState() => _AutoPlayReviewSliderState();
 }
@@ -822,7 +805,6 @@ class _AutoPlayReviewSliderState extends State<_AutoPlayReviewSlider> {
   late PageController _pageController;
   int _currentIndex = 0;
   Timer? _timer;
-
   @override
   void initState() {
     super.initState();
@@ -911,7 +893,6 @@ class _AutoPlayReviewSliderState extends State<_AutoPlayReviewSlider> {
     String photo = data['user_photo'] ?? '';
     String comment = data['comment'] ?? '';
     int rating = data['rating'] ?? 5;
-
     String dateStr = "";
     if (data['created_at'] != null && data['created_at'] is Timestamp) {
       DateTime dt = (data['created_at'] as Timestamp).toDate();
@@ -981,7 +962,7 @@ class _AutoPlayReviewSliderState extends State<_AutoPlayReviewSlider> {
                       children: [
                         Text(
                           name,
-                          style: const TextStyle(
+                          style: GoogleFonts.mulish(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                           ),
@@ -1006,7 +987,7 @@ class _AutoPlayReviewSliderState extends State<_AutoPlayReviewSlider> {
                             const SizedBox(width: 8),
                             Text(
                               dateStr,
-                              style: TextStyle(
+                              style: GoogleFonts.mulish(
                                 fontSize: 10,
                                 color: Colors.grey[400],
                               ),
@@ -1024,11 +1005,10 @@ class _AutoPlayReviewSliderState extends State<_AutoPlayReviewSlider> {
                   comment,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
+                  style: GoogleFonts.mulish(
                     fontSize: 13,
                     color: Colors.grey[700],
                     height: 1.5,
-                    fontFamily: 'Serif',
                   ),
                 ),
               ),

@@ -24,6 +24,8 @@ import '../modules/gantikatasandi/bindings/gantikatasandi_binding.dart';
 import '../modules/gantikatasandi/views/gantikatasandi_view.dart';
 import '../modules/home/bindings/home_binding.dart';
 import '../modules/home/views/home_view.dart';
+import '../modules/kamera/bindings/kamera_binding.dart';
+import '../modules/kamera/views/kamera_view.dart';
 import '../modules/kebijakanprivasi/bindings/kebijakanprivasi_binding.dart';
 import '../modules/kebijakanprivasi/views/kebijakanprivasi_view.dart';
 import '../modules/ketentuanpemakaian/bindings/ketentuanpemakaian_binding.dart';
@@ -66,7 +68,7 @@ part 'app_routes.dart';
 class AppPages {
   AppPages._();
 
-  static const INITIAL = Routes.HOME;
+  static const INITIAL = Routes.LOGIN;
 
   static final routes = [
     GetPage(
@@ -218,6 +220,11 @@ class AppPages {
       name: _Paths.ULASAN,
       page: () => const UlasanView(),
       binding: UlasanBinding(),
+    ),
+    GetPage(
+      name: _Paths.KAMERA,
+      page: () => const KameraView(),
+      binding: KameraBinding(),
     ),
   ];
 }

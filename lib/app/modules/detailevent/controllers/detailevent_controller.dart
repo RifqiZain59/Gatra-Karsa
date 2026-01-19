@@ -1,136 +1,188 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:gatrakarsa/app/data/service/api_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class DetaileventController extends GetxController {
-  final ApiService _apiService = ApiService();
   late ContentModel event;
+  var isSaved = false.obs;
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  final TextEditingController reviewController = TextEditingController();
+  var userRating = 5.obs;
 
   @override
   void onInit() {
     super.onInit();
     if (Get.arguments is ContentModel) {
-      event = Get.arguments;
+      event = Get.arguments as ContentModel;
     } else {
       event = ContentModel(
         id: '0',
-        title: 'Error',
-        subtitle: '-',
-        category: '-',
-        description: 'Error',
+        title: 'Unknown',
+        subtitle: '',
+        category: 'Event',
+        description: '',
         imageUrl: '',
       );
     }
+    checkSaveStatus();
   }
 
-  // Stream Ulasan
-  Stream<QuerySnapshot> get ulasanStream => _apiService.streamUlasan(event.id);
+  void checkSaveStatus() async {
+    User? user = _auth.currentUser;
+    if (user == null) return;
+    try {
+      var doc = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('bookmarks')
+          .doc(event.id)
+          .get();
+      isSaved.value = doc.exists;
+    } catch (e) {
+      print(e);
+    }
+  }
 
-  // --- FITUR MAPS ---
-  Future<void> openMap() async {
-    final String? url = event.mapsUrl;
-    if (url != null && url.isNotEmpty) {
-      try {
-        if (!await launchUrl(
-          Uri.parse(url),
-          mode: LaunchMode.externalApplication,
-        )) {
-          throw 'Could not launch $url';
-        }
-      } catch (e) {
+  void toggleSave() async {
+    User? user = _auth.currentUser;
+    if (user == null) {
+      Get.snackbar("Akses Dibatasi", "Silakan login.");
+      return;
+    }
+    var docRef = _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('bookmarks')
+        .doc(event.id);
+
+    try {
+      if (isSaved.value) {
+        await docRef.delete();
+        isSaved.value = false;
         Get.snackbar(
-          "Gagal",
-          "Link peta tidak valid.",
-          backgroundColor: Colors.redAccent,
+          "Dihapus",
+          "Event dihapus dari bookmark",
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+        );
+      } else {
+        await docRef.set({
+          'id': event.id,
+          'title': event.title,
+          'subtitle': event.subtitle,
+          'category': 'Event',
+          'image_url': event.imageUrl,
+          'description': event.description,
+          'location': event.location,
+          'price': event.price,
+          'saved_at': FieldValue.serverTimestamp(),
+        });
+        isSaved.value = true;
+        Get.snackbar(
+          "Disimpan",
+          "Event disimpan",
+          backgroundColor: Colors.green,
           colorText: Colors.white,
         );
       }
-    } else {
-      Get.snackbar(
-        "Info",
-        "Lokasi peta tidak tersedia.",
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-      );
+    } catch (e) {
+      Get.snackbar("Error", "$e");
     }
   }
 
-  // --- FITUR BOOKMARK ---
-  var isSaved = false.obs;
-  void toggleSave() {
-    isSaved.value = !isSaved.value;
-    Get.snackbar(
-      "Berhasil",
-      isSaved.value ? "Acara disimpan" : "Dihapus dari simpanan",
-      backgroundColor: Colors.white,
-      colorText: Colors.black87,
-      snackPosition: SnackPosition.TOP,
-      margin: const EdgeInsets.all(20),
+  // --- PERBAIKAN DI SINI (OPEN MAP) ---
+  void openMap() async {
+    if (event.location == null || event.location!.isEmpty) {
+      Get.snackbar("Info", "Lokasi tidak tersedia");
+      return;
+    }
+
+    // Format URL Google Maps Search yang benar
+    final Uri googleUrl = Uri.parse(
+      "https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(event.location!)}",
     );
+
+    try {
+      if (await canLaunchUrl(googleUrl)) {
+        await launchUrl(googleUrl, mode: LaunchMode.externalApplication);
+      } else {
+        await launchUrl(googleUrl, mode: LaunchMode.platformDefault);
+      }
+    } catch (e) {
+      Get.snackbar("Error", "Gagal membuka peta: $e");
+    }
   }
 
-  // --- FITUR RATING ---
-  var userRating = 0.obs;
-  final TextEditingController reviewController = TextEditingController();
+  Stream<QuerySnapshot> get ulasanStream {
+    return _firestore
+        .collection('contents')
+        .doc(event.id)
+        .collection('reviews')
+        .orderBy('created_at', descending: true)
+        .snapshots();
+  }
 
   void setRating(int rating) => userRating.value = rating;
 
-  Future<void> submitReview() async {
-    if (userRating.value == 0) {
-      Get.snackbar(
-        "Peringatan",
-        "Beri bintang dulu ya!",
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-      );
-      return;
-    }
-    final user = FirebaseAuth.instance.currentUser;
+  void submitReview() async {
+    User? user = _auth.currentUser;
     if (user == null) {
-      Get.snackbar(
-        "Akses Ditolak",
-        "Login dulu untuk mengulas.",
-        backgroundColor: Colors.orange,
-      );
+      Get.snackbar("Error", "Login dulu.");
       return;
     }
+    if (reviewController.text.trim().isEmpty) return;
 
     try {
-      Get.dialog(
-        const Center(child: CircularProgressIndicator()),
-        barrierDismissible: false,
-      );
+      var userDoc = await _firestore.collection('users').doc(user.uid).get();
+      String userName =
+          (userDoc.data() as Map<String, dynamic>?)?['name'] ?? 'Pengguna';
+      String userPhoto =
+          (userDoc.data() as Map<String, dynamic>?)?['photoBase64'] ?? '';
 
-      await _apiService.submitUlasan(
-        contentId: event.id,
-        targetName: event.title,
-        category: event.category,
-        subtitle: event.subtitle,
-        // imageUrl: event.imageUrl, <--- DIHAPUS
-        rating: userRating.value,
-        comment: reviewController.text,
-        userId: user.uid,
-        userName: user.displayName ?? "Pengguna",
-      );
+      Map<String, dynamic> reviewData = {
+        'user_id': user.uid,
+        'user_name': userName,
+        'user_photo': userPhoto,
+        'rating': userRating.value,
+        'comment': reviewController.text.trim(),
+        'created_at': FieldValue.serverTimestamp(),
+      };
 
-      Get.back();
+      await _firestore
+          .collection('contents')
+          .doc(event.id)
+          .collection('reviews')
+          .add(reviewData);
+
+      Map<String, dynamic> userHistoryData = {
+        ...reviewData,
+        'content_id': event.id,
+        'targetName': event.title,
+        'category': 'Event',
+        'image': event.imageUrl,
+      };
+      await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('reviews')
+          .add(userHistoryData);
+
+      reviewController.clear();
+      userRating.value = 5;
       Get.snackbar(
         "Sukses",
         "Ulasan terkirim!",
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
-
-      // Reset Form
-      userRating.value = 0;
-      reviewController.clear();
-      FocusManager.instance.primaryFocus?.unfocus();
     } catch (e) {
-      Get.back();
-      Get.snackbar("Gagal", "Error: $e", backgroundColor: Colors.red);
+      Get.snackbar("Error", "$e");
     }
   }
 

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ionicons/ionicons.dart';
+import 'package:google_fonts/google_fonts.dart'; // IMPORT FONT
 import '../controllers/leaderboard_controller.dart';
 
 class LeaderboardView extends GetView<LeaderboardController> {
   const LeaderboardView({super.key});
 
-  // --- PALET WARNA TEMA WAYANG ---
   static const Color primaryDark = Color(0xFF4E342E);
   static const Color accentGold = Color(0xFFD4AF37);
   static const Color accentSilver = Color(0xFFB0BEC5);
@@ -16,127 +16,142 @@ class LeaderboardView extends GetView<LeaderboardController> {
 
   @override
   Widget build(BuildContext context) {
-    // --- DATA DUMMY ---
-    final List<Map<String, dynamic>> mockData = [
-      {'name': 'Arjuna_01', 'score': 2500, 'rank': 1},
-      {'name': 'BimaSakti', 'score': 2350, 'rank': 2},
-      {'name': 'GatotKaca', 'score': 2100, 'rank': 3},
-      {'name': 'Srikandi_Pro', 'score': 1900, 'rank': 4},
-      {'name': 'Yudistira', 'score': 1850, 'rank': 5},
-      {'name': 'Nakula', 'score': 1700, 'rank': 6},
-      {'name': 'Sadewa', 'score': 1650, 'rank': 7},
-      {'name': 'Semar_M', 'score': 1500, 'rank': 8},
-      {'name': 'Petruk_O', 'score': 1400, 'rank': 9},
-      {'name': 'Gareng_99', 'score': 1200, 'rank': 10},
-    ];
-
+    if (!Get.isRegistered<LeaderboardController>())
+      Get.put(LeaderboardController());
     return Scaffold(
       backgroundColor: bgCream,
       body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
+        child: Obx(() {
+          if (controller.isLoading.value)
+            return const Center(
+              child: CircularProgressIndicator(color: primaryDark),
+            );
+          if (controller.leaderboardData.isEmpty) return _buildEmptyState();
 
-            // --- JUDUL HALAMAN ---
-            const Text(
-              "PAPAN PERINGKAT",
-              style: TextStyle(
-                fontFamily: 'Serif', // Font disamakan
-                fontWeight: FontWeight.bold,
-                letterSpacing: 2.0,
-                color: primaryDark,
-                fontSize: 20,
+          final allData = controller.leaderboardData;
+          bool showPodium =
+              allData.isNotEmpty && (allData[0]['score'] as int) > 0;
+          Map<String, dynamic>? juara1 = allData.isNotEmpty ? allData[0] : null;
+          Map<String, dynamic>? juara2 = allData.length > 1 ? allData[1] : null;
+          Map<String, dynamic>? juara3 = allData.length > 2 ? allData[2] : null;
+          List<Map<String, dynamic>> restData = allData.length > 3
+              ? allData.sublist(3)
+              : [];
+          if (!showPodium) restData = allData;
+
+          return Column(
+            children: [
+              const SizedBox(height: 20),
+              Text(
+                "PAPAN PERINGKAT",
+                style: GoogleFonts.philosopher(
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 2.0,
+                  color: primaryDark,
+                  fontSize: 20,
+                ),
               ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // --- BAGIAN ATAS: PODIUM TOP 3 ---
-            if (mockData.length >= 3)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  // CrossAxisAlignment.end PENTING agar kotak "tangga" rata bawah
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      // Juara 2 (Perak) - Kiri
-                      _buildPodiumUser(
-                        name: mockData[1]['name'],
-                        score: mockData[1]['score'],
-                        rank: 2,
-                        color: accentSilver,
-                        size: 90,
+              const SizedBox(height: 20),
+              if (showPodium)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        if (juara2 != null)
+                          _buildPodiumUser(
+                            name: juara2['name'],
+                            score: juara2['score'],
+                            rank: 2,
+                            color: accentSilver,
+                            size: 90,
+                          )
+                        else
+                          const SizedBox(width: 90),
+                        if (juara1 != null)
+                          _buildPodiumUser(
+                            name: juara1['name'],
+                            score: juara1['score'],
+                            rank: 1,
+                            color: accentGold,
+                            size: 110,
+                            isCenter: true,
+                          ),
+                        if (juara3 != null)
+                          _buildPodiumUser(
+                            name: juara3['name'],
+                            score: juara3['score'],
+                            rank: 3,
+                            color: accentBronze,
+                            size: 90,
+                          )
+                        else
+                          const SizedBox(width: 90),
+                      ],
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 20),
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border(
+                      top: BorderSide(
+                        color: primaryDark.withOpacity(0.1),
+                        width: 1.5,
                       ),
-                      // Juara 1 (Emas) - Tengah
-                      _buildPodiumUser(
-                        name: mockData[0]['name'],
-                        score: mockData[0]['score'],
-                        rank: 1,
-                        color: accentGold,
-                        size: 110,
-                        isCenter: true, // Untuk membuatnya sedikit lebih besar
-                      ),
-                      // Juara 3 (Tembaga) - Kanan
-                      _buildPodiumUser(
-                        name: mockData[2]['name'],
-                        score: mockData[2]['score'],
-                        rank: 3,
-                        color: accentBronze,
-                        size: 90,
+                    ),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 5,
+                        offset: Offset(0, -2),
                       ),
                     ],
                   ),
+                  child: restData.isEmpty && showPodium
+                      ? const Center(child: Text("Belum ada pemain lain."))
+                      : ListView.separated(
+                          padding: const EdgeInsets.all(20),
+                          itemCount: restData.length,
+                          separatorBuilder: (ctx, i) =>
+                              const Divider(color: Color(0xFFEEEEEE)),
+                          itemBuilder: (context, index) =>
+                              _buildListItem(restData[index]),
+                        ),
                 ),
               ),
-
-            const SizedBox(height: 20),
-
-            // --- BAGIAN BAWAH: LIST VIEW SISA ---
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border(
-                    top: BorderSide(
-                      color: primaryDark.withOpacity(0.1),
-                      width: 1.5,
-                    ),
-                  ),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 5,
-                      offset: Offset(0, -2),
-                    ),
-                  ],
-                ),
-                child: ListView.separated(
-                  padding: const EdgeInsets.only(
-                    top: 20,
-                    bottom: 30,
-                    left: 20,
-                    right: 20,
-                  ),
-                  itemCount: mockData.length - 3,
-                  separatorBuilder: (ctx, i) =>
-                      const Divider(color: Color(0xFFEEEEEE)),
-                  itemBuilder: (context, index) {
-                    final data = mockData[index + 3];
-                    return _buildListItem(data);
-                  },
-                ),
-              ),
-            ),
-          ],
-        ),
+            ],
+          );
+        }),
       ),
     );
   }
 
-  // --- WIDGET PODIUM DENGAN KOTAK TANGGA ---
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Ionicons.stats_chart_outline,
+            size: 80,
+            color: Colors.grey,
+          ),
+          const SizedBox(height: 20),
+          Text(
+            "Belum ada data peringkat",
+            style: GoogleFonts.mulish(color: textDark, fontSize: 16),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPodiumUser({
     required String name,
     required int score,
@@ -145,22 +160,16 @@ class LeaderboardView extends GetView<LeaderboardController> {
     required double size,
     bool isCenter = false,
   }) {
-    // Tentukan tinggi kotak tangga berdasarkan ranking
-    double stairHeight;
-    if (rank == 1) {
-      stairHeight = 80.0; // Paling tinggi
-    } else if (rank == 2) {
-      stairHeight = 55.0; // Sedang
-    } else {
-      stairHeight = 35.0; // Paling pendek
-    }
-
+    double stairHeight = rank == 1
+        ? 80.0
+        : rank == 2
+        ? 55.0
+        : 35.0;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4), // Jarak antar podium
+      padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          // 1. PIALA (Emas/Perak/Perunggu)
           Padding(
             padding: const EdgeInsets.only(bottom: 5),
             child: Icon(
@@ -169,8 +178,6 @@ class LeaderboardView extends GetView<LeaderboardController> {
               size: isCenter ? 30 : 24,
             ),
           ),
-
-          // 2. AVATAR
           Container(
             width: size,
             height: size,
@@ -188,9 +195,8 @@ class LeaderboardView extends GetView<LeaderboardController> {
             ),
             child: Center(
               child: Text(
-                name.isNotEmpty ? name[0] : "?",
-                style: TextStyle(
-                  fontFamily: 'Serif',
+                name.isNotEmpty ? name[0].toUpperCase() : "?",
+                style: GoogleFonts.philosopher(
                   fontSize: size * 0.4,
                   fontWeight: FontWeight.bold,
                   color: primaryDark,
@@ -198,44 +204,36 @@ class LeaderboardView extends GetView<LeaderboardController> {
               ),
             ),
           ),
-
           const SizedBox(height: 8),
-
-          // 3. NAMA
           SizedBox(
-            width: size + 10,
+            width: size + 20,
             child: Text(
               name,
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: GoogleFonts.mulish(
                 fontWeight: FontWeight.bold,
                 fontSize: 12,
                 color: textDark,
               ),
             ),
           ),
-
-          // 4. TOTAL POINT (BADGE KECIL)
           const SizedBox(height: 4),
           Text(
             "$score pts",
-            style: TextStyle(
+            style: GoogleFonts.mulish(
               color: primaryDark.withOpacity(0.7),
               fontSize: 10,
               fontWeight: FontWeight.bold,
             ),
           ),
-
           const SizedBox(height: 8),
-
-          // 5. KOTAK TANGGA (PODIUM BOX) -- FITUR BARU
           Container(
-            width: size, // Lebar kotak sama dengan lebar avatar
+            width: size,
             height: stairHeight,
             decoration: BoxDecoration(
-              color: color, // Warna kotak mengikuti warna juara
+              color: color,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(10),
                 topRight: Radius.circular(10),
@@ -249,11 +247,9 @@ class LeaderboardView extends GetView<LeaderboardController> {
               ],
             ),
             alignment: Alignment.center,
-            // Angka Besar di dalam kotak (1, 2, 3)
             child: Text(
               "$rank",
-              style: TextStyle(
-                fontFamily: 'Serif',
+              style: GoogleFonts.philosopher(
                 fontSize: isCenter ? 32 : 24,
                 fontWeight: FontWeight.w900,
                 color: Colors.white.withOpacity(0.9),
@@ -265,7 +261,6 @@ class LeaderboardView extends GetView<LeaderboardController> {
     );
   }
 
-  // --- WIDGET LIST ITEM ---
   Widget _buildListItem(Map<String, dynamic> data) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -287,7 +282,7 @@ class LeaderboardView extends GetView<LeaderboardController> {
             ),
             child: Text(
               "${data['rank']}",
-              style: const TextStyle(
+              style: GoogleFonts.mulish(
                 fontWeight: FontWeight.bold,
                 color: primaryDark,
               ),
@@ -297,7 +292,7 @@ class LeaderboardView extends GetView<LeaderboardController> {
           Expanded(
             child: Text(
               data['name'],
-              style: const TextStyle(
+              style: GoogleFonts.mulish(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
                 color: textDark,
@@ -306,8 +301,7 @@ class LeaderboardView extends GetView<LeaderboardController> {
           ),
           Text(
             "${data['score']} pts",
-            style: TextStyle(
-              fontFamily: 'Serif',
+            style: GoogleFonts.mulish(
               fontWeight: FontWeight.bold,
               color: primaryDark.withOpacity(0.7),
             ),

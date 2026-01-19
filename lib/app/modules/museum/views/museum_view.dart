@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:gatrakarsa/app/data/service/api_service.dart';
 import 'package:get/get.dart';
 import 'package:ionicons/ionicons.dart';
-
+import 'package:google_fonts/google_fonts.dart';
 import '../controllers/museum_controller.dart';
 import '../../detailmuseum/views/detailmuseum_view.dart';
 
@@ -29,10 +29,7 @@ class MuseumView extends GetView<MuseumController> {
 
   @override
   Widget build(BuildContext context) {
-    if (!Get.isRegistered<MuseumController>()) {
-      Get.put(MuseumController());
-    }
-
+    if (!Get.isRegistered<MuseumController>()) Get.put(MuseumController());
     return Scaffold(
       backgroundColor: _bgColor,
       body: AnnotatedRegion<SystemUiOverlayStyle>(
@@ -44,7 +41,6 @@ class MuseumView extends GetView<MuseumController> {
           child: Column(
             children: [
               _buildHeaderSection(),
-
               Expanded(
                 child: Obx(() {
                   if (controller.isLoading.value) {
@@ -52,24 +48,18 @@ class MuseumView extends GetView<MuseumController> {
                       child: CircularProgressIndicator(color: _primaryColor),
                     );
                   }
-
                   if (controller.filteredMuseums.isEmpty) {
                     return _buildEmptyState();
                   }
-
                   return RefreshIndicator(
                     onRefresh: controller.refreshData,
                     color: _primaryColor,
                     child: ListView.builder(
-                      // PERBAIKAN: Padding Top 0 (karena Header sudah punya padding bottom 20)
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                       physics: const BouncingScrollPhysics(),
                       itemCount: controller.filteredMuseums.length,
-                      itemBuilder: (context, index) {
-                        return _buildMuseumCard(
-                          controller.filteredMuseums[index],
-                        );
-                      },
+                      itemBuilder: (context, index) =>
+                          _buildMuseumCard(controller.filteredMuseums[index]),
                     ),
                   );
                 }),
@@ -81,16 +71,13 @@ class MuseumView extends GetView<MuseumController> {
     );
   }
 
-  // --- HEADER SECTION ---
   Widget _buildHeaderSection() {
     return Container(
-      // Padding bottom 20 (Sama dengan KisahView)
       padding: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(color: _bgColor),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Top Nav
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
             child: Row(
@@ -100,17 +87,12 @@ class MuseumView extends GetView<MuseumController> {
                   onTap: () => Get.back(),
                   child: Icon(Ionicons.arrow_back, color: _primaryColor),
                 ),
-                Obx(
-                  () => Text(
-                    controller.isCollectionMode.value
-                        ? 'Koleksi Museum'
-                        : 'Jelajah Museum',
-                    style: TextStyle(
-                      color: _primaryColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                      fontFamily: 'Serif',
-                    ),
+                Text(
+                  'Jelajah Museum',
+                  style: GoogleFonts.philosopher(
+                    color: _primaryColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
                   ),
                 ),
                 GestureDetector(
@@ -120,14 +102,12 @@ class MuseumView extends GetView<MuseumController> {
               ],
             ),
           ),
-
           const SizedBox(height: 25),
-
-          // 2. SEARCH BAR + SAVE BUTTON
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
               children: [
+                // Expanded agar search bar mengisi penuh
                 Expanded(
                   child: Container(
                     height: 50,
@@ -147,17 +127,16 @@ class MuseumView extends GetView<MuseumController> {
                       controller: controller.searchC,
                       onChanged: (value) => controller.updateSearch(value),
                       textInputAction: TextInputAction.search,
-                      style: const TextStyle(fontFamily: 'Serif'),
+                      style: GoogleFonts.mulish(),
                       decoration: InputDecoration(
                         prefixIcon: Icon(
                           Ionicons.search_outline,
                           color: _secondaryColor.withOpacity(0.5),
                         ),
                         hintText: 'Cari museum...',
-                        hintStyle: TextStyle(
+                        hintStyle: GoogleFonts.mulish(
                           color: Colors.grey[400],
                           fontSize: 14,
-                          fontFamily: 'Serif',
                         ),
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(
@@ -178,71 +157,21 @@ class MuseumView extends GetView<MuseumController> {
                     ),
                   ),
                 ),
-
-                const SizedBox(width: 12),
-
-                GestureDetector(
-                  onTap: () => controller.toggleCollectionMode(),
-                  child: Obx(
-                    () => Container(
-                      height: 50,
-                      width: 50,
-                      decoration: BoxDecoration(
-                        color: controller.isCollectionMode.value
-                            ? _primaryColor
-                            : Colors.white,
-                        borderRadius: BorderRadius.circular(15),
-                        boxShadow: [
-                          BoxShadow(
-                            color: _primaryColor.withOpacity(0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                        border: controller.isCollectionMode.value
-                            ? null
-                            : Border.all(color: _primaryColor.withOpacity(0.1)),
-                      ),
-                      child: Icon(
-                        controller.isCollectionMode.value
-                            ? Ionicons.bookmark
-                            : Ionicons.bookmark_outline,
-                        color: controller.isCollectionMode.value
-                            ? _accentColor
-                            : _primaryColor,
-                      ),
-                    ),
-                  ),
-                ),
+                // BAGIAN KOTAK YANG DULUNYA ADA DI SINI SUDAH DIHAPUS
               ],
             ),
           ),
-
-          // 3. Filter Tabs (Hanya muncul jika BUKAN mode koleksi)
-          Obx(() {
-            if (!controller.isCollectionMode.value) {
-              return Column(
-                children: [
-                  const SizedBox(height: 15),
-                  _buildFilterTabs(),
-                  // Jarak ekstra 5px agar tidak terlalu mepet dengan list (Sama dengan KisahView)
-                  const SizedBox(height: 5),
-                ],
-              );
-            } else {
-              return const SizedBox(height: 5);
-            }
-          }),
+          const SizedBox(height: 15),
+          _buildFilterTabs(), // Filter tabs TETAP ADA
+          const SizedBox(height: 5),
         ],
       ),
     );
   }
 
-  // --- FILTER TABS ---
   Widget _buildFilterTabs() {
     return Obx(() {
       final filters = _dynamicFilters;
-
       return SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
@@ -252,7 +181,6 @@ class MuseumView extends GetView<MuseumController> {
           children: filters.map((filterName) {
             final bool isSelected =
                 controller.selectedFilter.value == filterName;
-
             return Padding(
               padding: const EdgeInsets.only(right: 30),
               child: GestureDetector(
@@ -261,13 +189,12 @@ class MuseumView extends GetView<MuseumController> {
                   children: [
                     Text(
                       filterName,
-                      style: TextStyle(
+                      style: GoogleFonts.mulish(
                         color: isSelected ? _primaryColor : Colors.grey[400],
                         fontSize: 14,
                         fontWeight: isSelected
                             ? FontWeight.bold
                             : FontWeight.normal,
-                        fontFamily: 'Serif',
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -296,22 +223,17 @@ class MuseumView extends GetView<MuseumController> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            controller.isCollectionMode.value
-                ? Ionicons.bookmark_outline
-                : Ionicons.map_outline,
+            Ionicons.map_outline,
             size: 80,
             color: _secondaryColor.withOpacity(0.2),
           ),
           const SizedBox(height: 15),
           Text(
-            controller.isCollectionMode.value
-                ? "Belum ada koleksi"
-                : "Tidak ditemukan",
-            style: TextStyle(
+            "Tidak ditemukan",
+            style: GoogleFonts.mulish(
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: _secondaryColor,
-              fontFamily: 'Serif',
             ),
           ),
         ],
@@ -341,7 +263,6 @@ class MuseumView extends GetView<MuseumController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- GAMBAR ---
               Stack(
                 children: [
                   ClipRRect(
@@ -354,42 +275,9 @@ class MuseumView extends GetView<MuseumController> {
                       child: _buildImage(item.imageUrl),
                     ),
                   ),
-
-                  // ICON SAVE
-                  Positioned(
-                    top: 15,
-                    right: 15,
-                    child: GestureDetector(
-                      onTap: () => controller.toggleSave(item.id),
-                      child: Obx(() {
-                        bool isSaved = controller.savedIds.contains(item.id);
-                        return Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.9),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 5,
-                              ),
-                            ],
-                          ),
-                          child: Icon(
-                            isSaved
-                                ? Ionicons.bookmark
-                                : Ionicons.bookmark_outline,
-                            color: isSaved ? _accentColor : _primaryColor,
-                            size: 18,
-                          ),
-                        );
-                      }),
-                    ),
-                  ),
+                  // ICON BOOKMARK YANG MELAYANG DI GAMBAR SUDAH DIHAPUS
                 ],
               ),
-
-              // --- INFORMASI ---
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -397,11 +285,10 @@ class MuseumView extends GetView<MuseumController> {
                   children: [
                     Text(
                       item.title,
-                      style: TextStyle(
+                      style: GoogleFonts.philosopher(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: _primaryColor,
-                        fontFamily: 'Serif',
                         height: 1.2,
                       ),
                       maxLines: 2,
@@ -422,13 +309,12 @@ class MuseumView extends GetView<MuseumController> {
                             item.subtitle.isNotEmpty
                                 ? item.subtitle
                                 : (item.location ?? "Lokasi tidak tersedia"),
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 13,
-                              fontFamily: 'Serif',
-                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.mulish(
+                              color: Colors.grey[600],
+                              fontSize: 13,
+                            ),
                           ),
                         ),
                       ],
@@ -449,7 +335,7 @@ class MuseumView extends GetView<MuseumController> {
                             const SizedBox(width: 4),
                             Text(
                               item.category,
-                              style: TextStyle(
+                              style: GoogleFonts.mulish(
                                 fontSize: 12,
                                 color: _secondaryColor,
                                 fontWeight: FontWeight.w500,
@@ -470,7 +356,7 @@ class MuseumView extends GetView<MuseumController> {
                             item.price != null && item.price!.isNotEmpty
                                 ? item.price!
                                 : "Gratis",
-                            style: TextStyle(
+                            style: GoogleFonts.mulish(
                               fontSize: 11,
                               color: _primaryColor,
                               fontWeight: FontWeight.bold,
@@ -490,9 +376,7 @@ class MuseumView extends GetView<MuseumController> {
   }
 
   Widget _buildImage(String imageUrl) {
-    if (imageUrl.isEmpty) {
-      return Container(color: Colors.grey[200]);
-    }
+    if (imageUrl.isEmpty) return Container(color: Colors.grey[200]);
     try {
       if (imageUrl.startsWith('http')) {
         return Image.network(
@@ -507,13 +391,14 @@ class MuseumView extends GetView<MuseumController> {
           errorBuilder: (c, e, s) => Container(color: Colors.grey[200]),
         );
       } else {
-        String base64String = imageUrl;
-        if (base64String.contains(','))
+        String base64String = imageUrl.replaceAll(RegExp(r'\s+'), '');
+        if (base64String.contains(',')) {
           base64String = base64String.split(',').last;
-        base64String = base64String.replaceAll(RegExp(r'\s+'), '');
-        Uint8List bytes = base64Decode(base64String);
+        }
+        int mod4 = base64String.length % 4;
+        if (mod4 > 0) base64String += '=' * (4 - mod4);
         return Image.memory(
-          bytes,
+          base64Decode(base64String),
           fit: BoxFit.cover,
           errorBuilder: (c, e, s) => Container(color: Colors.grey[200]),
         );

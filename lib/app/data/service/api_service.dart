@@ -301,4 +301,59 @@ class ApiService {
         .orderBy('created_at', descending: true)
         .snapshots();
   }
+
+  Future<void> saveLeaderboard({
+    required String userId,
+    required int newScore,
+  }) async {
+    try {
+      final DocumentReference docRef = FirebaseFirestore.instance
+          .collection('leaderboard')
+          .doc(userId);
+
+      // 1. Ambil Data User (Nama & Foto) agar muncul di Leaderboard
+      String userName = 'Unknown User';
+      String photoBase64 = '';
+
+      try {
+        DocumentSnapshot userDoc = await _usersCollection.doc(userId).get();
+        if (userDoc.exists) {
+          final userData = userDoc.data() as Map<String, dynamic>;
+          userName = userData['name'] ?? userData['username'] ?? 'User';
+          photoBase64 = userData['photoBase64'] ?? '';
+        }
+      } catch (e) {
+        print("Gagal ambil data user: $e");
+      }
+
+      // 2. Cek Skor Lama (Opsional: Agar hanya update jika High Score)
+      // Jika ingin selalu overwrite (misal history), langsung gunakan .set() tanpa cek
+      DocumentSnapshot docSnap = await docRef.get();
+      int currentHighScore = 0;
+
+      if (docSnap.exists) {
+        final data = docSnap.data() as Map<String, dynamic>;
+        currentHighScore = data['score'] ?? 0;
+      }
+
+      // 3. Simpan jika skor baru lebih tinggi atau data belum ada
+      if (newScore > currentHighScore || !docSnap.exists) {
+        await docRef.set({
+          'user_id': userId,
+          'user_name': userName,
+          'user_photo': photoBase64,
+          'score': newScore,
+          'updated_at': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
+        print("Highscore updated: $newScore");
+      } else {
+        print(
+          "Score $newScore tidak lebih tinggi dari $currentHighScore. Tidak disimpan.",
+        );
+      }
+    } catch (e) {
+      print("Error saving leaderboard: $e");
+      rethrow;
+    }
+  }
 }

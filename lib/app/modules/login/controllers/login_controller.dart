@@ -15,9 +15,8 @@ class LoginController extends GetxController {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
-  // Memisahkan variabel loading
-  var isLoading = false.obs; // Loading untuk tombol Masuk (Email)
-  var isGoogleLoading = false.obs; // Loading untuk tombol Google
+  var isLoading = false.obs;
+  var isGoogleLoading = false.obs;
   var isObscure = true.obs;
 
   void toggleObscure() => isObscure.value = !isObscure.value;
@@ -34,8 +33,9 @@ class LoginController extends GetxController {
     }
 
     try {
-      isLoading.value = true; // Hanya tombol email yang loading
+      isLoading.value = true;
 
+      // Cek Blacklist (Opsional)
       bool isBlacklisted = await _checkIfEmailDeleted(
         emailController.text.trim(),
       );
@@ -51,6 +51,9 @@ class LoginController extends GetxController {
       );
 
       if (userCredential.user != null) {
+        // Cek apakah email sudah diverifikasi (Opsional, tergantung flow Anda)
+        // if (!userCredential.user!.emailVerified) { ... }
+
         await recordUserDevice(userCredential.user!.uid);
         Get.offAllNamed('/home');
       }
@@ -65,12 +68,12 @@ class LoginController extends GetxController {
     }
   }
 
-  // --- 2. LOGIN GOOGLE (PILIH AKUN) ---
+  // --- 2. LOGIN GOOGLE (PERBAIKAN UTAMA DISINI) ---
   Future<void> loginWithGoogle() async {
     try {
-      isGoogleLoading.value = true; // Hanya tombol google yang loading
+      isGoogleLoading.value = true;
 
-      // Paksa muncul pilihan akun
+      // 1. Trigger Google Sign In Flow
       if (await _googleSignIn.isSignedIn()) {
         await _googleSignIn.signOut();
       }
@@ -78,9 +81,10 @@ class LoginController extends GetxController {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
         isGoogleLoading.value = false;
-        return;
+        return; // User membatalkan login
       }
 
+      // Cek Blacklist
       bool isBlacklisted = await _checkIfEmailDeleted(googleUser.email);
       if (isBlacklisted) {
         isGoogleLoading.value = false;
@@ -89,6 +93,7 @@ class LoginController extends GetxController {
         return;
       }
 
+      // 2. Dapatkan Credential dari Google
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
       final AuthCredential credential = GoogleAuthProvider.credential(
@@ -96,18 +101,48 @@ class LoginController extends GetxController {
         idToken: googleAuth.idToken,
       );
 
+      // 3. Sign In ke Firebase Auth
       UserCredential userCredential = await _auth.signInWithCredential(
         credential,
       );
+      User? user = userCredential.user;
 
-      if (userCredential.user != null) {
-        await recordUserDevice(userCredential.user!.uid);
+      if (user != null) {
+        // 4. CEK & SIMPAN KE FIRESTORE (LOGIKA REGISTER OTOMATIS)
+        DocumentSnapshot userDoc = await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (!userDoc.exists) {
+          // Jika dokumen belum ada, berarti ini user baru. Simpan datanya.
+          await _firestore.collection('users').doc(user.uid).set({
+            'uid': user.uid,
+            'name': user.displayName ?? googleUser.displayName ?? "User Google",
+            'email': user.email ?? googleUser.email,
+            'photoUrl': user.photoURL ?? googleUser.photoUrl,
+            'role': 'user',
+            'createdAt': FieldValue.serverTimestamp(),
+            'isVerified': true, // User Google dianggap sudah terverifikasi
+            'authProvider': 'google',
+          });
+          print("User Google baru berhasil didaftarkan ke Firestore");
+        } else {
+          // Opsional: Update data jika user mengganti nama/foto di Google
+          await _firestore.collection('users').doc(user.uid).update({
+            'last_login': FieldValue.serverTimestamp(),
+            // 'photoUrl': user.photoURL, // Uncomment jika ingin auto-update foto
+          });
+        }
+
+        await recordUserDevice(user.uid);
         Get.offAllNamed('/home');
       }
     } catch (e) {
+      print("Google Login Error: $e");
       _showSnackbar(
         "Google Error",
-        "Terjadi kesalahan saat memilih akun",
+        "Gagal login dengan Google: $e",
         Colors.red,
       );
     } finally {
@@ -115,7 +150,7 @@ class LoginController extends GetxController {
     }
   }
 
-  // --- 3. REKAM DEVICE (DIPISAH) ---
+  // --- 3. REKAM DEVICE ---
   Future<void> recordUserDevice(String uid) async {
     try {
       DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
@@ -146,11 +181,15 @@ class LoginController extends GetxController {
   }
 
   Future<bool> _checkIfEmailDeleted(String email) async {
-    var check = await _firestore
-        .collection('deleted_accounts')
-        .doc(email)
-        .get();
-    return check.exists;
+    try {
+      var check = await _firestore
+          .collection('deleted_accounts')
+          .doc(email)
+          .get();
+      return check.exists;
+    } catch (e) {
+      return false;
+    }
   }
 
   void _showAccessDeniedDialog() {
@@ -170,15 +209,11 @@ class LoginController extends GetxController {
               const SizedBox(height: 20),
               const Text(
                 "Akses Ditolak",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Serif',
-                ),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
               const Text(
-                "Akun ini telah dihapus permanen. Silakan pilih akun lain.",
+                "Akun ini telah dihapus permanen.",
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 30),
@@ -188,9 +223,6 @@ class LoginController extends GetxController {
                   onPressed: () => Get.back(),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF4E342E),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
                   ),
                   child: const Text(
                     "MENGERTI",

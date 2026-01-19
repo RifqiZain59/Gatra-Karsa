@@ -1,10 +1,12 @@
+import 'dart:convert';
+import 'dart:typed_data';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ionicons/ionicons.dart';
-
 import '../controllers/daftarsave_controller.dart';
 
-// --- TEMA WARNA (Konsisten) ---
+// --- TEMA WARNA ---
 class WayangColors {
   static const Color primaryDark = Color(0xFF4E342E);
   static const Color primaryLight = Color(0xFF8D6E63);
@@ -20,24 +22,10 @@ class DaftarsaveView extends GetView<DaftarsaveController> {
 
   @override
   Widget build(BuildContext context) {
-    // TIPS: Data Dummy untuk preview tampilan Save
-    final List<Map<String, String>> items = [
-      {
-        'title': 'Wayang Kulit Arjuna',
-        'category': 'Tokoh Pandawa',
-        'image': 'https://via.placeholder.com/150',
-      },
-      {
-        'title': 'Museum Wayang Kekayon',
-        'category': 'Destinasi Budaya',
-        'image': 'https://via.placeholder.com/150',
-      },
-      {
-        'title': 'Pagelaran Semalam Suntuk',
-        'category': 'Event Seni',
-        'image': 'https://via.placeholder.com/150',
-      },
-    ];
+    // Inject Controller jika belum ada
+    if (!Get.isRegistered<DaftarsaveController>()) {
+      Get.put(DaftarsaveController());
+    }
 
     return Scaffold(
       backgroundColor: WayangColors.background,
@@ -53,7 +41,7 @@ class DaftarsaveView extends GetView<DaftarsaveController> {
           onPressed: () => Get.back(),
         ),
         title: const Text(
-          'Koleksi Tersimpan', // Diubah judulnya
+          'Koleksi Tersimpan',
           style: TextStyle(
             color: WayangColors.primaryDark,
             fontFamily: 'Serif',
@@ -62,37 +50,57 @@ class DaftarsaveView extends GetView<DaftarsaveController> {
           ),
         ),
       ),
-      body: items.isEmpty
-          ? _buildEmptyState()
-          : ListView.builder(
-              padding: const EdgeInsets.all(20),
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                final item = items[index];
-                return _buildSavedCard(
-                  title: item['title']!,
-                  category: item['category']!,
-                  imageUrl: item['image']!,
-                  onRemove: () {
-                    // TODO: Panggil fungsi hapus bookmark di controller
-                    // controller.removeBookmark(id);
-                    Get.snackbar(
-                      "Dihapus",
-                      "${item['title']} dihapus dari penyimpanan",
-                      backgroundColor: WayangColors.primaryDark,
-                      colorText: Colors.white,
-                      snackPosition: SnackPosition.BOTTOM,
-                      margin: const EdgeInsets.all(20),
-                      borderRadius: 10,
-                    );
-                  },
-                );
-              },
-            ),
+      // MENGGUNAKAN STREAMBUILDER UNTUK DATA REALTIME
+      body: StreamBuilder<QuerySnapshot>(
+        stream: controller.bookmarksStream,
+        builder: (context, snapshot) {
+          // 1. Loading
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(color: WayangColors.primaryDark),
+            );
+          }
+
+          // 2. Error
+          if (snapshot.hasError) {
+            return Center(child: Text("Terjadi kesalahan: ${snapshot.error}"));
+          }
+
+          // 3. Empty State
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return _buildEmptyState();
+          }
+
+          // 4. Data Ada -> Tampilkan List
+          var docs = snapshot.data!.docs;
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(20),
+            itemCount: docs.length,
+            physics: const BouncingScrollPhysics(),
+            itemBuilder: (context, index) {
+              var doc = docs[index];
+              var data = doc.data() as Map<String, dynamic>;
+
+              // Ambil Data dengan Default Value
+              String title = data['title'] ?? 'Tanpa Judul';
+              String category = data['category'] ?? 'Umum';
+              String imageUrl = data['image_url'] ?? '';
+
+              return _buildSavedCard(
+                title: title,
+                category: category,
+                imageUrl: imageUrl,
+                onRemove: () => controller.removeBookmark(doc.id),
+                onTap: () => controller.navigateToDetail(data),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 
-  // --- WIDGET: EMPTY STATE (KOSONG) ---
   Widget _buildEmptyState() {
     return Center(
       child: Column(
@@ -104,7 +112,6 @@ class DaftarsaveView extends GetView<DaftarsaveController> {
               color: WayangColors.primaryDark.withOpacity(0.05),
               shape: BoxShape.circle,
             ),
-            // Ikon Bookmark Outline (Arsip kosong)
             child: Icon(
               Ionicons.bookmark_outline,
               size: 80,
@@ -132,12 +139,12 @@ class DaftarsaveView extends GetView<DaftarsaveController> {
     );
   }
 
-  // --- WIDGET: KARTU ITEM (PREMIUM LOOK) ---
   Widget _buildSavedCard({
     required String title,
     required String category,
     required String imageUrl,
     required VoidCallback onRemove,
+    required VoidCallback onTap,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -156,47 +163,37 @@ class DaftarsaveView extends GetView<DaftarsaveController> {
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
-          onTap: () {
-            // TODO: Arahkan ke detail halaman
-          },
+          onTap: onTap,
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(12.0),
             child: Row(
               children: [
-                // --- 1. GAMBAR THUMBNAIL ---
+                // --- GAMBAR ---
                 Container(
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
                     color: WayangColors.background,
                     borderRadius: BorderRadius.circular(12),
-                    image: DecorationImage(
-                      image: NetworkImage(imageUrl),
-                      fit: BoxFit.cover,
-                    ),
                     border: Border.all(
                       color: WayangColors.goldAccent.withOpacity(0.3),
                       width: 1,
                     ),
                   ),
-                  child: const Center(
-                    child: Icon(
-                      Ionicons.image_outline,
-                      color: Colors.grey,
-                      size: 30,
-                    ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(11),
+                    child: _buildImage(imageUrl),
                   ),
                 ),
 
                 const SizedBox(width: 16),
 
-                // --- 2. TEXT DETAIL ---
+                // --- INFO ---
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Kategori
                       Text(
                         category.toUpperCase(),
                         style: const TextStyle(
@@ -207,7 +204,6 @@ class DaftarsaveView extends GetView<DaftarsaveController> {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      // Judul Utama
                       Text(
                         title,
                         maxLines: 2,
@@ -223,11 +219,10 @@ class DaftarsaveView extends GetView<DaftarsaveController> {
                   ),
                 ),
 
-                // --- 3. TOMBOL BOOKMARK (ICON SAVE) ---
+                // --- TOMBOL HAPUS ---
                 IconButton(
                   onPressed: onRemove,
                   splashRadius: 24,
-                  // Menggunakan Ikon Bookmark Solid berwarna Emas
                   icon: const Icon(
                     Ionicons.bookmark,
                     color: WayangColors.goldAccent,
@@ -241,5 +236,38 @@ class DaftarsaveView extends GetView<DaftarsaveController> {
         ),
       ),
     );
+  }
+
+  // Helper Gambar
+  Widget _buildImage(String path) {
+    if (path.isEmpty)
+      return const Icon(Ionicons.image_outline, color: Colors.grey);
+
+    try {
+      if (path.startsWith('http')) {
+        return Image.network(
+          path,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => const Icon(Icons.error),
+        );
+      } else if (path.startsWith('assets/')) {
+        return Image.asset(
+          path,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => const Icon(Icons.error),
+        );
+      } else {
+        String cleanBase64 = path.replaceAll(RegExp(r'\s+'), '');
+        if (cleanBase64.contains(','))
+          cleanBase64 = cleanBase64.split(',').last;
+        return Image.memory(
+          base64Decode(cleanBase64),
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => const Icon(Icons.error),
+        );
+      }
+    } catch (e) {
+      return const Icon(Ionicons.image_outline, color: Colors.grey);
+    }
   }
 }

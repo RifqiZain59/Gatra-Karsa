@@ -1,18 +1,18 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ui'; // Diperlukan untuk ImageFilter
+import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:ionicons/ionicons.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:gatrakarsa/app/data/service/api_service.dart';
 import '../controllers/detailevent_controller.dart';
 
 class DetaileventView extends GetView<DetaileventController> {
   const DetaileventView({super.key});
 
-  // --- PALET WARNA ---
   final Color _primaryBrown = const Color(0xFF4E342E);
   final Color _goldAccent = const Color(0xFFD4AF37);
   final Color _bgSoft = const Color(0xFFFAFAFA);
@@ -26,8 +26,6 @@ class DetaileventView extends GetView<DetaileventController> {
     }
 
     final ContentModel event = controller.event;
-
-    // Data Processing
     final String date = event.subtitle.isNotEmpty ? event.subtitle : "TBA";
     final String time = event.time ?? "TBA";
     final String location =
@@ -40,16 +38,16 @@ class DetaileventView extends GetView<DetaileventController> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark, // Icon Status Bar Hitam
-        systemNavigationBarColor: Colors.white, // Navigasi Bar HP Putih
+        statusBarIconBrightness: Brightness.dark,
+        systemNavigationBarColor: Colors.white,
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
       child: Scaffold(
         backgroundColor: Colors.white,
-        resizeToAvoidBottomInset: false, // Background diam saat keyboard muncul
+        resizeToAvoidBottomInset: false,
         body: Stack(
           children: [
-            // 1. GAMBAR BACKGROUND
+            // 1. GAMBAR HEADER
             Positioned(
               top: 0,
               left: 0,
@@ -58,7 +56,7 @@ class DetaileventView extends GetView<DetaileventController> {
               child: _buildHeaderImage(event.imageUrl),
             ),
 
-            // 2. TOMBOL BACK & BOOKMARK
+            // 2. NAVBAR
             Positioned(
               top: MediaQuery.of(context).padding.top + 10,
               left: 20,
@@ -85,7 +83,7 @@ class DetaileventView extends GetView<DetaileventController> {
               ),
             ),
 
-            // 3. KONTEN UTAMA (SHEET)
+            // 3. KONTEN
             Positioned.fill(
               top: MediaQuery.of(context).size.height * 0.40,
               child: Container(
@@ -101,12 +99,11 @@ class DetaileventView extends GetView<DetaileventController> {
                 ),
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
-                  // Padding bawah besar agar scroll bisa mentok ke atas tombol navigasi
                   padding: const EdgeInsets.fromLTRB(24, 30, 24, 160),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // A. KATEGORI
+                      // KATEGORI
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 14,
@@ -118,7 +115,7 @@ class DetaileventView extends GetView<DetaileventController> {
                         ),
                         child: Text(
                           event.category.toUpperCase(),
-                          style: TextStyle(
+                          style: GoogleFonts.mulish(
                             color: _primaryBrown,
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
@@ -128,11 +125,10 @@ class DetaileventView extends GetView<DetaileventController> {
                       ),
                       const SizedBox(height: 16),
 
-                      // B. JUDUL
+                      // JUDUL
                       Text(
                         event.title,
-                        style: TextStyle(
-                          fontFamily: 'Serif',
+                        style: GoogleFonts.philosopher(
                           fontSize: 28,
                           fontWeight: FontWeight.w800,
                           color: _textHeading,
@@ -141,7 +137,7 @@ class DetaileventView extends GetView<DetaileventController> {
                       ),
                       const SizedBox(height: 24),
 
-                      // C. INFO GRID
+                      // GRID INFO
                       Row(
                         children: [
                           Expanded(
@@ -163,10 +159,9 @@ class DetaileventView extends GetView<DetaileventController> {
                       ),
                       const SizedBox(height: 12),
                       _buildLocationTile(location),
-
                       const SizedBox(height: 30),
 
-                      // D. PERFORMER
+                      // PERFORMER
                       if (performer.isNotEmpty && performer != "-") ...[
                         Text("Penampil Utama", style: _headingStyle),
                         const SizedBox(height: 12),
@@ -196,7 +191,7 @@ class DetaileventView extends GetView<DetaileventController> {
                                 children: [
                                   Text(
                                     performer,
-                                    style: TextStyle(
+                                    style: GoogleFonts.mulish(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
                                       color: _textHeading,
@@ -204,7 +199,7 @@ class DetaileventView extends GetView<DetaileventController> {
                                   ),
                                   Text(
                                     "Tokoh / Seniman",
-                                    style: TextStyle(
+                                    style: GoogleFonts.mulish(
                                       fontSize: 12,
                                       color: Colors.grey[500],
                                     ),
@@ -217,7 +212,7 @@ class DetaileventView extends GetView<DetaileventController> {
                         const SizedBox(height: 30),
                       ],
 
-                      // E. DESKRIPSI
+                      // DESKRIPSI
                       Text("Tentang Acara", style: _headingStyle),
                       const SizedBox(height: 10),
                       Text(
@@ -225,7 +220,7 @@ class DetaileventView extends GetView<DetaileventController> {
                             ? event.description
                             : "Tidak ada deskripsi.",
                         textAlign: TextAlign.justify,
-                        style: TextStyle(
+                        style: GoogleFonts.mulish(
                           fontSize: 15,
                           height: 1.8,
                           color: _textBody,
@@ -233,7 +228,7 @@ class DetaileventView extends GetView<DetaileventController> {
                       ),
                       const SizedBox(height: 30),
 
-                      // F. SECTION ULASAN
+                      // REVIEW
                       _buildReviewSection(context),
                     ],
                   ),
@@ -241,7 +236,7 @@ class DetaileventView extends GetView<DetaileventController> {
               ),
             ),
 
-            // 4. FLOATING BOTTOM BAR
+            // 4. BOTTOM BAR
             Positioned(
               bottom: 0,
               left: 0,
@@ -270,18 +265,17 @@ class DetaileventView extends GetView<DetaileventController> {
                       children: [
                         Text(
                           "Harga Tiket",
-                          style: TextStyle(
+                          style: GoogleFonts.mulish(
                             fontSize: 12,
                             color: Colors.grey[500],
                           ),
                         ),
                         Text(
                           price,
-                          style: TextStyle(
+                          style: GoogleFonts.philosopher(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
                             color: _primaryBrown,
-                            fontFamily: 'Serif',
                           ),
                         ),
                       ],
@@ -302,9 +296,9 @@ class DetaileventView extends GetView<DetaileventController> {
                         ),
                       ),
                       icon: const Icon(Ionicons.map_outline, size: 20),
-                      label: const Text(
+                      label: Text(
                         "Petunjuk Arah",
-                        style: TextStyle(
+                        style: GoogleFonts.mulish(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
                         ),
@@ -320,14 +314,11 @@ class DetaileventView extends GetView<DetaileventController> {
     );
   }
 
-  TextStyle get _headingStyle => TextStyle(
+  TextStyle get _headingStyle => GoogleFonts.philosopher(
     fontSize: 18,
     fontWeight: FontWeight.bold,
     color: _textHeading,
-    fontFamily: 'Serif',
   );
-
-  // --- WIDGET HELPER ---
 
   Widget _buildInfoTile(IconData icon, String label, String value) {
     return Container(
@@ -342,13 +333,16 @@ class DetaileventView extends GetView<DetaileventController> {
         children: [
           Icon(icon, color: _goldAccent, size: 22),
           const SizedBox(height: 8),
-          Text(label, style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+          Text(
+            label,
+            style: GoogleFonts.mulish(fontSize: 11, color: Colors.grey[500]),
+          ),
           const SizedBox(height: 4),
           Text(
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
+            style: GoogleFonts.mulish(
               fontWeight: FontWeight.bold,
               color: _textHeading,
               fontSize: 14,
@@ -379,12 +373,15 @@ class DetaileventView extends GetView<DetaileventController> {
               children: [
                 Text(
                   "Lokasi",
-                  style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                  style: GoogleFonts.mulish(
+                    fontSize: 11,
+                    color: Colors.grey[500],
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   location,
-                  style: TextStyle(
+                  style: GoogleFonts.mulish(
                     fontWeight: FontWeight.bold,
                     color: _textHeading,
                     fontSize: 14,
@@ -394,6 +391,304 @@ class DetaileventView extends GetView<DetaileventController> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildReviewSection(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: controller.ulasanStream,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting)
+          return Container(height: 150, color: Colors.grey[100]);
+        var docs = snapshot.data?.docs ?? [];
+        int totalReviews = docs.length;
+        double averageRating = 0.0;
+        if (totalReviews > 0) {
+          double totalStars = 0;
+          for (var doc in docs)
+            totalStars += (doc.data() as Map<String, dynamic>)['rating'] ?? 0;
+          averageRating = totalStars / totalReviews;
+        }
+        return Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [_primaryBrown, _primaryBrown.withOpacity(0.8)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: _primaryBrown.withOpacity(0.3),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Stack(
+                children: [
+                  Positioned(
+                    right: -10,
+                    bottom: -10,
+                    child: Opacity(
+                      opacity: 0.1,
+                      child: Icon(
+                        Ionicons.chatbubbles,
+                        size: 100,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Column(
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                averageRating.toStringAsFixed(1),
+                                style: GoogleFonts.philosopher(
+                                  fontSize: 48,
+                                  fontWeight: FontWeight.bold,
+                                  color: _goldAccent,
+                                  height: 1.0,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: Text(
+                                  "/ 5.0",
+                                  style: GoogleFonts.mulish(
+                                    fontSize: 14,
+                                    color: Colors.white.withOpacity(0.6),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 24),
+                      Container(
+                        width: 1,
+                        height: 50,
+                        color: Colors.white.withOpacity(0.2),
+                      ),
+                      const SizedBox(width: 24),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: List.generate(
+                              5,
+                              (index) => Icon(
+                                index < averageRating.round()
+                                    ? Ionicons.star
+                                    : Ionicons.star_outline,
+                                color: _goldAccent,
+                                size: 18,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            "$totalReviews Ulasan",
+                            style: GoogleFonts.mulish(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            "Pengunjung",
+                            style: GoogleFonts.mulish(
+                              color: Colors.white.withOpacity(0.6),
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 30),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("Ulasan Terbaru", style: _headingStyle),
+                GestureDetector(
+                  onTap: () => _openRatingBottomSheet(context),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      "Tulis Ulasan",
+                      style: GoogleFonts.mulish(
+                        color: _goldAccent,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (docs.isEmpty)
+              Container(
+                padding: const EdgeInsets.all(30),
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      Ionicons.chatbubble_ellipses_outline,
+                      size: 40,
+                      color: Colors.grey[300],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      "Belum ada ulasan.",
+                      style: GoogleFonts.mulish(
+                        color: Colors.grey[400],
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              _AutoPlayReviewSlider(
+                docs: docs,
+                primaryBrown: _primaryBrown,
+                goldAccent: _goldAccent,
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _openRatingBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: EdgeInsets.only(
+          left: 24,
+          right: 24,
+          top: 24,
+          bottom:
+              MediaQuery.of(context).viewInsets.bottom +
+              MediaQuery.of(context).padding.bottom +
+              24,
+        ),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                "Bagikan Pengalaman",
+                style: GoogleFonts.philosopher(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: _primaryBrown,
+                ),
+              ),
+              const SizedBox(height: 25),
+              Obx(
+                () => Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    5,
+                    (index) => GestureDetector(
+                      onTap: () => controller.setRating(index + 1),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 5),
+                        child: Icon(
+                          index < controller.userRating.value
+                              ? Ionicons.star
+                              : Ionicons.star_outline,
+                          color: _goldAccent,
+                          size: 42,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 25),
+              TextField(
+                controller: controller.reviewController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: "Ceritakan pengalamanmu...",
+                  hintStyle: GoogleFonts.mulish(color: Colors.grey[400]),
+                  filled: true,
+                  fillColor: _bgSoft,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.all(16),
+                ),
+              ),
+              const SizedBox(height: 25),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Get.back();
+                    controller.submitReview();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _primaryBrown,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    "Kirim Ulasan",
+                    style: GoogleFonts.mulish(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -437,9 +732,8 @@ class DetaileventView extends GetView<DetaileventController> {
         return Image.asset(imageUrl, fit: BoxFit.cover);
       } else {
         String cleanBase64 = imageUrl.replaceAll(RegExp(r'\s+'), '');
-        if (cleanBase64.contains(',')) {
+        if (cleanBase64.contains(','))
           cleanBase64 = cleanBase64.split(',').last;
-        }
         int mod4 = cleanBase64.length % 4;
         if (mod4 > 0) cleanBase64 += '=' * (4 - mod4);
         return Image.memory(base64Decode(cleanBase64), fit: BoxFit.cover);
@@ -448,334 +742,18 @@ class DetaileventView extends GetView<DetaileventController> {
       return Container(color: _primaryBrown);
     }
   }
-
-  // --- REVIEW SECTION ---
-  Widget _buildReviewSection(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: controller.ulasanStream,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Container(height: 150, color: Colors.grey[100]);
-        }
-
-        var docs = snapshot.data?.docs ?? [];
-        int totalReviews = docs.length;
-        double averageRating = 0.0;
-        if (totalReviews > 0) {
-          double totalStars = 0;
-          for (var doc in docs) {
-            totalStars += (doc.data() as Map<String, dynamic>)['rating'] ?? 0;
-          }
-          averageRating = totalStars / totalReviews;
-        }
-
-        return Column(
-          children: [
-            // A. KOTAK TOTAL ULASAN
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [_primaryBrown, _primaryBrown.withOpacity(0.8)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: _primaryBrown.withOpacity(0.3),
-                    blurRadius: 15,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Stack(
-                children: [
-                  Positioned(
-                    right: -10,
-                    bottom: -10,
-                    child: Opacity(
-                      opacity: 0.1,
-                      child: Icon(
-                        Ionicons.chatbubbles,
-                        size: 100,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                averageRating.toStringAsFixed(1),
-                                style: TextStyle(
-                                  fontSize: 48,
-                                  fontWeight: FontWeight.bold,
-                                  color: _goldAccent,
-                                  fontFamily: 'Serif',
-                                  height: 1.0,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 8),
-                                child: Text(
-                                  "/ 5.0",
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.white.withOpacity(0.6),
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      const SizedBox(width: 24),
-                      Container(
-                        width: 1,
-                        height: 50,
-                        color: Colors.white.withOpacity(0.2),
-                      ),
-                      const SizedBox(width: 24),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: List.generate(
-                              5,
-                              (index) => Icon(
-                                index < averageRating.round()
-                                    ? Ionicons.star
-                                    : Ionicons.star_outline,
-                                color: _goldAccent,
-                                size: 18,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            "$totalReviews Ulasan",
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Text(
-                            "Pengunjung",
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.6),
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 30),
-
-            // B. HEADER & TOMBOL TULIS
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("Ulasan Terbaru", style: _headingStyle),
-                GestureDetector(
-                  onTap: () => _openRatingBottomSheet(context),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Text(
-                      "Tulis Ulasan",
-                      style: TextStyle(
-                        color: _goldAccent,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        // FIX: Garis bawah dihapus sesuai permintaan
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // C. SLIDER
-            if (docs.isEmpty)
-              Container(
-                padding: const EdgeInsets.all(30),
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade200),
-                ),
-                child: Column(
-                  children: [
-                    Icon(
-                      Ionicons.chatbubble_ellipses_outline,
-                      size: 40,
-                      color: Colors.grey[300],
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      "Belum ada ulasan.",
-                      style: TextStyle(
-                        color: Colors.grey[400],
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            else
-              _AutoPlayReviewSlider(
-                docs: docs,
-                primaryBrown: _primaryBrown,
-                goldAccent: _goldAccent,
-              ),
-          ],
-        );
-      },
-    );
-  }
-
-  // --- MODAL INPUT ULASAN ---
-  void _openRatingBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        // FIX: Menambahkan padding.bottom agar aman dari Navigasi Bar HP
-        padding: EdgeInsets.only(
-          left: 24,
-          right: 24,
-          top: 24,
-          bottom:
-              MediaQuery.of(context).viewInsets.bottom +
-              MediaQuery.of(context).padding.bottom +
-              24,
-        ),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                "Bagikan Pengalaman",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: _primaryBrown,
-                  fontFamily: 'Serif',
-                ),
-              ),
-              const SizedBox(height: 25),
-              Obx(
-                () => Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(
-                    5,
-                    (index) => GestureDetector(
-                      onTap: () => controller.setRating(index + 1),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 5),
-                        child: Icon(
-                          index < controller.userRating.value
-                              ? Ionicons.star
-                              : Ionicons.star_outline,
-                          color: _goldAccent,
-                          size: 42,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 25),
-              TextField(
-                controller: controller.reviewController,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  hintText: "Ceritakan pengalamanmu...",
-                  hintStyle: TextStyle(color: Colors.grey[400]),
-                  filled: true,
-                  fillColor: _bgSoft,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.all(16),
-                ),
-              ),
-              const SizedBox(height: 25),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Get.back();
-                    controller.submitReview();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _primaryBrown,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    "Kirim Ulasan",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
 
-// --- SLIDER (Reused Logic) ---
+// --- DEFINISI SLIDER AGAR TIDAK ERROR ---
 class _AutoPlayReviewSlider extends StatefulWidget {
   final List<DocumentSnapshot> docs;
   final Color primaryBrown;
   final Color goldAccent;
-
   const _AutoPlayReviewSlider({
     required this.docs,
     required this.primaryBrown,
     required this.goldAccent,
   });
-
   @override
   State<_AutoPlayReviewSlider> createState() => _AutoPlayReviewSliderState();
 }
@@ -784,7 +762,6 @@ class _AutoPlayReviewSliderState extends State<_AutoPlayReviewSlider> {
   late PageController _pageController;
   int _currentIndex = 0;
   Timer? _timer;
-
   @override
   void initState() {
     super.initState();
@@ -873,7 +850,6 @@ class _AutoPlayReviewSliderState extends State<_AutoPlayReviewSlider> {
     String photo = data['user_photo'] ?? '';
     String comment = data['comment'] ?? '';
     int rating = data['rating'] ?? 5;
-
     String dateStr = "";
     if (data['created_at'] != null && data['created_at'] is Timestamp) {
       DateTime dt = (data['created_at'] as Timestamp).toDate();
@@ -886,14 +862,14 @@ class _AutoPlayReviewSliderState extends State<_AutoPlayReviewSlider> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade100),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.08),
+            color: Colors.grey.withOpacity(0.06),
             blurRadius: 15,
-            offset: const Offset(0, 5),
+            offset: const Offset(0, 8),
           ),
         ],
-        border: Border.all(color: Colors.grey.shade100),
       ),
       child: Stack(
         children: [
@@ -903,7 +879,7 @@ class _AutoPlayReviewSliderState extends State<_AutoPlayReviewSlider> {
             child: Icon(
               Icons.format_quote_rounded,
               size: 40,
-              color: widget.goldAccent.withOpacity(0.2),
+              color: widget.goldAccent.withOpacity(0.15),
             ),
           ),
           Column(
@@ -916,7 +892,7 @@ class _AutoPlayReviewSliderState extends State<_AutoPlayReviewSlider> {
                     height: 40,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: widget.goldAccent.withOpacity(0.2),
+                      color: widget.goldAccent.withOpacity(0.1),
                       image: photo.isNotEmpty
                           ? DecorationImage(
                               image: MemoryImage(
@@ -943,11 +919,12 @@ class _AutoPlayReviewSliderState extends State<_AutoPlayReviewSlider> {
                       children: [
                         Text(
                           name,
-                          style: const TextStyle(
+                          style: GoogleFonts.mulish(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                           ),
                           maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
                         Row(
@@ -967,7 +944,7 @@ class _AutoPlayReviewSliderState extends State<_AutoPlayReviewSlider> {
                             const SizedBox(width: 8),
                             Text(
                               dateStr,
-                              style: TextStyle(
+                              style: GoogleFonts.mulish(
                                 fontSize: 10,
                                 color: Colors.grey[400],
                               ),
@@ -985,11 +962,10 @@ class _AutoPlayReviewSliderState extends State<_AutoPlayReviewSlider> {
                   comment,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
+                  style: GoogleFonts.mulish(
                     fontSize: 13,
                     color: Colors.grey[700],
                     height: 1.5,
-                    fontFamily: 'Serif',
                   ),
                 ),
               ),

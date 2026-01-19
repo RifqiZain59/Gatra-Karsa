@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:gatrakarsa/app/data/service/api_service.dart';
 import 'package:get/get.dart';
 import 'package:ionicons/ionicons.dart';
+import 'package:google_fonts/google_fonts.dart'; // IMPORT FONT
 
 // --- IMPORT VIEW & CONTROLLER & BINDING ---
 import 'package:gatrakarsa/app/modules/detail_wayang/views/detail_wayang_view.dart';
@@ -15,22 +16,17 @@ import 'package:gatrakarsa/app/modules/tokoh/controllers/tokoh_controller.dart';
 
 class TokohView extends StatefulWidget {
   const TokohView({super.key});
-
   @override
   State<TokohView> createState() => _TokohViewState();
 }
 
 class _TokohViewState extends State<TokohView> {
   final TokohController controller = Get.put(TokohController());
-
-  // --- PALET WARNA ---
   final Color _primaryColor = const Color(0xFF4E342E);
   final Color _accentColor = const Color(0xFFD4AF37);
   final Color _bgColor = const Color(0xFFFAFAF5);
   final Color _secondaryColor = const Color(0xFF8D6E63);
-
-  // --- LOCAL STATE ---
-  int _activeTab = 0; // 0: Wayang, 1: Dalang
+  int _activeTab = 0;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
   String _selectedCategory = "Semua";
@@ -41,7 +37,6 @@ class _TokohViewState extends State<TokohView> {
     super.dispose();
   }
 
-  // Helper Decode Image
   Uint8List? _decodeImage(String? base64String) {
     if (base64String == null || base64String.isEmpty) return null;
     try {
@@ -54,46 +49,30 @@ class _TokohViewState extends State<TokohView> {
     }
   }
 
-  // --- LOGIKA FILTER DINAMIS ---
-  // Mengambil kategori unik langsung dari data yang ada di Controller
   List<String> get _dynamicFilters {
-    // 1. Tentukan sumber data berdasarkan tab aktif
     List<ContentModel> source = _activeTab == 0
         ? controller.wayangList
         : controller.dalangList;
-
-    // 2. Ambil kategori unik (Set menghilangkan duplikat)
     Set<String> uniqueCategories = source
-        .map((e) => e.category.trim()) // Bersihkan spasi
-        .where((cat) => cat.isNotEmpty) // Hapus yang kosong
+        .map((e) => e.category.trim())
+        .where((cat) => cat.isNotEmpty)
         .toSet();
-
-    // 3. Urutkan abjad
     List<String> sortedCats = uniqueCategories.toList()..sort();
-
-    // 4. Tambahkan "Semua" di awal
     return ['Semua', ...sortedCats];
   }
 
-  // --- LOGIKA DATA TERFILTER ---
   List<ContentModel> get _filteredData {
     List<ContentModel> source = _activeTab == 0
         ? controller.wayangList
         : controller.dalangList;
-
     return source.where((item) {
-      // Filter Search
       bool matchesSearch = item.title.toLowerCase().contains(
         _searchQuery.toLowerCase(),
       );
-
-      // Filter Kategori
       bool matchesCategory = true;
       if (_selectedCategory != "Semua") {
-        // Bandingkan string (trim untuk keamanan)
         matchesCategory = item.category.trim() == _selectedCategory.trim();
       }
-
       return matchesSearch && matchesCategory;
     }).toList();
   }
@@ -112,28 +91,18 @@ class _TokohViewState extends State<TokohView> {
         child: SafeArea(
           child: Column(
             children: [
-              // HEADER
               _buildHeaderSection(),
-
-              // CONTENT GRID
               Expanded(
                 child: Obx(() {
                   bool isLoading = _activeTab == 0
                       ? controller.isLoadingWayang.value
                       : controller.isLoadingDalang.value;
-
-                  if (isLoading) {
+                  if (isLoading)
                     return Center(
                       child: CircularProgressIndicator(color: _primaryColor),
                     );
-                  }
-
-                  // Ambil data yang sudah difilter
                   final dataToShow = _filteredData;
-
-                  if (dataToShow.isEmpty) {
-                    return _buildEmptyState();
-                  }
+                  if (dataToShow.isEmpty) return _buildEmptyState();
                   return _buildContentGrid(dataToShow);
                 }),
               ),
@@ -150,7 +119,6 @@ class _TokohViewState extends State<TokohView> {
       decoration: BoxDecoration(color: _bgColor),
       child: Column(
         children: [
-          // Top Bar
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
             child: Row(
@@ -162,11 +130,10 @@ class _TokohViewState extends State<TokohView> {
                 ),
                 Text(
                   'Ensiklopedia',
-                  style: TextStyle(
+                  style: GoogleFonts.philosopher(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: _primaryColor,
-                    fontFamily: 'Serif',
                   ),
                 ),
                 const SizedBox(width: 24),
@@ -174,8 +141,6 @@ class _TokohViewState extends State<TokohView> {
             ),
           ),
           const SizedBox(height: 25),
-
-          // Main Tab Buttons (Wayang / Dalang)
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -185,8 +150,6 @@ class _TokohViewState extends State<TokohView> {
             ],
           ),
           const SizedBox(height: 20),
-
-          // Search Bar
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Container(
@@ -213,10 +176,9 @@ class _TokohViewState extends State<TokohView> {
                   hintText: _activeTab == 0
                       ? 'Cari wayang...'
                       : 'Cari dalang...',
-                  hintStyle: TextStyle(
+                  hintStyle: GoogleFonts.mulish(
                     color: Colors.grey[400],
                     fontSize: 14,
-                    fontFamily: 'Serif',
                   ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 14),
@@ -237,8 +199,6 @@ class _TokohViewState extends State<TokohView> {
             ),
           ),
           const SizedBox(height: 15),
-
-          // Filter Tabs (Dinamis)
           _buildFilterTabs(),
         ],
       ),
@@ -248,23 +208,20 @@ class _TokohViewState extends State<TokohView> {
   Widget _buildMainTabButton(String label, int index) {
     bool isActive = _activeTab == index;
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          _activeTab = index;
-          _searchQuery = "";
-          _searchController.clear();
-          _selectedCategory = "Semua"; // Reset kategori saat pindah tab
-        });
-      },
+      onTap: () => setState(() {
+        _activeTab = index;
+        _searchQuery = "";
+        _searchController.clear();
+        _selectedCategory = "Semua";
+      }),
       child: Column(
         children: [
           Text(
             label,
-            style: TextStyle(
+            style: GoogleFonts.mulish(
               color: isActive ? _primaryColor : Colors.grey,
               fontSize: 16,
               fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-              fontFamily: 'Serif',
             ),
           ),
           const SizedBox(height: 6),
@@ -282,26 +239,25 @@ class _TokohViewState extends State<TokohView> {
     );
   }
 
-  // --- WIDGET FILTER TABS (MENGGUNAKAN DATA DINAMIS) ---
   Widget _buildFilterTabs() {
     return SizedBox(
       width: double.infinity,
-      // Gunakan Obx agar tab muncul otomatis saat data selesai loading
       child: Obx(() {
-        final filters = _dynamicFilters; // Ambil list kategori dinamis
-
+        final filters = _dynamicFilters;
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.start,
-            children: filters.map((category) {
-              return Padding(
-                padding: const EdgeInsets.only(right: 30),
-                child: _buildFilterTabItem(category),
-              );
-            }).toList(),
+            children: filters
+                .map(
+                  (category) => Padding(
+                    padding: const EdgeInsets.only(right: 30),
+                    child: _buildFilterTabItem(category),
+                  ),
+                )
+                .toList(),
           ),
         );
       }),
@@ -316,11 +272,10 @@ class _TokohViewState extends State<TokohView> {
         children: [
           Text(
             label,
-            style: TextStyle(
+            style: GoogleFonts.mulish(
               color: isSelected ? _primaryColor : Colors.grey,
               fontSize: 14,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              fontFamily: 'Serif',
             ),
           ),
           const SizedBox(height: 4),
@@ -351,10 +306,7 @@ class _TokohViewState extends State<TokohView> {
           const SizedBox(height: 10),
           Text(
             "Data tidak ditemukan",
-            style: TextStyle(
-              color: _secondaryColor.withOpacity(0.5),
-              fontFamily: 'Serif',
-            ),
+            style: GoogleFonts.mulish(color: _secondaryColor.withOpacity(0.5)),
           ),
         ],
       ),
@@ -380,15 +332,12 @@ class _TokohViewState extends State<TokohView> {
 
   Widget _buildWayangCard(ContentModel item) {
     Uint8List? imageBytes = _decodeImage(item.imageUrl);
-
     return GestureDetector(
-      onTap: () {
-        Get.to(
-          () => const DetailWayangView(),
-          arguments: item,
-          binding: DetailWayangBinding(),
-        );
-      },
+      onTap: () => Get.to(
+        () => const DetailWayangView(),
+        arguments: item,
+        binding: DetailWayangBinding(),
+      ),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -441,12 +390,11 @@ class _TokohViewState extends State<TokohView> {
                   children: [
                     Text(
                       item.category.toUpperCase(),
-                      style: TextStyle(
+                      style: GoogleFonts.mulish(
                         fontSize: 9,
                         fontWeight: FontWeight.bold,
                         color: _accentColor,
                         letterSpacing: 0.5,
-                        fontFamily: 'Serif',
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -454,11 +402,10 @@ class _TokohViewState extends State<TokohView> {
                       item.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
+                      style: GoogleFonts.philosopher(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: _primaryColor,
-                        fontFamily: 'Serif',
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -469,20 +416,24 @@ class _TokohViewState extends State<TokohView> {
                           child: Text(
                             item.subtitle,
                             maxLines: 1,
-                            style: const TextStyle(
+                            style: GoogleFonts.mulish(
                               fontSize: 10,
                               color: Colors.grey,
                               fontStyle: FontStyle.italic,
-                              fontFamily: 'Serif',
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        Icon(
-                          Ionicons.heart_outline,
-                          size: 16,
-                          color: _secondaryColor,
-                        ),
+                        Obx(() {
+                          bool isLiked = controller.favoriteIds.contains(
+                            item.id,
+                          );
+                          return Icon(
+                            isLiked ? Ionicons.heart : Ionicons.heart_outline,
+                            size: 18,
+                            color: isLiked ? Colors.red : _secondaryColor,
+                          );
+                        }),
                       ],
                     ),
                   ],
@@ -498,15 +449,13 @@ class _TokohViewState extends State<TokohView> {
   Widget _buildDalangCard(ContentModel item) {
     Uint8List? imageBytes = _decodeImage(item.imageUrl);
     return GestureDetector(
-      onTap: () {
-        Get.to(
-          () => const DetaildalangView(),
-          arguments: item,
-          binding: BindingsBuilder(() {
-            Get.put(DetaildalangController());
-          }),
-        );
-      },
+      onTap: () => Get.to(
+        () => const DetaildalangView(),
+        arguments: item,
+        binding: BindingsBuilder(() {
+          Get.put(DetaildalangController());
+        }),
+      ),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -549,21 +498,19 @@ class _TokohViewState extends State<TokohView> {
               item.title,
               textAlign: TextAlign.center,
               maxLines: 2,
-              style: TextStyle(
+              style: GoogleFonts.philosopher(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
                 color: _primaryColor,
-                fontFamily: 'Serif',
               ),
             ),
             const SizedBox(height: 4),
             Text(
               item.subtitle,
-              style: TextStyle(
+              style: GoogleFonts.mulish(
                 fontSize: 10,
                 color: _accentColor,
                 fontWeight: FontWeight.w600,
-                fontFamily: 'Serif',
               ),
             ),
             const SizedBox(height: 8),
@@ -576,10 +523,9 @@ class _TokohViewState extends State<TokohView> {
                 ),
                 child: Text(
                   item.location!,
-                  style: TextStyle(
+                  style: GoogleFonts.mulish(
                     fontSize: 9,
                     color: _secondaryColor,
-                    fontFamily: 'Serif',
                   ),
                 ),
               ),

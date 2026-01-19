@@ -1,16 +1,19 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:gatrakarsa/app/data/service/api_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class DetailmuseumController extends GetxController {
-  final ApiService _apiService = ApiService();
   late ContentModel museum;
+  var isSaved = false.obs;
 
-  // Controller untuk Input Ulasan
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   final TextEditingController reviewController = TextEditingController();
-  var userRating = 0.obs;
+  var userRating = 5.obs;
 
   @override
   void onInit() {
@@ -20,12 +23,166 @@ class DetailmuseumController extends GetxController {
     } else {
       museum = ContentModel(
         id: '0',
-        title: 'Error',
-        subtitle: '-',
-        category: '-',
-        description: 'Error',
+        title: 'Unknown',
+        subtitle: '',
+        category: 'Museum',
+        description: '',
         imageUrl: '',
       );
+    }
+    checkSaveStatus();
+  }
+
+  void checkSaveStatus() async {
+    User? user = _auth.currentUser;
+    if (user == null) return;
+    try {
+      var doc = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('bookmarks')
+          .doc(museum.id)
+          .get();
+      isSaved.value = doc.exists;
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  void toggleSave() async {
+    User? user = _auth.currentUser;
+    if (user == null) {
+      Get.snackbar("Akses Dibatasi", "Silakan login.");
+      return;
+    }
+    var docRef = _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('bookmarks')
+        .doc(museum.id);
+
+    try {
+      if (isSaved.value) {
+        await docRef.delete();
+        isSaved.value = false;
+        Get.snackbar(
+          "Dihapus",
+          "Museum dihapus dari bookmark",
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+        );
+      } else {
+        await docRef.set({
+          'id': museum.id,
+          'title': museum.title,
+          'subtitle': museum.subtitle,
+          'category': 'Museum',
+          'image_url': museum.imageUrl,
+          'description': museum.description,
+          'location': museum.location,
+          'price': museum.price,
+          'saved_at': FieldValue.serverTimestamp(),
+        });
+        isSaved.value = true;
+        Get.snackbar(
+          "Disimpan",
+          "Museum disimpan",
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      Get.snackbar("Error", "$e");
+    }
+  }
+
+  // --- PERBAIKAN DI SINI (OPEN MAP) ---
+  void openMap() async {
+    if (museum.location == null || museum.location!.isEmpty) {
+      Get.snackbar("Info", "Lokasi tidak tersedia");
+      return;
+    }
+
+    // Format URL Google Maps Search yang benar
+    final Uri googleUrl = Uri.parse(
+      "https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(museum.location!)}",
+    );
+
+    try {
+      if (await canLaunchUrl(googleUrl)) {
+        await launchUrl(googleUrl, mode: LaunchMode.externalApplication);
+      } else {
+        await launchUrl(googleUrl, mode: LaunchMode.platformDefault);
+      }
+    } catch (e) {
+      Get.snackbar("Error", "Gagal membuka peta: $e");
+    }
+  }
+
+  Stream<QuerySnapshot> get ulasanStream {
+    return _firestore
+        .collection('contents')
+        .doc(museum.id)
+        .collection('reviews')
+        .orderBy('created_at', descending: true)
+        .snapshots();
+  }
+
+  void setRating(int rating) => userRating.value = rating;
+
+  void submitReview() async {
+    User? user = _auth.currentUser;
+    if (user == null) {
+      Get.snackbar("Error", "Login dulu.");
+      return;
+    }
+    if (reviewController.text.trim().isEmpty) return;
+
+    try {
+      var userDoc = await _firestore.collection('users').doc(user.uid).get();
+      String userName =
+          (userDoc.data() as Map<String, dynamic>?)?['name'] ?? 'Pengguna';
+      String userPhoto =
+          (userDoc.data() as Map<String, dynamic>?)?['photoBase64'] ?? '';
+
+      Map<String, dynamic> reviewData = {
+        'user_id': user.uid,
+        'user_name': userName,
+        'user_photo': userPhoto,
+        'rating': userRating.value,
+        'comment': reviewController.text.trim(),
+        'created_at': FieldValue.serverTimestamp(),
+      };
+
+      await _firestore
+          .collection('contents')
+          .doc(museum.id)
+          .collection('reviews')
+          .add(reviewData);
+
+      Map<String, dynamic> userHistoryData = {
+        ...reviewData,
+        'content_id': museum.id,
+        'targetName': museum.title,
+        'category': 'Museum',
+        'image': museum.imageUrl,
+      };
+      await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('reviews')
+          .add(userHistoryData);
+
+      reviewController.clear();
+      userRating.value = 5;
+      Get.snackbar(
+        "Sukses",
+        "Ulasan terkirim!",
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      Get.snackbar("Error", "$e");
     }
   }
 
@@ -33,109 +190,5 @@ class DetailmuseumController extends GetxController {
   void onClose() {
     reviewController.dispose();
     super.onClose();
-  }
-
-  // --- 1. GETTER STREAM ULASAN (YANG ERROR SEBELUMNYA) ---
-  Stream<QuerySnapshot> get ulasanStream => _apiService.streamUlasan(museum.id);
-
-  // --- 2. FITUR SAVE / BOOKMARK ---
-  var isSaved = false.obs;
-  void toggleSave() {
-    isSaved.value = !isSaved.value;
-    Get.snackbar(
-      isSaved.value ? "Disimpan" : "Dihapus",
-      "",
-      backgroundColor: Colors.white,
-      snackPosition: SnackPosition.TOP,
-      margin: const EdgeInsets.all(20),
-    );
-  }
-
-  // --- 3. FITUR SUBMIT REVIEW ---
-  void setRating(int rating) => userRating.value = rating;
-
-  Future<void> submitReview() async {
-    // Validasi Rating
-    if (userRating.value == 0) {
-      Get.snackbar(
-        "Peringatan",
-        "Beri bintang dulu ya!",
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-      );
-      return;
-    }
-
-    // Cek Login User
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      Get.snackbar(
-        "Akses Ditolak",
-        "Login dulu untuk mengulas.",
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-      );
-      return;
-    }
-
-    try {
-      // Tampilkan Loading
-      Get.dialog(
-        const Center(child: CircularProgressIndicator()),
-        barrierDismissible: false,
-      );
-
-      // Kirim ke Firebase (Tanpa ImageUrl sesuai perbaikan API)
-      await _apiService.submitUlasan(
-        contentId: museum.id,
-        targetName: museum.title,
-        category: museum.category,
-        subtitle: museum.subtitle,
-        rating: userRating.value,
-        comment: reviewController.text,
-        userId: user.uid,
-        userName: user.displayName ?? "Pengguna",
-      );
-
-      // Tutup Loading & Reset
-      Get.back();
-      Get.snackbar(
-        "Sukses",
-        "Ulasan terkirim!",
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
-
-      userRating.value = 0;
-      reviewController.clear();
-      FocusManager.instance.primaryFocus?.unfocus();
-    } catch (e) {
-      if (Get.isDialogOpen ?? false) Get.back();
-      Get.snackbar(
-        "Gagal",
-        "Error: $e",
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-    }
-  }
-
-  // --- 4. FITUR BUKA PETA ---
-  void openMap() {
-    if (museum.mapsUrl != null && museum.mapsUrl!.isNotEmpty) {
-      // Logika buka URL peta bisa ditambahkan di sini (misal pakai url_launcher)
-      Get.snackbar(
-        "Info",
-        "Membuka peta...",
-        snackPosition: SnackPosition.BOTTOM,
-      );
-    } else {
-      Get.snackbar(
-        "Maaf",
-        "Link peta belum tersedia.",
-        backgroundColor: Colors.orange,
-        colorText: Colors.white,
-      );
-    }
   }
 }

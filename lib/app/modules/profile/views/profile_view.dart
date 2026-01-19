@@ -1,12 +1,13 @@
-import 'dart:convert'; // Untuk decode Base64
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-// --- IMPORT HALAMAN TUJUAN ---
+// IMPORT HALAMAN
 import 'package:gatrakarsa/app/modules/editprofile/views/editprofile_view.dart';
 import 'package:gatrakarsa/app/modules/gantikatasandi/views/gantikatasandi_view.dart';
 import 'package:gatrakarsa/app/modules/riwayatlogin/views/riwayatlogin_view.dart';
@@ -14,11 +15,8 @@ import 'package:gatrakarsa/app/modules/tentangkami/views/tentangkami_view.dart';
 import 'package:gatrakarsa/app/modules/ketentuanpemakaian/views/ketentuanpemakaian_view.dart';
 import 'package:gatrakarsa/app/modules/kebijakanprivasi/views/kebijakanprivasi_view.dart';
 import 'package:gatrakarsa/app/modules/daftarsave/views/daftarsave_view.dart';
-
-// --- [BARU] IMPORT HALAMAN ULASAN ---
 import 'package:gatrakarsa/app/modules/ulasan/views/ulasan_view.dart';
 
-// --- TEMA WARNA ---
 class WayangColors {
   static const Color primaryDark = Color(0xFF4E342E);
   static const Color primaryLight = Color(0xFF8D6E63);
@@ -31,7 +29,6 @@ class WayangColors {
 
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
-
   @override
   State<ProfileView> createState() => _ProfileViewState();
 }
@@ -55,13 +52,11 @@ class _ProfileViewState extends State<ProfileView> {
         _userEmail = user.email ?? "-";
         _photoUrl = user.photoURL;
       });
-
       try {
         DocumentSnapshot userDoc = await FirebaseFirestore.instance
             .collection('users')
             .doc(user.uid)
             .get();
-
         if (userDoc.exists) {
           Map<String, dynamic>? data = userDoc.data() as Map<String, dynamic>?;
           setState(() {
@@ -70,7 +65,7 @@ class _ProfileViewState extends State<ProfileView> {
           });
         }
       } catch (e) {
-        print("Gagal ambil data profil: $e");
+        print("Gagal: $e");
       }
     }
   }
@@ -94,6 +89,7 @@ class _ProfileViewState extends State<ProfileView> {
           statusBarIconBrightness: Brightness.light,
         ),
         child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
           child: Column(
             children: [
               _buildHeaderSection(context),
@@ -103,10 +99,6 @@ class _ProfileViewState extends State<ProfileView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 24),
-
-                    // ==========================================
-                    // 1. KOTAK PENYIMPANAN (BOOKMARK)
-                    // ==========================================
                     _buildSectionTitle('Koleksi Saya'),
                     _buildMenuCard(context, [
                       _buildMenuItem(
@@ -115,28 +107,16 @@ class _ProfileViewState extends State<ProfileView> {
                         onTap: () => Get.to(() => const DaftarsaveView()),
                       ),
                     ]),
-
                     const SizedBox(height: 24),
-
-                    // ==========================================
-                    // 2. KOTAK RATING (AKTIVITAS)
-                    // ==========================================
                     _buildSectionTitle('Aktivitas Saya'),
                     _buildMenuCard(context, [
                       _buildMenuItem(
                         Ionicons.star_outline,
                         'Ulasan & Rating',
-                        onTap: () => Get.to(
-                          () => const UlasanView(),
-                        ), // <-- SUDAH DIARAHKAN KE ULASAN VIEW
+                        onTap: () => Get.to(() => const UlasanView()),
                       ),
                     ]),
-
                     const SizedBox(height: 32),
-
-                    // ==========================================
-                    // 3. PENGATURAN AKUN
-                    // ==========================================
                     _buildSectionTitle('Pengaturan Akun'),
                     _buildMenuCard(context, [
                       _buildMenuItem(
@@ -159,12 +139,7 @@ class _ProfileViewState extends State<ProfileView> {
                         onTap: () => Get.to(() => const RiwayatloginView()),
                       ),
                     ]),
-
                     const SizedBox(height: 32),
-
-                    // ==========================================
-                    // 4. TENTANG KAMI
-                    // ==========================================
                     _buildSectionTitle('Tentang Gatra Karsa'),
                     _buildMenuCard(context, [
                       _buildMenuItem(
@@ -186,12 +161,7 @@ class _ProfileViewState extends State<ProfileView> {
                         onTap: () => Get.to(() => const KebijakanprivasiView()),
                       ),
                     ]),
-
                     const SizedBox(height: 32),
-
-                    // ==========================================
-                    // 5. PUSAT BANTUAN
-                    // ==========================================
                     _buildSectionTitle('Pusat Bantuan'),
                     _buildMenuCard(context, [
                       _buildMenuItem(
@@ -206,12 +176,7 @@ class _ProfileViewState extends State<ProfileView> {
                         onTap: () {},
                       ),
                     ]),
-
                     const SizedBox(height: 40),
-
-                    // ==========================================
-                    // TOMBOL KELUAR
-                    // ==========================================
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
@@ -226,17 +191,20 @@ class _ProfileViewState extends State<ProfileView> {
                           ),
                         ),
                         icon: const Icon(Ionicons.log_out_outline),
-                        label: const Text(
+                        label: Text(
                           'Keluar Aplikasi',
-                          style: TextStyle(
+                          style: GoogleFonts.mulish(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
-                            fontFamily: 'Serif',
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 50),
+
+                    // --- PERBAIKAN UTAMA: Jarak Aman Bawah ---
+                    SizedBox(
+                      height: 120 + MediaQuery.of(context).padding.bottom,
+                    ),
                   ],
                 ),
               ),
@@ -247,21 +215,21 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
-  // --- WIDGET HELPERS ---
-
+  // ... (Helper widgets: _buildHeaderSection, _buildLeafDecor, _buildSectionTitle, _buildMenuCard, _buildMenuItem, _buildDivider - SAMA SEPERTI SEBELUMNYA, PASTIKAN MENGGUNAKAN GOOGLEFONTS)
+  // Untuk menghemat space, saya asumsikan Anda menyalin helper widget dari jawaban sebelumnya.
+  // Jika butuh lengkap, beri tahu saya.
   Widget _buildHeaderSection(BuildContext context) {
     ImageProvider? imageProvider;
     if (_photoBase64 != null && _photoBase64!.isNotEmpty) {
       try {
         imageProvider = MemoryImage(base64Decode(_photoBase64!));
       } catch (e) {
-        print("Error decoding image: $e");
+        print("Error");
       }
     }
     if (imageProvider == null && _photoUrl != null && _photoUrl!.isNotEmpty) {
       imageProvider = NetworkImage(_photoUrl!);
     }
-
     return SizedBox(
       height: 280,
       width: double.infinity,
@@ -296,19 +264,9 @@ class _ProfileViewState extends State<ProfileView> {
                   child: _buildLeafDecor(angle: -0.3, size: 60),
                 ),
                 Positioned(
-                  top: 20,
-                  right: -30,
-                  child: _buildLeafDecor(angle: 0.9, size: 70),
-                ),
-                Positioned(
                   bottom: 20,
                   left: -10,
                   child: _buildLeafDecor(angle: 0.7, size: 60),
-                ),
-                Positioned(
-                  bottom: -30,
-                  left: 80,
-                  child: _buildLeafDecor(angle: -0.4, size: 80),
                 ),
               ],
             ),
@@ -344,11 +302,10 @@ class _ProfileViewState extends State<ProfileView> {
                   const SizedBox(height: 16),
                   Text(
                     _userName,
-                    style: const TextStyle(
+                    style: GoogleFonts.philosopher(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
-                      fontFamily: 'Serif',
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -363,10 +320,9 @@ class _ProfileViewState extends State<ProfileView> {
                     ),
                     child: Text(
                       _userEmail,
-                      style: const TextStyle(
+                      style: GoogleFonts.mulish(
                         fontSize: 14,
                         color: Colors.white,
-                        fontFamily: 'Serif',
                       ),
                     ),
                   ),
@@ -395,11 +351,10 @@ class _ProfileViewState extends State<ProfileView> {
       padding: const EdgeInsets.only(left: 4, bottom: 12),
       child: Text(
         title,
-        style: TextStyle(
+        style: GoogleFonts.philosopher(
           fontSize: 16,
           fontWeight: FontWeight.bold,
           color: WayangColors.primaryDark.withOpacity(0.8),
-          fontFamily: 'Serif',
         ),
       ),
     );
@@ -448,11 +403,10 @@ class _ProfileViewState extends State<ProfileView> {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(
+                  style: GoogleFonts.mulish(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: WayangColors.textPrimary,
-                    fontFamily: 'Serif',
                   ),
                 ),
               ),

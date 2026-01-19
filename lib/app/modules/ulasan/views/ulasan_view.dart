@@ -1,7 +1,8 @@
+import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:ionicons/ionicons.dart';
-
 import '../controllers/ulasan_controller.dart';
 
 // --- TEMA WARNA ---
@@ -12,7 +13,6 @@ class WayangColors {
   static const Color background = Color(0xFFFAFAF5);
   static const Color surface = Colors.white;
   static const Color textPrimary = Color(0xFF3E2723);
-  static const Color textSecondary = Color(0xFF795548);
   static const Color cardBg = Color(0xFFFFFFFF);
 }
 
@@ -21,35 +21,9 @@ class UlasanView extends GetView<UlasanController> {
 
   @override
   Widget build(BuildContext context) {
-    // DUMMY DATA
-    final List<Map<String, dynamic>> myReviews = [
-      {
-        "targetName": "Festival Wayang Jogja 2024",
-        "category": "Event",
-        "image": "https://via.placeholder.com/150",
-        "date": "10 Jan 2024",
-        "rating": 5,
-        "comment":
-            "Acaranya meriah sekali! Dalangnya sangat profesional dan tata panggungnya megah.",
-      },
-      {
-        "targetName": "Museum Wayang Kekayon",
-        "category": "Destinasi",
-        "image": "https://via.placeholder.com/150",
-        "date": "25 Des 2023",
-        "rating": 4,
-        "comment":
-            "Koleksinya lengkap, tapi sayang pencahayaan di beberapa sudut agak kurang terang.",
-      },
-      {
-        "targetName": "Gatot Kaca",
-        "category": "Tokoh",
-        "image": "https://via.placeholder.com/150",
-        "date": "12 Nov 2023",
-        "rating": 5,
-        "comment": "Tokoh favorit saya sepanjang masa. Otot kawat tulang besi!",
-      },
-    ];
+    if (!Get.isRegistered<UlasanController>()) {
+      Get.put(UlasanController());
+    }
 
     return Scaffold(
       backgroundColor: WayangColors.background,
@@ -74,59 +48,56 @@ class UlasanView extends GetView<UlasanController> {
           ),
         ),
       ),
-      body: myReviews.isEmpty
-          ? _buildEmptyState()
-          : ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              itemCount: myReviews.length,
-              itemBuilder: (context, index) {
-                return _buildHistoryCard(context, myReviews[index]);
-              },
-            ),
-    );
-  }
+      body: StreamBuilder<QuerySnapshot>(
+        stream: controller.myReviewsStream,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(color: WayangColors.primaryDark),
+            );
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text("Error: ${snapshot.error}"));
+          }
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return _buildEmptyState();
+          }
 
-  // --- WIDGET: EMPTY STATE ---
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(30),
-            decoration: BoxDecoration(
-              color: WayangColors.primaryDark.withOpacity(0.05),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Ionicons.document_text_outline,
-              size: 80,
-              color: WayangColors.primaryDark.withOpacity(0.4),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            "Belum Ada Ulasan",
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Serif',
-              color: WayangColors.primaryDark.withOpacity(0.8),
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            "Ulasan yang Anda kirim akan\nmuncul di halaman ini.",
-            textAlign: TextAlign.center,
-            style: TextStyle(color: WayangColors.textSecondary, fontSize: 14),
-          ),
-        ],
+          var docs = snapshot.data!.docs;
+
+          return ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            itemCount: docs.length,
+            itemBuilder: (context, index) {
+              var doc = docs[index];
+              var data = doc.data() as Map<String, dynamic>;
+              return _buildHistoryCard(context, data, doc.id);
+            },
+          );
+        },
       ),
     );
   }
 
-  // --- WIDGET: KARTU RIWAYAT (PREMIUM) ---
-  Widget _buildHistoryCard(BuildContext context, Map<String, dynamic> data) {
+  // --- WIDGET KARTU ULASAN (LAYOUT DIPERBAIKI) ---
+  Widget _buildHistoryCard(
+    BuildContext context,
+    Map<String, dynamic> data,
+    String docId,
+  ) {
+    // Format Tanggal
+    String dateStr = "-";
+    if (data['created_at'] != null && data['created_at'] is Timestamp) {
+      DateTime dt = (data['created_at'] as Timestamp).toDate();
+      dateStr = "${dt.day}/${dt.month}/${dt.year}";
+    }
+
+    String title = data['targetName'] ?? 'Tanpa Judul';
+    String category = data['category'] ?? 'Umum';
+    String imageUrl = data['image'] ?? data['image_url'] ?? '';
+    String comment = data['comment'] ?? '';
+    int rating = data['rating'] ?? 0;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 24),
       decoration: BoxDecoration(
@@ -142,121 +113,111 @@ class UlasanView extends GetView<UlasanController> {
       ),
       child: Stack(
         children: [
-          // Dekorasi Kutipan di Background (Watermark)
-          Positioned(
-            bottom: -10,
-            right: 20,
-            child: Icon(
-              Ionicons.chatbox_outline,
-              size: 100,
-              color: WayangColors.goldAccent.withOpacity(0.05),
-            ),
-          ),
-
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(
+              16,
+              16,
+              16,
+              20,
+            ), // Padding disesuaikan
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // HEADER: Gambar & Info Utama
+                // BAGIAN ATAS: Gambar + Info
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Gambar Thumbnail
+                    // 1. Gambar
                     Container(
-                      width: 70,
-                      height: 70,
+                      width: 80,
+                      height: 80,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        image: DecorationImage(
-                          image: NetworkImage(data['image']),
-                          fit: BoxFit.cover,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                        borderRadius: BorderRadius.circular(12),
+                        color: Colors.grey[200],
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: _buildImageLoader(imageUrl),
                       ),
                     ),
                     const SizedBox(width: 16),
 
-                    // Info Teks
+                    // 2. Info Teks
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Chip Kategori & Tanggal
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: WayangColors.goldAccent.withOpacity(
-                                    0.15,
-                                  ),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  data['category'].toUpperCase(),
-                                  style: const TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: WayangColors.primaryDark,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
+                          // Kategori Chip
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: WayangColors.goldAccent.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              category.toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: WayangColors.primaryDark,
                               ),
-                              const Spacer(),
-                              // Tanggal Review
-                              Text(
-                                data['date'],
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[400],
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              // Spacer agar tidak nabrak tombol hapus
-                              const SizedBox(width: 30),
-                            ],
+                            ),
                           ),
                           const SizedBox(height: 8),
 
-                          // Judul Item
+                          // Judul (Dibatasi agar tidak nabrak icon hapus)
                           Padding(
-                            padding: const EdgeInsets.only(right: 20.0),
+                            padding: const EdgeInsets.only(
+                              right: 24.0,
+                            ), // Padding kanan extra untuk icon hapus
                             child: Text(
-                              data['targetName'],
-                              maxLines: 1,
+                              title,
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                                 fontFamily: 'Serif',
                                 color: WayangColors.textPrimary,
+                                height: 1.1,
                               ),
                             ),
                           ),
 
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 8),
 
-                          // Bintang Rating
+                          // Rating & Tanggal (Satu Baris di Bawah Judul)
                           Row(
-                            children: List.generate(5, (index) {
-                              return Icon(
-                                index < data['rating']
-                                    ? Ionicons.star
-                                    : Ionicons.star_outline,
-                                size: 16,
-                                color: WayangColors.goldAccent,
-                              );
-                            }),
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              // Bintang
+                              Row(
+                                children: List.generate(
+                                  5,
+                                  (i) => Icon(
+                                    i < rating
+                                        ? Ionicons.star
+                                        : Ionicons.star_outline,
+                                    size: 14,
+                                    color: WayangColors.goldAccent,
+                                  ),
+                                ),
+                              ),
+
+                              // Tanggal (Dipindah ke sini agar aman)
+                              Text(
+                                dateStr,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey[500],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -264,35 +225,32 @@ class UlasanView extends GetView<UlasanController> {
                   ],
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
 
-                // ISI KOMENTAR
+                // 3. Isi Komentar
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: WayangColors.background,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: WayangColors.primaryDark.withOpacity(0.05),
-                    ),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Icon(
                         Icons.format_quote_rounded,
-                        size: 30,
+                        size: 20,
                         color: WayangColors.primaryLight,
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        data['comment'],
+                        comment,
                         style: const TextStyle(
                           color: WayangColors.textPrimary,
                           fontSize: 14,
-                          height: 1.6,
                           fontStyle: FontStyle.italic,
+                          height: 1.5,
                         ),
                       ),
                     ],
@@ -302,20 +260,19 @@ class UlasanView extends GetView<UlasanController> {
             ),
           ),
 
-          // TOMBOL HAPUS (Pojok Kanan Atas - Subtle)
+          // TOMBOL HAPUS (Absolut di Pojok Kanan Atas)
           Positioned(
-            top: 8,
-            right: 8,
+            top: 4,
+            right: 4,
             child: IconButton(
-              // Panggil Fungsi Pop-up Keren di sini
-              onPressed: () => _showDeleteDialog(context),
+              onPressed: () => controller.deleteReview(docId),
               icon: Icon(
                 Ionicons.trash_outline,
                 size: 20,
-                color: Colors.red.withOpacity(0.6),
+                color: Colors.red.withOpacity(0.5),
               ),
               splashRadius: 20,
-              tooltip: "Hapus Ulasan",
+              tooltip: "Hapus",
             ),
           ),
         ],
@@ -323,129 +280,54 @@ class UlasanView extends GetView<UlasanController> {
     );
   }
 
-  // --- POP-UP DIALOG KEREN (PREMIUM) ---
-  void _showDeleteDialog(BuildContext context) {
-    Get.dialog(
-      Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
+  // Helper Loader Gambar
+  Widget _buildImageLoader(String path) {
+    if (path.isEmpty)
+      return const Icon(Ionicons.image_outline, color: Colors.grey);
+    try {
+      if (path.startsWith('http')) {
+        return Image.network(
+          path,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => const Icon(Icons.broken_image),
+        );
+      } else if (path.startsWith('assets/')) {
+        return Image.asset(
+          path,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => const Icon(Icons.broken_image),
+        );
+      } else {
+        String cleanBase64 = path.replaceAll(RegExp(r'\s+'), '');
+        if (cleanBase64.contains(','))
+          cleanBase64 = cleanBase64.split(',').last;
+        return Image.memory(
+          base64Decode(cleanBase64),
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => const Icon(Icons.image),
+        );
+      }
+    } catch (e) {
+      return const Icon(Ionicons.image_outline, color: Colors.grey);
+    }
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Ionicons.chatbubble_ellipses_outline,
+            size: 80,
+            color: WayangColors.primaryDark.withOpacity(0.3),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // 1. Ikon Peringatan Besar
-              Container(
-                width: 70,
-                height: 70,
-                decoration: BoxDecoration(
-                  color: Colors.red[50],
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Ionicons.trash_outline,
-                  size: 32,
-                  color: Colors.red,
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // 2. Judul
-              const Text(
-                "Hapus Ulasan?",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Serif',
-                  color: WayangColors.primaryDark,
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              // 3. Deskripsi
-              Text(
-                "Ulasan ini akan dihapus permanen dan tidak dapat dikembalikan.",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 14,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 28),
-
-              // 4. Tombol Aksi
-              Row(
-                children: [
-                  // Tombol Batal
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Get.back(),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: BorderSide(color: Colors.grey[300]!),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        "Batal",
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-
-                  // Tombol Hapus
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Get.back(); // Tutup Dialog
-                        // Logika hapus data di sini
-                        Get.snackbar(
-                          "Berhasil",
-                          "Ulasan berhasil dihapus",
-                          backgroundColor: WayangColors.primaryDark,
-                          colorText: Colors.white,
-                          snackPosition: SnackPosition.BOTTOM,
-                          margin: const EdgeInsets.all(20),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        "Hapus",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+          const SizedBox(height: 20),
+          const Text(
+            "Belum Ada Ulasan",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-        ),
+        ],
       ),
     );
   }

@@ -5,20 +5,17 @@ import 'package:flutter/services.dart';
 import 'package:gatrakarsa/app/data/service/api_service.dart';
 import 'package:get/get.dart';
 import 'package:ionicons/ionicons.dart';
-
-// Import Controller
+import 'package:google_fonts/google_fonts.dart'; // IMPORT FONT
 import '../controllers/detaildalang_controller.dart';
 
 class DetaildalangView extends GetView<DetaildalangController> {
   const DetaildalangView({super.key});
 
-  // --- PALET WARNA ---
   final Color _primaryBrown = const Color(0xFF3E2723);
   final Color _goldAccent = const Color(0xFFC5A059);
   final Color _paperBg = const Color(0xFFFDFBF7);
   final Color _textSecondary = const Color(0xFF5D4037);
 
-  // --- HELPER: DECODE GAMBAR BASE64 ---
   Uint8List? _decodeImage(String base64String) {
     if (base64String.isEmpty) return null;
     try {
@@ -33,10 +30,7 @@ class DetaildalangView extends GetView<DetaildalangController> {
 
   @override
   Widget build(BuildContext context) {
-    // Ambil data ContentModel dari controller
     final ContentModel dalang = controller.dalang;
-
-    // Decode gambar
     final Uint8List? imageBytes = _decodeImage(dalang.imageUrl);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -52,7 +46,6 @@ class DetaildalangView extends GetView<DetaildalangController> {
         extendBodyBehindAppBar: true,
         body: Stack(
           children: [
-            // Ornamen Background
             Positioned(
               top: 300,
               right: -50,
@@ -61,7 +54,6 @@ class DetaildalangView extends GetView<DetaildalangController> {
                 child: Icon(Ionicons.leaf, size: 400, color: _primaryBrown),
               ),
             ),
-
             CustomScrollView(
               physics: const BouncingScrollPhysics(),
               slivers: [
@@ -73,18 +65,13 @@ class DetaildalangView extends GetView<DetaildalangController> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 24),
-
-                        // 1. Kategori Badge
                         Center(child: _buildCategoryBadge(dalang.category)),
                         const SizedBox(height: 20),
-
-                        // 2. Nama Tokoh (Title)
                         Center(
                           child: Text(
                             dalang.title.toUpperCase(),
                             textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontFamily: 'Serif',
+                            style: GoogleFonts.philosopher(
                               fontSize: 26,
                               fontWeight: FontWeight.w800,
                               color: _primaryBrown,
@@ -92,17 +79,12 @@ class DetaildalangView extends GetView<DetaildalangController> {
                             ),
                           ),
                         ),
-
-                        // --- TULISAN DI BAWAH NAMA DIHAPUS ---
                         const SizedBox(height: 32),
-
-                        // 3. --- KOTAK INFO (ASAL DAERAH & NOMOR HP) ---
                         Row(
                           children: [
                             _buildInfoCard(
                               Ionicons.map_outline,
                               "Asal Daerah",
-                              // Menampilkan location, jika kosong baru subtitle
                               (dalang.location != null &&
                                       dalang.location!.isNotEmpty)
                                   ? dalang.location!
@@ -118,10 +100,7 @@ class DetaildalangView extends GetView<DetaildalangController> {
                             ),
                           ],
                         ),
-
                         const SizedBox(height: 32),
-
-                        // Divider Ornamen
                         Row(
                           children: [
                             Expanded(
@@ -146,14 +125,10 @@ class DetaildalangView extends GetView<DetaildalangController> {
                             ),
                           ],
                         ),
-
                         const SizedBox(height: 24),
-
-                        // 4. Riwayat Singkat (Deskripsi)
                         Text(
                           "Riwayat Singkat",
-                          style: TextStyle(
-                            fontFamily: 'Serif',
+                          style: GoogleFonts.philosopher(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: _primaryBrown,
@@ -163,15 +138,12 @@ class DetaildalangView extends GetView<DetaildalangController> {
                         Text(
                           dalang.description,
                           textAlign: TextAlign.justify,
-                          style: TextStyle(
-                            fontFamily: 'Serif',
+                          style: GoogleFonts.mulish(
                             fontSize: 15,
                             height: 1.8,
                             color: _textSecondary,
                           ),
                         ),
-
-                        // Jarak bawah setelah deskripsi
                         SizedBox(
                           height: MediaQuery.of(context).padding.bottom + 40,
                         ),
@@ -186,8 +158,6 @@ class DetaildalangView extends GetView<DetaildalangController> {
       ),
     );
   }
-
-  // --- WIDGET BUILDERS ---
 
   Widget _buildSliverAppBar(Uint8List? imageBytes) {
     return SliverAppBar(
@@ -223,7 +193,6 @@ class DetaildalangView extends GetView<DetaildalangController> {
                     errorBuilder: (c, e, s) => _buildImageError(),
                   )
                 : _buildImageError(),
-
             DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -262,8 +231,7 @@ class DetaildalangView extends GetView<DetaildalangController> {
       ),
       child: Text(
         category.toUpperCase(),
-        style: TextStyle(
-          fontFamily: 'Serif',
+        style: GoogleFonts.mulish(
           color: _primaryBrown,
           fontWeight: FontWeight.bold,
           fontSize: 10,
@@ -303,17 +271,12 @@ class DetaildalangView extends GetView<DetaildalangController> {
             const SizedBox(height: 12),
             Text(
               label,
-              style: TextStyle(
-                fontFamily: 'Serif',
-                fontSize: 11,
-                color: Colors.grey[500],
-              ),
+              style: GoogleFonts.mulish(fontSize: 11, color: Colors.grey[500]),
             ),
             const SizedBox(height: 4),
             Text(
               value,
-              style: TextStyle(
-                fontFamily: 'Serif',
+              style: GoogleFonts.mulish(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: _textSecondary,

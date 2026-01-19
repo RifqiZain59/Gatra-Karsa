@@ -1,21 +1,21 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ui'; // Diperlukan untuk ImageFilter
+import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:ionicons/ionicons.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:gatrakarsa/app/data/service/api_service.dart';
 import '../controllers/detailmuseum_controller.dart';
 
 class DetailmuseumView extends GetView<DetailmuseumController> {
   const DetailmuseumView({super.key});
 
-  // --- PALET WARNA MODERN ---
   final Color _primaryBrown = const Color(0xFF4E342E);
   final Color _goldAccent = const Color(0xFFD4AF37);
-  final Color _bgSoft = const Color(0xFFFAFAFA); // Putih tulang sangat muda
+  final Color _bgSoft = const Color(0xFFFAFAFA);
   final Color _textHeading = const Color(0xFF1A1A1A);
   final Color _textBody = const Color(0xFF616161);
 
@@ -29,13 +29,11 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
-        // Status Bar (Atas)
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark, // Icon Hitam
-        statusBarBrightness: Brightness.light, // Untuk iOS
-        // Navigation Bar (Bawah HP)
-        systemNavigationBarColor: Colors.white, // Background Putih
-        systemNavigationBarIconBrightness: Brightness.dark, // Icon Tombol Hitam
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+        systemNavigationBarColor: Colors.white,
+        systemNavigationBarIconBrightness: Brightness.dark,
         systemNavigationBarDividerColor: Colors.transparent,
       ),
       child: Scaffold(
@@ -43,7 +41,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
         resizeToAvoidBottomInset: false,
         body: Stack(
           children: [
-            // --- 1. GAMBAR BACKGROUND (FIXED) ---
+            // 1. GAMBAR HEADER
             Positioned(
               top: 0,
               left: 0,
@@ -52,7 +50,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
               child: _buildHeaderImage(museum.imageUrl),
             ),
 
-            // --- 2. TOMBOL BACK & BOOKMARK ---
+            // 2. NAVBAR TOMBOL KEMBALI
             Positioned(
               top: MediaQuery.of(context).padding.top + 10,
               left: 20,
@@ -71,7 +69,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                           : Ionicons.bookmark_outline,
                       color: controller.isSaved.value
                           ? _goldAccent
-                          : Colors.black, // Icon hitam agar kontras di glass
+                          : Colors.black,
                       onTap: () => controller.toggleSave(),
                     ),
                   ),
@@ -79,13 +77,12 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
               ),
             ),
 
-            // --- 3. KONTEN UTAMA (SHEET SCROLLABLE) ---
+            // 3. KONTEN UTAMA
             Positioned.fill(
               top: MediaQuery.of(context).size.height * 0.40,
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  // FIX: borderRadius dihapus agar lurus (tidak melengkung)
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.1),
@@ -96,16 +93,14 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                 ),
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
-                  // Padding bawah besar agar scroll bisa mentok ke atas tombol navigasi bottom bar
                   padding: const EdgeInsets.fromLTRB(24, 30, 24, 160),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // A. JUDUL BESAR
+                      // JUDUL
                       Text(
                         museum.title,
-                        style: TextStyle(
-                          fontFamily: 'Serif',
+                        style: GoogleFonts.philosopher(
                           fontSize: 28,
                           fontWeight: FontWeight.w800,
                           color: _textHeading,
@@ -114,7 +109,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                       ),
                       const SizedBox(height: 24),
 
-                      // B. INFO GRID (Lokasi, Kategori, Tiket)
+                      // INFO TILES
                       _buildLocationTile(
                         museum.subtitle.isNotEmpty
                             ? museum.subtitle
@@ -142,10 +137,9 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                           ),
                         ],
                       ),
-
                       const SizedBox(height: 30),
 
-                      // C. DESKRIPSI
+                      // DESKRIPSI
                       Text("Tentang Museum", style: _headingStyle),
                       const SizedBox(height: 10),
                       Text(
@@ -153,16 +147,15 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                             ? museum.description
                             : "Deskripsi belum tersedia.",
                         textAlign: TextAlign.justify,
-                        style: TextStyle(
+                        style: GoogleFonts.mulish(
                           fontSize: 15,
                           height: 1.8,
                           color: _textBody,
-                          fontFamily: 'Serif',
                         ),
                       ),
                       const SizedBox(height: 30),
 
-                      // D. SECTION ULASAN
+                      // REVIEW SECTION
                       _buildReviewSection(context),
                     ],
                   ),
@@ -170,7 +163,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
               ),
             ),
 
-            // --- 4. FLOATING BOTTOM BAR (STICKY) ---
+            // 4. BOTTOM BAR
             Positioned(
               bottom: 0,
               left: 0,
@@ -180,7 +173,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                   24,
                   20,
                   24,
-                  20 + MediaQuery.of(context).padding.bottom, // Safe Area Bawah
+                  20 + MediaQuery.of(context).padding.bottom,
                 ),
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -212,12 +205,11 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                       ),
                     ),
                     icon: const Icon(Ionicons.navigate_outline, size: 20),
-                    label: const Text(
+                    label: Text(
                       "Navigasi ke Lokasi",
-                      style: TextStyle(
+                      style: GoogleFonts.mulish(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
-                        fontFamily: 'Serif',
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -231,42 +223,11 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
     );
   }
 
-  TextStyle get _headingStyle => TextStyle(
+  TextStyle get _headingStyle => GoogleFonts.philosopher(
     fontSize: 18,
     fontWeight: FontWeight.bold,
     color: _textHeading,
-    fontFamily: 'Serif',
   );
-
-  // --- WIDGET HELPER ---
-
-  Widget _glassButton({
-    required IconData icon,
-    required VoidCallback onTap,
-    Color color = Colors.black,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(50),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-          child: Container(
-            width: 45,
-            height: 45,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.8), // Glassy white background
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10),
-              ],
-            ),
-            child: Icon(icon, color: color, size: 22),
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildInfoTile(IconData icon, String label, String value) {
     return Container(
@@ -281,13 +242,16 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
         children: [
           Icon(icon, color: _goldAccent, size: 24),
           const SizedBox(height: 10),
-          Text(label, style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+          Text(
+            label,
+            style: GoogleFonts.mulish(fontSize: 11, color: Colors.grey[500]),
+          ),
           const SizedBox(height: 4),
           Text(
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
+            style: GoogleFonts.mulish(
               fontWeight: FontWeight.bold,
               color: _textHeading,
               fontSize: 14,
@@ -318,12 +282,15 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
               children: [
                 Text(
                   "Lokasi",
-                  style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                  style: GoogleFonts.mulish(
+                    fontSize: 11,
+                    color: Colors.grey[500],
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   location,
-                  style: TextStyle(
+                  style: GoogleFonts.mulish(
                     fontWeight: FontWeight.bold,
                     color: _textHeading,
                     fontSize: 14,
@@ -337,37 +304,11 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
     );
   }
 
-  Widget _buildHeaderImage(String imageUrl) {
-    if (imageUrl.isEmpty) return Container(color: _bgSoft);
-    try {
-      if (imageUrl.startsWith('http')) {
-        return Image.network(
-          imageUrl,
-          fit: BoxFit.cover,
-          errorBuilder: (c, e, s) => Container(color: _bgSoft),
-        );
-      } else if (imageUrl.startsWith('assets/')) {
-        return Image.asset(imageUrl, fit: BoxFit.cover);
-      } else {
-        String cleanBase64 = imageUrl.replaceAll(RegExp(r'\s+'), '');
-        if (cleanBase64.contains(',')) {
-          cleanBase64 = cleanBase64.split(',').last;
-        }
-        int mod4 = cleanBase64.length % 4;
-        if (mod4 > 0) cleanBase64 += '=' * (4 - mod4);
-        return Image.memory(base64Decode(cleanBase64), fit: BoxFit.cover);
-      }
-    } catch (e) {
-      return Container(color: _bgSoft);
-    }
-  }
-
-  // --- REVIEW SECTION ---
   Widget _buildReviewSection(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
       stream: controller.ulasanStream,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+        if (snapshot.connectionState == ConnectionState.waiting)
           return Container(
             height: 150,
             decoration: BoxDecoration(
@@ -375,22 +316,17 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
               borderRadius: BorderRadius.circular(16),
             ),
           );
-        }
-
         var docs = snapshot.data?.docs ?? [];
         int totalReviews = docs.length;
         double averageRating = 0.0;
         if (totalReviews > 0) {
           double totalStars = 0;
-          for (var doc in docs) {
+          for (var doc in docs)
             totalStars += (doc.data() as Map<String, dynamic>)['rating'] ?? 0;
-          }
           averageRating = totalStars / totalReviews;
         }
-
         return Column(
           children: [
-            // A. KOTAK TOTAL ULASAN (Desain Gradien)
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
@@ -426,18 +362,16 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
                                 averageRating.toStringAsFixed(1),
-                                style: TextStyle(
+                                style: GoogleFonts.philosopher(
                                   fontSize: 48,
                                   fontWeight: FontWeight.bold,
                                   color: _goldAccent,
-                                  fontFamily: 'Serif',
                                   height: 1.0,
                                 ),
                               ),
@@ -446,7 +380,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                                 padding: const EdgeInsets.only(bottom: 8),
                                 child: Text(
                                   "/ 5.0",
-                                  style: TextStyle(
+                                  style: GoogleFonts.mulish(
                                     fontSize: 14,
                                     color: Colors.white.withOpacity(0.6),
                                     fontWeight: FontWeight.bold,
@@ -482,7 +416,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                           const SizedBox(height: 6),
                           Text(
                             "$totalReviews Ulasan",
-                            style: const TextStyle(
+                            style: GoogleFonts.mulish(
                               color: Colors.white,
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -490,7 +424,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                           ),
                           Text(
                             "Pengunjung",
-                            style: TextStyle(
+                            style: GoogleFonts.mulish(
                               color: Colors.white.withOpacity(0.6),
                               fontSize: 11,
                             ),
@@ -503,8 +437,6 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
               ),
             ),
             const SizedBox(height: 30),
-
-            // B. HEADER & TOMBOL TULIS (TEXT ONLY - TANPA GARIS BAWAH)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -512,20 +444,18 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                 TextButton(
                   onPressed: () => _openRatingBottomSheet(context),
                   style: TextButton.styleFrom(foregroundColor: _goldAccent),
-                  child: const Text(
+                  child: Text(
                     "Tulis Ulasan",
-                    style: TextStyle(
+                    style: GoogleFonts.mulish(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
-                      decoration: TextDecoration.none, // Hapus Garis Bawah
+                      decoration: TextDecoration.none,
                     ),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 10),
-
-            // C. SLIDER
             if (docs.isEmpty)
               Container(
                 padding: const EdgeInsets.all(30),
@@ -545,7 +475,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                     const SizedBox(height: 10),
                     Text(
                       "Belum ada ulasan.",
-                      style: TextStyle(
+                      style: GoogleFonts.mulish(
                         color: Colors.grey[500],
                         fontStyle: FontStyle.italic,
                       ),
@@ -554,6 +484,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                 ),
               )
             else
+              // DEFINISI INI SEKARANG SUDAH ADA DI FILE
               _AutoPlayReviewSlider(
                 docs: docs,
                 primaryBrown: _primaryBrown,
@@ -565,18 +496,21 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
     );
   }
 
-  // --- MODAL POP-UP (BOTTOM SHEET) FIXED ---
   void _openRatingBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      isScrollControlled:
-          true, // WAJIB: Agar bisa full screen/terdorong keyboard
-      backgroundColor: Colors.transparent, // Transparan agar rounded terlihat
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) {
         return Padding(
           padding: EdgeInsets.only(
-            // Padding bawah dinamis mengikuti tinggi keyboard (viewInsets)
-            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 24,
+            right: 24,
+            top: 24,
+            bottom:
+                MediaQuery.of(context).viewInsets.bottom +
+                MediaQuery.of(context).padding.bottom +
+                24,
           ),
           child: Container(
             decoration: const BoxDecoration(
@@ -584,119 +518,104 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
             child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Handle Bar
-                    Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(10),
-                      ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    const SizedBox(height: 20),
-                    Text(
-                      "Bagikan Pengalaman",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: _primaryBrown,
-                        fontFamily: 'Serif',
-                      ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    "Bagikan Pengalaman",
+                    style: GoogleFonts.philosopher(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: _primaryBrown,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "Beri rating dan ulasan untuk museum ini",
-                      style: TextStyle(color: Colors.grey[500], fontSize: 14),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Beri rating dan ulasan untuk museum ini",
+                    style: GoogleFonts.mulish(
+                      color: Colors.grey[500],
+                      fontSize: 14,
                     ),
-                    const SizedBox(height: 25),
-
-                    // Input Rating Bintang
-                    Obx(
-                      () => Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(
-                          5,
-                          (index) => GestureDetector(
-                            onTap: () => controller.setRating(index + 1),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 5,
-                              ),
-                              child: Icon(
-                                index < controller.userRating.value
-                                    ? Ionicons.star
-                                    : Ionicons.star_outline,
-                                color: _goldAccent,
-                                size: 44,
-                              ),
+                  ),
+                  const SizedBox(height: 25),
+                  Obx(
+                    () => Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        5,
+                        (index) => GestureDetector(
+                          onTap: () => controller.setRating(index + 1),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 5),
+                            child: Icon(
+                              index < controller.userRating.value
+                                  ? Ionicons.star
+                                  : Ionicons.star_outline,
+                              color: _goldAccent,
+                              size: 44,
                             ),
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 30),
-
-                    // Input Text Area
-                    TextField(
-                      controller: controller.reviewController,
-                      maxLines: 4,
-                      style: const TextStyle(fontFamily: 'Serif'),
-                      decoration: InputDecoration(
-                        hintText: "Ceritakan pengalaman Anda...",
-                        hintStyle: TextStyle(
-                          color: Colors.grey[400],
-                          fontFamily: 'Serif',
-                        ),
-                        filled: true,
-                        fillColor: _bgSoft,
-                        contentPadding: const EdgeInsets.all(16),
-                        border: OutlineInputBorder(
+                  ),
+                  const SizedBox(height: 30),
+                  TextField(
+                    controller: controller.reviewController,
+                    maxLines: 4,
+                    style: GoogleFonts.mulish(),
+                    decoration: InputDecoration(
+                      hintText: "Ceritakan pengalaman Anda...",
+                      hintStyle: GoogleFonts.mulish(color: Colors.grey[400]),
+                      filled: true,
+                      fillColor: _bgSoft,
+                      contentPadding: const EdgeInsets.all(16),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide(color: _primaryBrown),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 25),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 55,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Get.back();
+                        controller.submitReview();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _primaryBrown,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
                         ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: _primaryBrown),
+                      ),
+                      child: Text(
+                        "Kirim Ulasan",
+                        style: GoogleFonts.mulish(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 25),
-
-                    // Tombol Kirim
-                    SizedBox(
-                      width: double.infinity,
-                      height: 55,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Get.back();
-                          controller.submitReview();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _primaryBrown,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        child: const Text(
-                          "Kirim Ulasan",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                    // Safe Area agar tidak mepet bawah layar di iPhone X+
-                    SizedBox(height: MediaQuery.of(context).padding.bottom),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -704,20 +623,74 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
       },
     );
   }
+
+  Widget _glassButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    Color color = Colors.black,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(50),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+          child: Container(
+            width: 45,
+            height: 45,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.8),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10),
+              ],
+            ),
+            child: Icon(icon, color: color, size: 22),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeaderImage(String imageUrl) {
+    if (imageUrl.isEmpty) return Container(color: _bgSoft);
+    try {
+      if (imageUrl.startsWith('http')) {
+        return Image.network(
+          imageUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (c, e, s) => Container(color: _bgSoft),
+        );
+      } else if (imageUrl.startsWith('assets/')) {
+        return Image.asset(imageUrl, fit: BoxFit.cover);
+      } else {
+        String cleanBase64 = imageUrl.replaceAll(RegExp(r'\s+'), '');
+        if (cleanBase64.contains(','))
+          cleanBase64 = cleanBase64.split(',').last;
+        int mod4 = cleanBase64.length % 4;
+        if (mod4 > 0) cleanBase64 += '=' * (4 - mod4);
+        return Image.memory(
+          base64Decode(cleanBase64),
+          fit: BoxFit.cover,
+          errorBuilder: (c, e, s) => Container(color: _bgSoft),
+        );
+      }
+    } catch (e) {
+      return Container(color: _bgSoft);
+    }
+  }
 }
 
-// --- SLIDER REUSABLE ---
+// --- DEFINISI SLIDER AGAR TIDAK ERROR ---
 class _AutoPlayReviewSlider extends StatefulWidget {
   final List<DocumentSnapshot> docs;
   final Color primaryBrown;
   final Color goldAccent;
-
   const _AutoPlayReviewSlider({
     required this.docs,
     required this.primaryBrown,
     required this.goldAccent,
   });
-
   @override
   State<_AutoPlayReviewSlider> createState() => _AutoPlayReviewSliderState();
 }
@@ -726,11 +699,9 @@ class _AutoPlayReviewSliderState extends State<_AutoPlayReviewSlider> {
   late PageController _pageController;
   int _currentIndex = 0;
   Timer? _timer;
-
   @override
   void initState() {
     super.initState();
-    // Fraction 0.90 agar kartu terlihat lebar dan sedikit intip kartu sebelah
     _pageController = PageController(viewportFraction: 0.90);
     _startAutoPlay();
   }
@@ -816,8 +787,6 @@ class _AutoPlayReviewSliderState extends State<_AutoPlayReviewSlider> {
     String photo = data['user_photo'] ?? '';
     String comment = data['comment'] ?? '';
     int rating = data['rating'] ?? 5;
-
-    // Format Tanggal
     String dateStr = "";
     if (data['created_at'] != null && data['created_at'] is Timestamp) {
       DateTime dt = (data['created_at'] as Timestamp).toDate();
@@ -887,7 +856,7 @@ class _AutoPlayReviewSliderState extends State<_AutoPlayReviewSlider> {
                       children: [
                         Text(
                           name,
-                          style: const TextStyle(
+                          style: GoogleFonts.mulish(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                           ),
@@ -912,7 +881,7 @@ class _AutoPlayReviewSliderState extends State<_AutoPlayReviewSlider> {
                             const SizedBox(width: 8),
                             Text(
                               dateStr,
-                              style: TextStyle(
+                              style: GoogleFonts.mulish(
                                 fontSize: 10,
                                 color: Colors.grey[400],
                               ),
@@ -930,11 +899,10 @@ class _AutoPlayReviewSliderState extends State<_AutoPlayReviewSlider> {
                   comment,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
+                  style: GoogleFonts.mulish(
                     fontSize: 13,
                     color: Colors.grey[700],
                     height: 1.5,
-                    fontFamily: 'Serif',
                   ),
                 ),
               ),

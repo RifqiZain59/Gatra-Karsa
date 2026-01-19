@@ -3,20 +3,17 @@ import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-// Pastikan path ini sesuai dengan struktur project Anda
+// Pastikan import ini mengarah ke file VerificationView Anda
 import '../../verification/views/verification_view.dart';
 
 class RegisterController extends GetxController {
-  // Input Controllers
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
-  // Firebase Instances
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Variables
   var isLoading = false.obs;
   var isPasswordVisible = false.obs;
 
@@ -24,9 +21,7 @@ class RegisterController extends GetxController {
     isPasswordVisible.value = !isPasswordVisible.value;
   }
 
-  // --- REGISTER EMAIL & PASSWORD ---
   Future<void> register() async {
-    // 1. Validasi Input
     if (nameController.text.isEmpty ||
         emailController.text.isEmpty ||
         passwordController.text.isEmpty) {
@@ -35,51 +30,41 @@ class RegisterController extends GetxController {
         'Semua kolom harus diisi',
         backgroundColor: Colors.orange,
         colorText: Colors.white,
-        margin: const EdgeInsets.all(10),
       );
       return;
     }
 
     try {
       isLoading.value = true;
-      print("--- MULAI PROSES REGISTER ---"); // DEBUG LOG
 
-      // 2. Buat Akun di Firebase Auth
+      // 1. Create User di Firebase Auth
       UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(
             email: emailController.text.trim(),
             password: passwordController.text.trim(),
           );
 
-      print(
-        "User berhasil dibuat dengan UID: ${userCredential.user?.uid}",
-      ); // DEBUG LOG
-
       if (userCredential.user != null) {
         String uid = userCredential.user!.uid;
 
-        // 3. Simpan Data ke Firestore
-        print("Menyimpan data ke Firestore..."); // DEBUG LOG
+        // 2. Simpan Data ke Firestore
         await _firestore.collection('users').doc(uid).set({
           'uid': uid,
           'name': nameController.text.trim(),
           'email': emailController.text.trim(),
-          'role': 'user', // Role default
+          'role': 'user',
           'createdAt': FieldValue.serverTimestamp(),
-          'isVerified': false, // Penanda awal
+          'isVerified': false,
+          'authProvider':
+              'email', // Berguna untuk membedakan dengan user Google
+          'photoUrl': '', // Field kosong untuk konsistensi
         });
 
-        // 4. Kirim Email Verifikasi
-        print("Mencoba mengirim email verifikasi..."); // DEBUG LOG
+        // 3. Kirim Email Verifikasi
         try {
           await userCredential.user!.sendEmailVerification();
-          print(
-            "SUKSES: Email verifikasi telah dikirim ke server Firebase.",
-          ); // DEBUG LOG
-        } catch (emailError) {
-          print("ERROR KIRIM EMAIL: $emailError"); // DEBUG LOG
-          // Kita tidak return di sini, biarkan user masuk ke halaman verifikasi
-          // agar mereka bisa mencoba tombol "Kirim Ulang" di sana.
+        } catch (e) {
+          print("Gagal kirim email verifikasi: $e");
         }
 
         isLoading.value = false;
@@ -91,22 +76,18 @@ class RegisterController extends GetxController {
           colorText: Colors.white,
         );
 
-        // 5. Arahkan ke Halaman Verifikasi
+        // 4. Arahkan ke Verification View
         Get.offAll(() => const VerificationView());
       }
     } on FirebaseAuthException catch (e) {
       isLoading.value = false;
       String message = 'Terjadi kesalahan.';
-
-      print("FIREBASE AUTH ERROR: ${e.code} - ${e.message}"); // DEBUG LOG
-
-      if (e.code == 'weak-password') {
-        message = 'Password terlalu lemah (min. 6 karakter).';
-      } else if (e.code == 'email-already-in-use') {
+      if (e.code == 'weak-password')
+        message = 'Password terlalu lemah.';
+      else if (e.code == 'email-already-in-use')
         message = 'Email ini sudah terdaftar.';
-      } else if (e.code == 'invalid-email') {
+      else if (e.code == 'invalid-email')
         message = 'Format email tidak valid.';
-      }
 
       Get.snackbar(
         'Gagal',
@@ -116,7 +97,6 @@ class RegisterController extends GetxController {
       );
     } catch (e) {
       isLoading.value = false;
-      print("GENERAL ERROR: $e"); // DEBUG LOG
       Get.snackbar(
         'Error',
         e.toString(),
