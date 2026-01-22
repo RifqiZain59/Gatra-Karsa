@@ -73,14 +73,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/Dalang.png
-    - assets/wayang purwa.png
-    - assets/Wayang Madya.png
-    - assets/Wayang Kulit.png
-    - assets/icon/google.png
-    - assets/logo2.png
-    - assets/wayang_model.tflite    
-    - assets/labels.txt
-flutter_icons:
+\flutter_icons:
   android: "launcher_icon"
   ios: true
   image_path: "assets/Logo.jpg"
