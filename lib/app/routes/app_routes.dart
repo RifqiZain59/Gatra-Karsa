@@ -34,6 +34,7 @@ abstract class Routes {
   static const DAFTARSAVE = _Paths.DAFTARSAVE;
   static const ULASAN = _Paths.ULASAN;
   static const KAMERA = _Paths.KAMERA;
+  static const DAFTARLIKE = _Paths.DAFTARLIKE;
 }
 
 abstract class _Paths {
@@ -69,4 +70,5 @@ abstract class _Paths {
   static const DAFTARSAVE = '/daftarsave';
   static const ULASAN = '/ulasan';
   static const KAMERA = '/kamera';
+  static const DAFTARLIKE = '/daftarlike';
 }

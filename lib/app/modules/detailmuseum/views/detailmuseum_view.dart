@@ -7,6 +7,8 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+// Pastikan import ini sesuai path project Anda
 import 'package:gatrakarsa/app/data/service/api_service.dart';
 import '../controllers/detailmuseum_controller.dart';
 
@@ -308,7 +310,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
     return StreamBuilder<QuerySnapshot>(
       stream: controller.ulasanStream,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting)
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return Container(
             height: 150,
             decoration: BoxDecoration(
@@ -316,13 +318,15 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
               borderRadius: BorderRadius.circular(16),
             ),
           );
+        }
         var docs = snapshot.data?.docs ?? [];
         int totalReviews = docs.length;
         double averageRating = 0.0;
         if (totalReviews > 0) {
           double totalStars = 0;
-          for (var doc in docs)
+          for (var doc in docs) {
             totalStars += (doc.data() as Map<String, dynamic>)['rating'] ?? 0;
+          }
           averageRating = totalStars / totalReviews;
         }
         return Column(
@@ -484,7 +488,6 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                 ),
               )
             else
-              // DEFINISI INI SEKARANG SUDAH ADA DI FILE
               _AutoPlayReviewSlider(
                 docs: docs,
                 primaryBrown: _primaryBrown,
@@ -496,6 +499,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
     );
   }
 
+  // --- BAGIAN FIXED (Full Width + Safe Area Nav Bar) ---
   void _openRatingBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -503,119 +507,167 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
       backgroundColor: Colors.transparent,
       builder: (context) {
         return Padding(
+          // Padding luar untuk menaikkan sheet saat Keyboard muncul
           padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 24,
-            bottom:
-                MediaQuery.of(context).viewInsets.bottom +
-                MediaQuery.of(context).padding.bottom +
-                24,
+            bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
           child: Container(
+            width: double.infinity, // Lebar Penuh
             decoration: const BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 10,
+                  offset: Offset(0, -5),
+                ),
+              ],
             ),
             child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(10),
+              physics: const BouncingScrollPhysics(),
+              child: Padding(
+                // Padding dalam: Menangani jarak tombol dari bawah layar (Safe Area)
+                padding: EdgeInsets.fromLTRB(
+                  24,
+                  24,
+                  24,
+                  24 +
+                      MediaQuery.of(
+                        context,
+                      ).padding.bottom, // <--- INI KUNCINYA
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Handle Bar
+                    Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    "Bagikan Pengalaman",
-                    style: GoogleFonts.philosopher(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: _primaryBrown,
+                    const SizedBox(height: 20),
+
+                    // Judul
+                    Text(
+                      "Bagikan Pengalaman",
+                      style: GoogleFonts.philosopher(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: _primaryBrown,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "Beri rating dan ulasan untuk museum ini",
-                    style: GoogleFonts.mulish(
-                      color: Colors.grey[500],
-                      fontSize: 14,
+                    const SizedBox(height: 8),
+                    Text(
+                      "Beri rating dan ulasan untuk museum ini",
+                      style: GoogleFonts.mulish(
+                        color: Colors.grey[500],
+                        fontSize: 14,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 25),
-                  Obx(
-                    () => Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(
-                        5,
-                        (index) => GestureDetector(
-                          onTap: () => controller.setRating(index + 1),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 5),
-                            child: Icon(
-                              index < controller.userRating.value
-                                  ? Ionicons.star
-                                  : Ionicons.star_outline,
-                              color: _goldAccent,
-                              size: 44,
+                    const SizedBox(height: 25),
+
+                    // Rating
+                    Obx(
+                      () => Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(
+                          5,
+                          (index) => GestureDetector(
+                            onTap: () => controller.setRating(index + 1),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 5,
+                              ),
+                              child: AnimatedScale(
+                                scale: index < controller.userRating.value
+                                    ? 1.1
+                                    : 1.0,
+                                duration: const Duration(milliseconds: 200),
+                                child: Icon(
+                                  index < controller.userRating.value
+                                      ? Ionicons.star
+                                      : Ionicons.star_outline,
+                                  color: _goldAccent,
+                                  size: 44,
+                                ),
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 30),
-                  TextField(
-                    controller: controller.reviewController,
-                    maxLines: 4,
-                    style: GoogleFonts.mulish(),
-                    decoration: InputDecoration(
-                      hintText: "Ceritakan pengalaman Anda...",
-                      hintStyle: GoogleFonts.mulish(color: Colors.grey[400]),
-                      filled: true,
-                      fillColor: _bgSoft,
-                      contentPadding: const EdgeInsets.all(16),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none,
+                    const SizedBox(height: 30),
+
+                    // TextField
+                    TextField(
+                      controller: controller.reviewController,
+                      minLines: 3,
+                      maxLines: 5,
+                      textCapitalization: TextCapitalization.sentences,
+                      style: GoogleFonts.mulish(
+                        color: _textHeading,
+                        fontSize: 14,
                       ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide(color: _primaryBrown),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 25),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 55,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Get.back();
-                        controller.submitReview();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _primaryBrown,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
+                      decoration: InputDecoration(
+                        hintText: "Ceritakan pengalaman menarik Anda...",
+                        hintStyle: GoogleFonts.mulish(
+                          color: Colors.grey[400],
+                          fontSize: 14,
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey[50],
+                        contentPadding: const EdgeInsets.all(16),
+                        enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(
+                            color: Colors.grey.shade300,
+                            width: 1,
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        "Kirim Ulasan",
-                        style: GoogleFonts.mulish(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide(
+                            color: _primaryBrown,
+                            width: 1.5,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 25),
+
+                    // Tombol Kirim
+                    SizedBox(
+                      width: double.infinity,
+                      height: 55,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Get.back();
+                          controller.submitReview();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _primaryBrown,
+                          foregroundColor: Colors.white,
+                          elevation: 2,
+                          shadowColor: _primaryBrown.withOpacity(0.4),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: Text(
+                          "Kirim Ulasan",
+                          style: GoogleFonts.mulish(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -665,8 +717,9 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
         return Image.asset(imageUrl, fit: BoxFit.cover);
       } else {
         String cleanBase64 = imageUrl.replaceAll(RegExp(r'\s+'), '');
-        if (cleanBase64.contains(','))
+        if (cleanBase64.contains(',')) {
           cleanBase64 = cleanBase64.split(',').last;
+        }
         int mod4 = cleanBase64.length % 4;
         if (mod4 > 0) cleanBase64 += '=' * (4 - mod4);
         return Image.memory(
@@ -681,7 +734,6 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
   }
 }
 
-// --- DEFINISI SLIDER AGAR TIDAK ERROR ---
 class _AutoPlayReviewSlider extends StatefulWidget {
   final List<DocumentSnapshot> docs;
   final Color primaryBrown;

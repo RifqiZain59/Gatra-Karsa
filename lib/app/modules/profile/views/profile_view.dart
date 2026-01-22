@@ -7,7 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-// IMPORT HALAMAN
+// IMPORT HALAMAN (Sesuaikan dengan project Anda)
 import 'package:gatrakarsa/app/modules/editprofile/views/editprofile_view.dart';
 import 'package:gatrakarsa/app/modules/gantikatasandi/views/gantikatasandi_view.dart';
 import 'package:gatrakarsa/app/modules/riwayatlogin/views/riwayatlogin_view.dart';
@@ -92,7 +92,10 @@ class _ProfileViewState extends State<ProfileView> {
           physics: const BouncingScrollPhysics(),
           child: Column(
             children: [
+              // HEADER (KOTAK COKLAT + BATIK)
               _buildHeaderSection(context),
+
+              // KONTEN MENU
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Column(
@@ -161,21 +164,6 @@ class _ProfileViewState extends State<ProfileView> {
                         onTap: () => Get.to(() => const KebijakanprivasiView()),
                       ),
                     ]),
-                    const SizedBox(height: 32),
-                    _buildSectionTitle('Pusat Bantuan'),
-                    _buildMenuCard(context, [
-                      _buildMenuItem(
-                        Ionicons.logo_whatsapp,
-                        'Hubungi CS (WhatsApp)',
-                        onTap: () {},
-                      ),
-                      _buildDivider(),
-                      _buildMenuItem(
-                        Ionicons.help_circle_outline,
-                        'FAQ',
-                        onTap: () {},
-                      ),
-                    ]),
                     const SizedBox(height: 40),
                     SizedBox(
                       width: double.infinity,
@@ -201,7 +189,7 @@ class _ProfileViewState extends State<ProfileView> {
                       ),
                     ),
 
-                    // --- PERBAIKAN UTAMA: Jarak Aman Bawah ---
+                    // --- Jarak Aman Bawah ---
                     SizedBox(
                       height: 120 + MediaQuery.of(context).padding.bottom,
                     ),
@@ -215,9 +203,8 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
-  // ... (Helper widgets: _buildHeaderSection, _buildLeafDecor, _buildSectionTitle, _buildMenuCard, _buildMenuItem, _buildDivider - SAMA SEPERTI SEBELUMNYA, PASTIKAN MENGGUNAKAN GOOGLEFONTS)
-  // Untuk menghemat space, saya asumsikan Anda menyalin helper widget dari jawaban sebelumnya.
-  // Jika butuh lengkap, beri tahu saya.
+  // --- HELPER WIDGETS ---
+
   Widget _buildHeaderSection(BuildContext context) {
     ImageProvider? imageProvider;
     if (_photoBase64 != null && _photoBase64!.isNotEmpty) {
@@ -235,6 +222,7 @@ class _ProfileViewState extends State<ProfileView> {
       width: double.infinity,
       child: Stack(
         children: [
+          // 1. Lapisan Dasar (Gradien Coklat) - KOTAK (Tanpa Radius)
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -242,35 +230,21 @@ class _ProfileViewState extends State<ProfileView> {
                 end: Alignment.bottomRight,
                 colors: [WayangColors.primaryDark, WayangColors.primaryLight],
               ),
+              // borderRadius dihapus agar kotak tegas
             ),
           ),
+
+          // 2. Lapisan Pola Batik (Hanya di dalam header)
           Positioned.fill(
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Positioned(
-                  top: -20,
-                  left: -20,
-                  child: _buildLeafDecor(angle: -0.8, size: 80),
-                ),
-                Positioned(
-                  top: 10,
-                  left: 100,
-                  child: _buildLeafDecor(angle: 0.5, size: 50),
-                ),
-                Positioned(
-                  top: -10,
-                  right: 80,
-                  child: _buildLeafDecor(angle: -0.3, size: 60),
-                ),
-                Positioned(
-                  bottom: 20,
-                  left: -10,
-                  child: _buildLeafDecor(angle: 0.7, size: 60),
-                ),
-              ],
+            child: CustomPaint(
+              painter: BatikPatternPainter(
+                // Warna emas transparan agar terlihat di atas coklat
+                color: WayangColors.goldAccent.withOpacity(0.08),
+              ),
             ),
           ),
+
+          // 3. Konten Profil (Foto dan Nama)
           SafeArea(
             bottom: false,
             child: Center(
@@ -285,6 +259,13 @@ class _ProfileViewState extends State<ProfileView> {
                         color: WayangColors.goldAccent,
                         width: 3,
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: CircleAvatar(
                       radius: 50,
@@ -306,6 +287,13 @@ class _ProfileViewState extends State<ProfileView> {
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -315,8 +303,9 @@ class _ProfileViewState extends State<ProfileView> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(4),
+                      color: Colors.black.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.white.withOpacity(0.2)),
                     ),
                     child: Text(
                       _userEmail,
@@ -331,17 +320,6 @@ class _ProfileViewState extends State<ProfileView> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildLeafDecor({double angle = 0, double size = 60}) {
-    return Transform.rotate(
-      angle: angle,
-      child: Icon(
-        Ionicons.leaf,
-        size: size,
-        color: WayangColors.goldAccent.withOpacity(0.08),
       ),
     );
   }
@@ -373,6 +351,7 @@ class _ProfileViewState extends State<ProfileView> {
             offset: const Offset(0, 4),
           ),
         ],
+        border: Border.all(color: WayangColors.primaryDark.withOpacity(0.05)),
       ),
       child: Column(children: children),
     );
@@ -431,4 +410,31 @@ class _ProfileViewState extends State<ProfileView> {
       endIndent: 16,
     );
   }
+}
+
+// --- BATIK PATTERN PAINTER (MOTIF KAWUNG) ---
+class BatikPatternPainter extends CustomPainter {
+  final Color color;
+
+  BatikPatternPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    double circleRadius = 30;
+    double gap = circleRadius * 1.5;
+
+    for (double y = 0; y < size.height + circleRadius; y += gap) {
+      for (double x = 0; x < size.width + circleRadius; x += gap) {
+        canvas.drawCircle(Offset(x, y), circleRadius, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter old) => false;
 }

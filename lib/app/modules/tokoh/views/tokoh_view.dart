@@ -1,31 +1,38 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:gatrakarsa/app/data/service/api_service.dart';
 import 'package:get/get.dart';
 import 'package:ionicons/ionicons.dart';
-import 'package:google_fonts/google_fonts.dart'; // IMPORT FONT
+import 'package:google_fonts/google_fonts.dart';
 
-// --- IMPORT VIEW & CONTROLLER & BINDING ---
+// --- IMPORT SERVICE & CONTROLLERS ---
+import 'package:gatrakarsa/app/data/service/api_service.dart';
+import 'package:gatrakarsa/app/modules/tokoh/controllers/tokoh_controller.dart';
+
+// --- IMPORT MODUL DETAIL ---
 import 'package:gatrakarsa/app/modules/detail_wayang/views/detail_wayang_view.dart';
 import 'package:gatrakarsa/app/modules/detail_wayang/bindings/detail_wayang_binding.dart';
 import 'package:gatrakarsa/app/modules/detaildalang/views/detaildalang_view.dart';
 import 'package:gatrakarsa/app/modules/detaildalang/controllers/detaildalang_controller.dart';
-import 'package:gatrakarsa/app/modules/tokoh/controllers/tokoh_controller.dart';
 
 class TokohView extends StatefulWidget {
   const TokohView({super.key});
+
   @override
   State<TokohView> createState() => _TokohViewState();
 }
 
 class _TokohViewState extends State<TokohView> {
   final TokohController controller = Get.put(TokohController());
-  final Color _primaryColor = const Color(0xFF4E342E);
-  final Color _accentColor = const Color(0xFFD4AF37);
-  final Color _bgColor = const Color(0xFFFAFAF5);
-  final Color _secondaryColor = const Color(0xFF8D6E63);
+
+  // --- PALET WARNA PREMIUM ---
+  final Color _primaryColor = const Color(0xFF3E2723); // Coklat Tua
+  final Color _accentColor = const Color(0xFFD4AF37); // Emas
+  final Color _bgColor = const Color(0xFFFDFCF8); // Putih Tulang
+  final Color _secondaryColor = const Color(0xFF5D4037);
+
   int _activeTab = 0;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
@@ -37,6 +44,7 @@ class _TokohViewState extends State<TokohView> {
     super.dispose();
   }
 
+  // Helper Decode Image
   Uint8List? _decodeImage(String? base64String) {
     if (base64String == null || base64String.isEmpty) return null;
     try {
@@ -81,101 +89,170 @@ class _TokohViewState extends State<TokohView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _bgColor,
-      body: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: const SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.dark,
-          systemNavigationBarColor: Colors.white,
-          systemNavigationBarIconBrightness: Brightness.dark,
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildHeaderSection(),
-              Expanded(
-                child: Obx(() {
-                  bool isLoading = _activeTab == 0
-                      ? controller.isLoadingWayang.value
-                      : controller.isLoadingDalang.value;
-                  if (isLoading)
-                    return Center(
-                      child: CircularProgressIndicator(color: _primaryColor),
-                    );
-                  final dataToShow = _filteredData;
-                  if (dataToShow.isEmpty) return _buildEmptyState();
-                  return _buildContentGrid(dataToShow);
-                }),
+      body: Stack(
+        children: [
+          // --- BACKGROUND DECORATION ---
+          Positioned(
+            top: -50,
+            right: -50,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _accentColor.withOpacity(0.15),
               ),
-            ],
+            ),
           ),
-        ),
+          Positioned(
+            top: 100,
+            left: -40,
+            child: Container(
+              width: 150,
+              height: 150,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _primaryColor.withOpacity(0.05),
+              ),
+            ),
+          ),
+
+          // --- MAIN CONTENT ---
+          AnnotatedRegion<SystemUiOverlayStyle>(
+            value: const SystemUiOverlayStyle(
+              statusBarColor: Colors.transparent,
+              statusBarIconBrightness: Brightness.dark,
+            ),
+            child: SafeArea(
+              child: Column(
+                children: [
+                  _buildHeaderSection(),
+                  Expanded(
+                    child: Obx(() {
+                      bool isLoading = _activeTab == 0
+                          ? controller.isLoadingWayang.value
+                          : controller.isLoadingDalang.value;
+
+                      if (isLoading) {
+                        return Center(
+                          child: CircularProgressIndicator(
+                            color: _primaryColor,
+                          ),
+                        );
+                      }
+
+                      final dataToShow = _filteredData;
+
+                      if (dataToShow.isEmpty) return _buildEmptyState();
+
+                      return _buildContentGrid(dataToShow);
+                    }),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildHeaderSection() {
     return Container(
-      padding: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(color: _bgColor),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Column(
         children: [
+          // Navigasi & Judul
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 GestureDetector(
                   onTap: () => Get.back(),
-                  child: Icon(Ionicons.arrow_back, color: _primaryColor),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Ionicons.arrow_back,
+                      color: _primaryColor,
+                      size: 20,
+                    ),
+                  ),
                 ),
                 Text(
                   'Ensiklopedia',
                   style: GoogleFonts.philosopher(
-                    fontSize: 20,
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                     color: _primaryColor,
+                    letterSpacing: 1,
                   ),
                 ),
-                const SizedBox(width: 24),
+                const SizedBox(width: 40),
               ],
             ),
           ),
-          const SizedBox(height: 25),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildMainTabButton('Tokoh Wayang', 0),
-              const SizedBox(width: 40),
-              _buildMainTabButton('Tokoh Dalang', 1),
-            ],
+
+          const SizedBox(height: 15),
+
+          // --- TAB SWITCHER (Kapsul) ---
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: Row(
+              children: [
+                Expanded(child: _buildCapsuleTab("Wayang", 0)),
+                Expanded(child: _buildCapsuleTab("Dalang", 1)),
+              ],
+            ),
           ),
+
           const SizedBox(height: 20),
+
+          // Search Bar
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 15),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(15),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.grey.withOpacity(0.1)),
                 boxShadow: [
                   BoxShadow(
-                    color: _primaryColor.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+                    color: _primaryColor.withOpacity(0.06),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
                   ),
                 ],
               ),
               child: TextField(
                 controller: _searchController,
                 onChanged: (value) => setState(() => _searchQuery = value),
+                style: GoogleFonts.mulish(color: _primaryColor),
                 decoration: InputDecoration(
                   prefixIcon: Icon(
                     Ionicons.search_outline,
                     color: _secondaryColor.withOpacity(0.5),
                   ),
                   hintText: _activeTab == 0
-                      ? 'Cari wayang...'
-                      : 'Cari dalang...',
+                      ? 'Cari tokoh wayang...'
+                      : 'Cari tokoh dalang...',
                   hintStyle: GoogleFonts.mulish(
                     color: Colors.grey[400],
                     fontSize: 14,
@@ -199,13 +276,15 @@ class _TokohViewState extends State<TokohView> {
             ),
           ),
           const SizedBox(height: 15),
+
+          // Filter Tabs
           _buildFilterTabs(),
         ],
       ),
     );
   }
 
-  Widget _buildMainTabButton(String label, int index) {
+  Widget _buildCapsuleTab(String label, int index) {
     bool isActive = _activeTab == index;
     return GestureDetector(
       onTap: () => setState(() {
@@ -214,27 +293,32 @@ class _TokohViewState extends State<TokohView> {
         _searchController.clear();
         _selectedCategory = "Semua";
       }),
-      child: Column(
-        children: [
-          Text(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isActive ? _primaryColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(25),
+          boxShadow: isActive
+              ? [
+                  BoxShadow(
+                    color: _primaryColor.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : [],
+        ),
+        child: Center(
+          child: Text(
             label,
             style: GoogleFonts.mulish(
-              color: isActive ? _primaryColor : Colors.grey,
-              fontSize: 16,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+              color: isActive ? _accentColor : Colors.grey[600],
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 6),
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            height: 3,
-            width: isActive ? 30 : 0,
-            decoration: BoxDecoration(
-              color: _accentColor,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -247,14 +331,14 @@ class _TokohViewState extends State<TokohView> {
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: filters
                 .map(
                   (category) => Padding(
-                    padding: const EdgeInsets.only(right: 30),
-                    child: _buildFilterTabItem(category),
+                    padding: const EdgeInsets.only(right: 12),
+                    child: _buildFilterChip(category),
                   ),
                 )
                 .toList(),
@@ -264,31 +348,28 @@ class _TokohViewState extends State<TokohView> {
     );
   }
 
-  Widget _buildFilterTabItem(String label) {
+  Widget _buildFilterChip(String label) {
     final bool isSelected = _selectedCategory == label;
     return GestureDetector(
       onTap: () => setState(() => _selectedCategory = label),
-      child: Column(
-        children: [
-          Text(
-            label,
-            style: GoogleFonts.mulish(
-              color: isSelected ? _primaryColor : Colors.grey,
-              fontSize: 14,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            ),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? _accentColor : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? _accentColor : Colors.grey.withOpacity(0.2),
           ),
-          const SizedBox(height: 4),
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            height: 2,
-            width: isSelected ? 20 : 0,
-            decoration: BoxDecoration(
-              color: _accentColor,
-              borderRadius: BorderRadius.circular(2),
-            ),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.mulish(
+            color: isSelected ? Colors.white : Colors.grey[600],
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
           ),
-        ],
+        ),
       ),
     );
   }
@@ -298,15 +379,26 @@ class _TokohViewState extends State<TokohView> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Ionicons.search,
-            size: 60,
-            color: _secondaryColor.withOpacity(0.3),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.grey[100],
+            ),
+            child: Icon(
+              Ionicons.search,
+              size: 50,
+              color: _secondaryColor.withOpacity(0.3),
+            ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
           Text(
             "Data tidak ditemukan",
-            style: GoogleFonts.mulish(color: _secondaryColor.withOpacity(0.5)),
+            style: GoogleFonts.mulish(
+              color: _secondaryColor.withOpacity(0.6),
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
@@ -315,13 +407,13 @@ class _TokohViewState extends State<TokohView> {
 
   Widget _buildContentGrid(List<ContentModel> data) {
     return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+      padding: const EdgeInsets.fromLTRB(24, 10, 24, 24),
       physics: const BouncingScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        crossAxisSpacing: 15,
-        mainAxisSpacing: 15,
-        childAspectRatio: 0.75,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 0.72,
       ),
       itemCount: data.length,
       itemBuilder: (context, index) => _activeTab == 0
@@ -330,6 +422,7 @@ class _TokohViewState extends State<TokohView> {
     );
   }
 
+  // --- KARTU WAYANG (UPDATED: BACKGROUND CLEAN) ---
   Widget _buildWayangCard(ContentModel item) {
     Uint8List? imageBytes = _decodeImage(item.imageUrl);
     return GestureDetector(
@@ -341,12 +434,12 @@ class _TokohViewState extends State<TokohView> {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: _primaryColor.withOpacity(0.08),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              color: const Color(0xFF3E2723).withOpacity(0.08),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
@@ -354,30 +447,84 @@ class _TokohViewState extends State<TokohView> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(
-              flex: 3,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: _bgColor,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(15),
+              flex: 4,
+              child: Stack(
+                children: [
+                  // --- PERBAIKAN BACKGROUND ---
+                  // Menggunakan warna solid/gradasi sangat tipis (Putih -> Cream)
+                  // Ini agar menyatu dengan gambar wayang apa pun.
+                  Container(
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(20),
+                      ),
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.white,
+                          Color(
+                            0xFFFFF8E1,
+                          ), // Cream sangat muda (Parchment look)
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
                   ),
-                ),
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(15),
+
+                  // Gambar Wayang
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: double.infinity,
+                      child: imageBytes != null
+                          ? Image.memory(
+                              imageBytes,
+                              fit: BoxFit.contain, // Gambar utuh
+                              alignment: Alignment.bottomCenter,
+                            )
+                          : Center(
+                              child: Icon(
+                                Ionicons.person,
+                                size: 40,
+                                color: _secondaryColor.withOpacity(0.3),
+                              ),
+                            ),
+                    ),
                   ),
-                  child: imageBytes != null
-                      ? Image.memory(
-                          imageBytes,
-                          fit: BoxFit.cover,
-                          errorBuilder: (c, e, s) => Icon(
-                            Ionicons.person,
-                            size: 40,
-                            color: _secondaryColor,
+
+                  // Badge Kategori
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.95),
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 4,
                           ),
-                        )
-                      : Icon(Ionicons.person, size: 40, color: _secondaryColor),
-                ),
+                        ],
+                      ),
+                      child: Text(
+                        item.category.toUpperCase(),
+                        style: GoogleFonts.mulish(
+                          fontSize: 8,
+                          fontWeight: FontWeight.w800,
+                          color: _accentColor,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             Expanded(
@@ -389,26 +536,16 @@ class _TokohViewState extends State<TokohView> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      item.category.toUpperCase(),
-                      style: GoogleFonts.mulish(
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
-                        color: _accentColor,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
                       item.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.philosopher(
-                        fontSize: 14,
+                        fontSize: 15,
                         fontWeight: FontWeight.bold,
                         color: _primaryColor,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -416,14 +553,14 @@ class _TokohViewState extends State<TokohView> {
                           child: Text(
                             item.subtitle,
                             maxLines: 1,
-                            style: GoogleFonts.mulish(
-                              fontSize: 10,
-                              color: Colors.grey,
-                              fontStyle: FontStyle.italic,
-                            ),
                             overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.mulish(
+                              fontSize: 11,
+                              color: Colors.grey[500],
+                            ),
                           ),
                         ),
+                        // Icon Like
                         Obx(() {
                           bool isLiked = controller.favoriteIds.contains(
                             item.id,
@@ -431,7 +568,7 @@ class _TokohViewState extends State<TokohView> {
                           return Icon(
                             isLiked ? Ionicons.heart : Ionicons.heart_outline,
                             size: 18,
-                            color: isLiked ? Colors.red : _secondaryColor,
+                            color: isLiked ? Colors.red : Colors.grey[400],
                           );
                         }),
                       ],
@@ -446,6 +583,7 @@ class _TokohViewState extends State<TokohView> {
     );
   }
 
+  // --- KARTU DALANG ---
   Widget _buildDalangCard(ContentModel item) {
     Uint8List? imageBytes = _decodeImage(item.imageUrl);
     return GestureDetector(
@@ -459,13 +597,12 @@ class _TokohViewState extends State<TokohView> {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: _secondaryColor.withOpacity(0.1)),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: _primaryColor.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              color: _primaryColor.withOpacity(0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -476,57 +613,84 @@ class _TokohViewState extends State<TokohView> {
               padding: const EdgeInsets.all(3),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: _accentColor, width: 2),
+                gradient: LinearGradient(
+                  colors: [_accentColor, _accentColor.withOpacity(0.4)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
               ),
               child: CircleAvatar(
-                radius: 35,
+                radius: 40,
                 backgroundColor: _bgColor,
                 backgroundImage: imageBytes != null
                     ? MemoryImage(imageBytes)
                     : null,
                 child: imageBytes == null
                     ? Icon(
-                        Ionicons.mic_outline,
-                        size: 25,
-                        color: _secondaryColor,
+                        Ionicons.mic,
+                        size: 30,
+                        color: _secondaryColor.withOpacity(0.5),
                       )
                     : null,
               ),
             ),
-            const SizedBox(height: 10),
-            Text(
-              item.title,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              style: GoogleFonts.philosopher(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: _primaryColor,
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                item.title,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.philosopher(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: _primaryColor,
+                ),
               ),
             ),
             const SizedBox(height: 4),
             Text(
-              item.subtitle,
+              "Dalang Profesional",
               style: GoogleFonts.mulish(
                 fontSize: 10,
-                color: _accentColor,
+                color: Colors.grey[500],
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 8),
             if (item.location != null && item.location!.isNotEmpty)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: _secondaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
                 ),
-                child: Text(
-                  item.location!,
-                  style: GoogleFonts.mulish(
-                    fontSize: 9,
-                    color: _secondaryColor,
-                  ),
+                decoration: BoxDecoration(
+                  color: _primaryColor.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Ionicons.location_outline,
+                      size: 10,
+                      color: _secondaryColor,
+                    ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        item.location!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.mulish(
+                          fontSize: 10,
+                          color: _secondaryColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
           ],

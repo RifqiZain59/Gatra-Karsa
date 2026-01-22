@@ -5,20 +5,22 @@ import 'package:gatrakarsa/app/data/service/api_service.dart';
 class EventController extends GetxController {
   final ApiService _apiService = ApiService();
 
-  // STATE UTAMA
+  // --- VARIABLES ---
   var isLoading = true.obs;
+
+  // List Master Data
   var allEvents = <ContentModel>[].obs;
+
+  // List Hasil Filter
   var filteredEvents = <ContentModel>[].obs;
 
-  // FILTER STATE
-  var categories = <String>['Semua'].obs;
-  var selectedCategory = 'Semua'.obs;
-  var searchQuery = ''.obs;
-  var selectedDate = Rxn<DateTime>();
+  // List Kategori Dinamis (Diambil dari data Firebase)
+  var categoryList = <String>["Semua"].obs;
 
-  // --- KOLEKSI STATE (BARU) ---
-  var savedIds = <String>{}.obs; // Set ID yang disimpan
-  var isCollectionMode = false.obs; // Mode filter: Semua vs Koleksi
+  // State Filter
+  var searchQuery = "".obs;
+  var selectedCategory = "Semua".obs;
+  var selectedDate = Rxn<DateTime>();
 
   @override
   void onInit() {
@@ -26,13 +28,21 @@ class EventController extends GetxController {
     fetchEvents();
   }
 
+  // --- FETCH DATA ---
   void fetchEvents() async {
     try {
       isLoading(true);
-      List<ContentModel> data = await _apiService.getEvents();
-      allEvents.assignAll(data);
-      _extractCategories();
-      runFilter();
+      // Mengambil data dari API/Firebase
+      var events = await _apiService.getEvents();
+
+      // Simpan ke master list
+      allEvents.assignAll(events);
+
+      // GENERATE KATEGORI DINAMIS
+      _generateDynamicCategories();
+
+      // Terapkan filter awal (tampilkan semua)
+      applyFilters();
     } catch (e) {
       print("Error fetching events: $e");
     } finally {
@@ -40,134 +50,112 @@ class EventController extends GetxController {
     }
   }
 
-  void _extractCategories() {
-    Set<String> uniqueCats = allEvents
-        .map((e) => e.category.trim())
-        .where((c) => c.isNotEmpty)
-        .toSet();
-    List<String> sorted = uniqueCats.toList()..sort();
-    categories.assignAll(['Semua', ...sorted]);
-  }
-
-  // LOGIKA FILTER LENGKAP
-  void runFilter() {
-    List<ContentModel> result = allEvents;
-
-    // 1. Filter Mode Koleksi (Jadwal Saya)
-    if (isCollectionMode.value) {
-      result = result.where((item) => savedIds.contains(item.id)).toList();
+  // Fungsi untuk mengekstrak kategori unik dari data
+  void _generateDynamicCategories() {
+    if (allEvents.isEmpty) {
+      categoryList.assignAll(["Semua"]);
+      return;
     }
 
-    // 2. Filter Kategori
-    if (selectedCategory.value != 'Semua') {
-      result = result
+    // Ambil kategori, trim spasi, hapus yang kosong, dan masukkan ke Set (unik)
+    Set<String> uniqueCategories = allEvents
+        .map((e) => e.category.trim()) // Bersihkan spasi
+        .where((c) => c.isNotEmpty) // Hapus string kosong
+        .toSet();
+
+    // Ubah ke List dan Urutkan Abjad
+    List<String> sortedCats = uniqueCategories.toList()..sort();
+
+    // Masukkan "Semua" di awal
+    categoryList.assignAll(["Semua", ...sortedCats]);
+  }
+
+  Future<void> refreshData() async {
+    fetchEvents();
+  }
+
+  // --- LOGIKA FILTER ---
+  void applyFilters() {
+    List<ContentModel> results = allEvents;
+
+    // 1. Filter Search
+    if (searchQuery.value.isNotEmpty) {
+      results = results
           .where(
-            (item) =>
-                item.category.toLowerCase().trim() ==
-                selectedCategory.value.toLowerCase().trim(),
+            (event) => event.title.toLowerCase().contains(
+              searchQuery.value.toLowerCase(),
+            ),
           )
           .toList();
     }
 
-    // 3. Filter Search
-    if (searchQuery.value.isNotEmpty) {
-      String query = searchQuery.value.toLowerCase();
-      result = result.where((item) {
-        return item.title.toLowerCase().contains(query) ||
-            (item.location ?? "").toLowerCase().contains(query);
-      }).toList();
+    // 2. Filter Kategori
+    if (selectedCategory.value != "Semua") {
+      // Case-insensitive comparison agar aman
+      results = results
+          .where(
+            (event) =>
+                event.category.trim().toLowerCase() ==
+                selectedCategory.value.trim().toLowerCase(),
+          )
+          .toList();
     }
 
-    // 4. Filter Date (Opsional)
+    // 3. Filter Tanggal
     if (selectedDate.value != null) {
-      // Logic tanggal bisa disesuaikan
+      // Implementasi sederhana: Cek apakah subtitle mengandung format tanggal
+      // (Sebaiknya gunakan field 'date' khusus jika ada di model)
+      DateTime picked = selectedDate.value!;
+
+      // Contoh: Kita anggap subtitle berisi "24 Januari 2024"
+      // Kita coba match String tanggal.
+      // *Catatan: Logic ini tergantung format tanggal di Firebase Anda*
+      // Disini kita filter jika data event memiliki tanggal yang valid/relevan
+      // results = results.where((e) => ...).toList();
     }
 
-    filteredEvents.assignAll(result);
+    filteredEvents.assignAll(results);
   }
 
-  // --- ACTIONS ---
+  void updateSearch(String val) {
+    searchQuery.value = val;
+    applyFilters();
+  }
 
   void changeCategory(String category) {
     selectedCategory.value = category;
-    runFilter();
+    applyFilters();
   }
 
-  void updateSearch(String query) {
-    searchQuery.value = query;
-    runFilter();
-  }
-
-  // Toggle Mode Koleksi (Tombol di sebelah Search)
-  void toggleCollectionMode() {
-    isCollectionMode.value = !isCollectionMode.value;
-    // Reset filter lain agar UX lebih baik
-    selectedCategory.value = 'Semua';
-    searchQuery.value = '';
-    runFilter();
-  }
-
-  // Toggle Simpan Item (Tombol di Card)
-  void toggleSave(String id) {
-    if (savedIds.contains(id)) {
-      savedIds.remove(id);
-      Get.snackbar(
-        "Dihapus",
-        "Event dihapus dari jadwal saya",
-        backgroundColor: Colors.grey,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(20),
-        duration: const Duration(seconds: 1),
-      );
-    } else {
-      savedIds.add(id);
-      Get.snackbar(
-        "Disimpan",
-        "Event ditambahkan ke jadwal saya",
-        backgroundColor: const Color(0xFF4E342E),
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(20),
-        duration: const Duration(seconds: 1),
-      );
-    }
-    // Jika sedang di mode koleksi, refresh agar item hilang real-time
-    if (isCollectionMode.value) runFilter();
-  }
-
-  // Date Picker Logic
+  // --- DATE PICKER ---
   Future<void> pickDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: selectedDate.value ?? DateTime.now(),
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
       builder: (context, child) {
         return Theme(
-          data: Theme.of(context).copyWith(
+          data: ThemeData.light().copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFF4E342E),
+              primary: Color(0xFF3E2723),
               onPrimary: Colors.white,
-              onSurface: Color(0xFF4E342E),
+              onSurface: Color(0xFF3E2723),
             ),
           ),
           child: child!,
         );
       },
     );
+
     if (picked != null && picked != selectedDate.value) {
       selectedDate.value = picked;
-      runFilter();
+      applyFilters();
     }
   }
 
   void clearDate() {
     selectedDate.value = null;
-    runFilter();
-  }
-
-  Future<void> refreshData() async {
-    fetchEvents();
+    applyFilters();
   }
 }

@@ -9,165 +9,206 @@ import '../controllers/register_controller.dart';
 class RegisterView extends GetView<RegisterController> {
   const RegisterView({super.key});
 
-  // --- Konstanta Warna ---
-  static const Color darkColor = Color(0xFF4E342E);
-  static const Color accentColor = Color(0xFFD4AF37);
-  static const Color surfaceColor = Colors.white;
-  static const Color inputFillColor = Color(0xFFF9F9F9);
+  // --- Palet Warna Premium (Sesuai HomeView) ---
+  static const Color primaryColor = Color(0xFF3E2723); // Coklat Tua
+  static const Color accentColor = Color(0xFFD4AF37); // Emas
+  static const Color bgColor = Color(0xFFFDFCF8); // Putih Tulang
+  static const Color inputColor = Colors.white;
 
   @override
   Widget build(BuildContext context) {
     if (!Get.isRegistered<RegisterController>()) Get.put(RegisterController());
 
-    return Scaffold(
-      backgroundColor: surfaceColor,
-      appBar: AppBar(
-        // --- PERBAIKAN SYSTEM UI DI SINI ---
-        systemOverlayStyle: const SystemUiOverlayStyle(
-          // Status Bar (Atas)
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.dark, // Ikon Hitam
-          statusBarBrightness: Brightness.light, // iOS: Background Terang
-          // Navigation Bar (Bawah)
-          systemNavigationBarColor: Colors.white, // Background Putih
-          systemNavigationBarIconBrightness: Brightness.dark, // Ikon Hitam
-        ),
-        // -----------------------------------
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 10),
-          child: IconButton(
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Ionicons.chevron_back,
-                color: darkColor,
-                size: 20,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        systemNavigationBarColor: bgColor,
+        systemNavigationBarIconBrightness: Brightness.dark,
+      ),
+      child: Scaffold(
+        backgroundColor: bgColor,
+        body: Stack(
+          children: [
+            // --- BACKGROUND DECORATION ---
+            // Lingkaran aksen di pojok kanan atas
+            Positioned(
+              top: -80,
+              right: -40,
+              child: Container(
+                width: 240,
+                height: 240,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [accentColor.withOpacity(0.1), Colors.transparent],
+                    begin: Alignment.bottomLeft,
+                    end: Alignment.topRight,
+                  ),
+                ),
               ),
             ),
-            onPressed: () => Get.back(),
-          ),
-        ),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              Text(
-                'Buat Akun Baru',
-                style: GoogleFonts.philosopher(
-                  fontSize: 32.0,
-                  fontWeight: FontWeight.bold,
-                  color: darkColor,
-                ),
-              ),
-              const SizedBox(height: 8.0),
-              Text(
-                'Daftar untuk mulai menjelajah dunia wayang!',
-                style: GoogleFonts.mulish(
-                  fontSize: 16.0,
-                  color: Colors.grey[600],
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 40.0),
 
-              _buildInputField(
-                label: 'Nama Lengkap',
-                controller: controller.nameController,
-                hint: 'Masukkan nama lengkap',
-                icon: Ionicons.person_outline,
-              ),
-              const SizedBox(height: 20.0),
-
-              _buildInputField(
-                label: 'Alamat Email',
-                controller: controller.emailController,
-                hint: 'Masukkan email',
-                icon: Ionicons.mail_outline,
-                inputType: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: 20.0),
-
-              _buildInputField(
-                label: 'Kata Sandi',
-                controller: controller.passwordController,
-                hint: 'Buat kata sandi',
-                icon: Ionicons.lock_closed_outline,
-                isPassword: true,
-              ),
-              const SizedBox(height: 40.0),
-
-              SizedBox(
-                width: double.infinity,
-                height: 56.0,
-                child: Obx(
-                  () => ElevatedButton(
-                    onPressed: controller.isLoading.value
-                        ? null
-                        : () => controller.register(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: darkColor,
-                      foregroundColor: accentColor,
-                      elevation: 5,
-                      shadowColor: darkColor.withOpacity(0.3),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
+            // --- CONTENT ---
+            SafeArea(
+              child: Column(
+                children: [
+                  // CUSTOM APP BAR
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      left: 16,
+                      right: 24,
+                      top: 16,
                     ),
-                    child: controller.isLoading.value
-                        ? const SizedBox(
-                            height: 24,
-                            width: 24,
-                            child: CircularProgressIndicator(
-                              color: accentColor,
-                              strokeWidth: 2.5,
-                            ),
-                          )
-                        : Text(
-                            'Daftar',
-                            style: GoogleFonts.mulish(
-                              fontSize: 18.0,
-                              fontWeight: FontWeight.bold,
+                    child: Row(
+                      children: [
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(50),
+                            onTap: () => Get.back(),
+                            child: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey[300]!),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Ionicons.arrow_back,
+                                color: primaryColor,
+                                size: 20,
+                              ),
                             ),
                           ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ),
 
-              const SizedBox(height: 30),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      physics: const BouncingScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 30),
+                          Text(
+                            'Buat Akun Baru',
+                            style: GoogleFonts.philosopher(
+                              fontSize: 32.0,
+                              fontWeight: FontWeight.bold,
+                              color: primaryColor,
+                            ),
+                          ),
+                          const SizedBox(height: 8.0),
+                          Text(
+                            'Mulai lestarikan budaya dengan bergabung\nbersama Gatra Karsa.',
+                            style: GoogleFonts.mulish(
+                              fontSize: 14.0,
+                              color: Colors.grey[600],
+                              height: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 40.0),
 
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "Sudah punya akun? ",
-                    style: GoogleFonts.mulish(color: Colors.grey[600]),
-                  ),
-                  GestureDetector(
-                    onTap: () => Get.back(),
-                    child: Text(
-                      'Masuk',
-                      style: GoogleFonts.mulish(
-                        color: darkColor,
-                        fontWeight: FontWeight.bold,
+                          _buildInputField(
+                            label: 'Nama Lengkap',
+                            controller: controller.nameController,
+                            hint: 'Rifqi Zain',
+                            icon: Ionicons.person_outline,
+                          ),
+                          const SizedBox(height: 20.0),
+
+                          _buildInputField(
+                            label: 'Alamat Email',
+                            controller: controller.emailController,
+                            hint: 'contoh@email.com',
+                            icon: Ionicons.mail_outline,
+                            inputType: TextInputType.emailAddress,
+                          ),
+                          const SizedBox(height: 20.0),
+
+                          _buildInputField(
+                            label: 'Kata Sandi',
+                            controller: controller.passwordController,
+                            hint: 'Buat kata sandi kuat',
+                            icon: Ionicons.lock_closed_outline,
+                            isPassword: true,
+                          ),
+                          const SizedBox(height: 40.0),
+
+                          SizedBox(
+                            width: double.infinity,
+                            height: 56.0,
+                            child: Obx(
+                              () => ElevatedButton(
+                                onPressed: controller.isLoading.value
+                                    ? null
+                                    : () => controller.register(),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: primaryColor,
+                                  foregroundColor: accentColor,
+                                  elevation: 8,
+                                  shadowColor: primaryColor.withOpacity(0.4),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
+                                ),
+                                child: controller.isLoading.value
+                                    ? const SizedBox(
+                                        height: 24,
+                                        width: 24,
+                                        child: CircularProgressIndicator(
+                                          color: accentColor,
+                                          strokeWidth: 2.5,
+                                        ),
+                                      )
+                                    : Text(
+                                        'Buat Akun',
+                                        style: GoogleFonts.mulish(
+                                          fontSize: 16.0,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 1,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 30),
+
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                "Sudah punya akun? ",
+                                style: GoogleFonts.mulish(
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () => Get.back(),
+                                child: Text(
+                                  'Masuk',
+                                  style: GoogleFonts.mulish(
+                                    color: primaryColor,
+                                    fontWeight: FontWeight.bold,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 40),
+                        ],
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -190,19 +231,19 @@ class RegisterView extends GetView<RegisterController> {
             label,
             style: GoogleFonts.mulish(
               fontWeight: FontWeight.bold,
-              color: darkColor,
+              color: primaryColor,
               fontSize: 14,
             ),
           ),
         ),
         Container(
           decoration: BoxDecoration(
-            color: inputFillColor,
-            borderRadius: BorderRadius.circular(16),
+            color: inputColor,
+            borderRadius: BorderRadius.circular(18),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
-                blurRadius: 10,
+                color: const Color(0xFF3E2723).withOpacity(0.06),
+                blurRadius: 20,
                 offset: const Offset(0, 4),
               ),
             ],
@@ -211,15 +252,18 @@ class RegisterView extends GetView<RegisterController> {
             controller: controller,
             obscureText: isPassword,
             keyboardType: inputType,
-            style: GoogleFonts.mulish(color: Colors.black87),
-            cursorColor: darkColor,
+            style: GoogleFonts.mulish(
+              color: primaryColor,
+              fontWeight: FontWeight.w600,
+            ),
+            cursorColor: primaryColor,
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: GoogleFonts.mulish(
                 color: Colors.grey[400],
                 fontSize: 14,
               ),
-              prefixIcon: Icon(icon, color: Colors.grey[500], size: 22),
+              prefixIcon: Icon(icon, color: Colors.grey[400], size: 20),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(
                 vertical: 18.0,

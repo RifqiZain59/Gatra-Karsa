@@ -1,19 +1,18 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
-import 'dart:ui'; // Diperlukan untuk ImageFilter (Blur)
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:gatrakarsa/app/modules/daftarlike/views/daftarlike_view.dart';
 import 'package:get/get.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-// --- IMPORT HALAMAN-HALAMAN ---
-import 'package:gatrakarsa/app/modules/detail_wayang/views/detail_wayang_view.dart';
-import 'package:gatrakarsa/app/data/service/api_service.dart';
-import 'package:gatrakarsa/app/modules/kamera/views/kamera_view.dart';
+// --- IMPORT HALAMAN LAIN ---
+import 'package:gatrakarsa/app/modules/deteksi/views/deteksi_view.dart';
 import '../../profile/views/profile_view.dart';
 import '../../video/views/video_view.dart';
 import '../../leaderboard/views/leaderboard_view.dart';
@@ -32,13 +31,14 @@ class HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<HomeView> {
   int _selectedIndex = 0;
+  int _currentlyPlayingIndex = -1;
 
-  // --- PALET WARNA PREMIUM (Elegant Heritage) ---
-  final Color _primaryColor = const Color(0xFF3E2723); // Coklat Tua Elegant
+  // --- PALET WARNA ---
+  final Color _primaryColor = const Color(0xFF3E2723); // Coklat Tua
   final Color _secondaryColor = const Color(0xFF5D4037); // Coklat Medium
-  final Color _accentColor = const Color(0xFFD4AF37); // Emas (Gold)
-  final Color _surfaceColor = const Color(0xFFFFFFFF); // Putih Bersih
-  final Color _bgColor = const Color(0xFFFDFCF8); // Putih Tulang
+  final Color _accentColor = const Color(0xFFD4AF37); // Emas
+  final Color _surfaceColor = const Color(0xFFFFFFFF);
+  final Color _bgColor = const Color(0xFFFDFCF8);
   final Color _softShadow = const Color(0xFF3E2723).withOpacity(0.08);
 
   final List<Map<String, dynamic>> categories = [
@@ -53,36 +53,35 @@ class _HomeViewState extends State<HomeView> {
     },
   ];
 
-  final List<Map<String, dynamic>> articles = [
+  final List<Map<String, dynamic>> audioCollections = [
     {
-      'title': 'Filosofi Gunungan dalam Pagelaran Wayang',
-      'date': '2 Jan 2026',
-      'tag': 'Filosofi',
-      'image': 'assets/banner1.jpg',
+      'title': 'Suling Bambu',
+      'subtitle': 'Melodi Ketenangan Sunda',
+      'duration': '03:45',
+      'icon': Ionicons.musical_note,
     },
     {
-      'title': 'Perbedaan Gaya Wayang Surakarta dan Yogyakarta',
-      'date': '29 Des 2025',
-      'tag': 'Wawasan',
-      'image': 'assets/banner1.jpg',
+      'title': 'Gamelan Jawa',
+      'subtitle': 'Harmoni Keraton Surakarta',
+      'duration': '05:12',
+      'icon': Ionicons.disc,
+    },
+    {
+      'title': 'Tembang Sinden',
+      'subtitle': 'Vokal Klasik Tradisional',
+      'duration': '04:20',
+      'icon': Ionicons.mic,
+    },
+    {
+      'title': 'Gender Wayang',
+      'subtitle': 'Iringan Dalang Bercerita',
+      'duration': '02:55',
+      'icon': Ionicons.flower,
     },
   ];
 
   void _onItemTapped(int index) {
     setState(() => _selectedIndex = index);
-  }
-
-  // --- HELPER DECODE IMAGE (BASE64) ---
-  Uint8List? _decodeImage(String? base64String) {
-    if (base64String == null || base64String.isEmpty) return null;
-    try {
-      if (base64String.contains(',')) {
-        return base64Decode(base64String.split(',').last);
-      }
-      return base64Decode(base64String);
-    } catch (e) {
-      return null;
-    }
   }
 
   @override
@@ -102,7 +101,7 @@ class _HomeViewState extends State<HomeView> {
           children: [
             _buildHomeContentBody(),
             const VideoView(),
-            const KameraView(),
+            const DeteksiView(),
             const LeaderboardView(),
             const ProfileView(),
           ],
@@ -114,7 +113,6 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
-  // --- MAIN HOME CONTENT ---
   Widget _buildHomeContentBody() {
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -122,12 +120,8 @@ class _HomeViewState extends State<HomeView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. KOTAK SELAMAT DATANG (YANG DIPERBAIKI)
           _buildWelcomeHeader(),
-
           const SizedBox(height: 30),
-
-          // 2. Grid Menu
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Row(
@@ -148,29 +142,212 @@ class _HomeViewState extends State<HomeView> {
           ),
           const SizedBox(height: 15),
           _buildWayangMenuGrid(),
-
           const SizedBox(height: 30),
 
-          // 3. Koleksi Favorit
+          // --- BAGIAN INI DIPERBAIKI (Kotak Lebih Bagus & Icon Like) ---
           _buildFavoriteSection(),
 
           const SizedBox(height: 25),
-
-          // 4. Artikel
-          _buildSectionHeader('Wawasan Budaya', 'Lihat Semua'),
+          _buildSectionHeader('Suara Tradisi', 'Putar Semua'),
           const SizedBox(height: 15),
-          _buildArticleList(),
+          _buildAudioList(),
         ],
       ),
     );
   }
 
-  // --- WIDGET COMPONENTS ---
+  // --- BAGIAN FAVORIT (Desain Baru: Gradient & Mewah) ---
+  Widget _buildFavoriteSection() {
+    final User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) return const SizedBox();
 
-  // --- WIDGET HEADER BARU (KOTAK SELAMAT DATANG - DIPERBAIKI) ---
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('favorites')
+          .snapshots(),
+      builder: (context, snapshot) {
+        int count = 0;
+        if (snapshot.hasData) {
+          count = snapshot.data!.docs.length;
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                "Koleksi Pribadi",
+                style: GoogleFonts.philosopher(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: _primaryColor,
+                ),
+              ),
+            ),
+            const SizedBox(height: 15),
+
+            // KOTAK STATISTIK DIPERBAIKI (GRADIENT PREMIUM)
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 24),
+              // Tambahkan clip agar dekorasi lingkaran tidak keluar kotak
+              clipBehavior: Clip.antiAlias,
+              decoration: BoxDecoration(
+                // Menggunakan Gradient agar tidak polos
+                gradient: LinearGradient(
+                  colors: [_primaryColor, _secondaryColor],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: _primaryColor.withOpacity(0.3),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Stack(
+                children: [
+                  // --- Dekorasi Latar Belakang (Agar tidak polos) ---
+                  Positioned(
+                    right: -20,
+                    top: -20,
+                    child: Container(
+                      width: 150,
+                      height: 150,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.05),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    right: 40,
+                    bottom: -40,
+                    child: Container(
+                      width: 100,
+                      height: 100,
+                      decoration: BoxDecoration(
+                        color: _accentColor.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+
+                  // --- Konten Utama ---
+                  Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                // Icon kecil menjadi Heart (Like)
+                                Icon(
+                                  Ionicons.heart,
+                                  color: _accentColor,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  "Total Disukai",
+                                  style: GoogleFonts.mulish(
+                                    color: Colors.white.withOpacity(
+                                      0.8,
+                                    ), // Teks putih agar kontras
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              "$count Item",
+                              style: GoogleFonts.philosopher(
+                                color: Colors.white, // Teks putih
+                                fontSize: 34,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+
+                            // --- TOMBOL LIHAT (Desain Gold) ---
+                            GestureDetector(
+                              onTap: () {
+                                // Navigasi ke Halaman Daftar Save
+                                Get.to(() => const DaftarlikeView());
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _accentColor, // Tombol warna Emas
+                                  borderRadius: BorderRadius.circular(14),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.2),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      "Lihat Semua",
+                                      style: GoogleFonts.mulish(
+                                        color: _primaryColor, // Teks Coklat Tua
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Icon(
+                                      Ionicons.arrow_forward,
+                                      color: _primaryColor,
+                                      size: 14,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        // Icon Besar di Kanan (Heart / Like) - Transparan
+                        Icon(
+                          Ionicons.heart, // Menggunakan icon Like
+                          color: Colors.white.withOpacity(0.15),
+                          size: 80,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // --- WIDGET HELPER LAINNYA ---
+
   Widget _buildWelcomeHeader() {
     final User? user = FirebaseAuth.instance.currentUser;
-
     return StreamBuilder<DocumentSnapshot>(
       stream: user != null
           ? FirebaseFirestore.instance
@@ -182,7 +359,6 @@ class _HomeViewState extends State<HomeView> {
         String displayName = "Sobat Wayang";
         String? photoBase64;
         String? photoUrl = user?.photoURL;
-
         if (snapshot.hasData &&
             snapshot.data != null &&
             snapshot.data!.exists) {
@@ -190,7 +366,6 @@ class _HomeViewState extends State<HomeView> {
           displayName = data['name'] ?? user?.displayName ?? "Sobat Wayang";
           photoBase64 = data['photoBase64'];
         }
-
         ImageProvider imageProvider;
         if (photoBase64 != null && photoBase64.isNotEmpty) {
           try {
@@ -205,25 +380,20 @@ class _HomeViewState extends State<HomeView> {
               ? NetworkImage(photoUrl)
               : const NetworkImage('https://i.pravatar.cc/150?img=32');
         }
-
-        // Menggunakan Container dengan ClipRRect untuk memotong bentuk abstrak yang keluar
         return Container(
           margin: EdgeInsets.only(
             top: MediaQuery.of(context).padding.top + 20,
             left: 24,
             right: 24,
           ),
-          // ClipRRect memastikan hiasan tidak keluar dari kotak
           child: ClipRRect(
             borderRadius: BorderRadius.circular(24),
             child: Stack(
               children: [
-                // LAYER 1: Background Gradient Dasar
                 Positioned.fill(
                   child: Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        // Gradien coklat yang lebih kaya
                         colors: [_primaryColor, const Color(0xFF4E342E)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
@@ -231,36 +401,31 @@ class _HomeViewState extends State<HomeView> {
                     ),
                   ),
                 ),
-
-                // LAYER 2: Hiasan Abstrak Emas (Pojok Kanan Atas)
+                // Dekorasi Header
                 Positioned(
                   top: -40,
                   right: -40,
                   child: Transform.rotate(
-                    angle: -0.2, // Sedikit miring
+                    angle: -0.2,
                     child: Container(
                       width: 150,
                       height: 150,
                       decoration: BoxDecoration(
-                        // Warna emas transparan
                         color: _accentColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(40),
                       ),
                     ),
                   ),
                 ),
-
-                // LAYER 3: Hiasan Abstrak Gelap (Pojok Kiri Bawah)
                 Positioned(
                   bottom: -30,
                   left: -20,
                   child: Transform.rotate(
-                    angle: 0.3, // Miring berlawanan
+                    angle: 0.3,
                     child: Container(
                       width: 120,
                       height: 120,
                       decoration: BoxDecoration(
-                        // Warna gelap transparan untuk kedalaman
                         color: Colors.black.withOpacity(0.08),
                         borderRadius: BorderRadius.circular(30),
                       ),
@@ -268,7 +433,6 @@ class _HomeViewState extends State<HomeView> {
                   ),
                 ),
 
-                // LAYER 4: Konten Utama (Teks & Foto)
                 Padding(
                   padding: const EdgeInsets.all(24),
                   child: Row(
@@ -277,7 +441,6 @@ class _HomeViewState extends State<HomeView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Badge kecil
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 10,
@@ -314,7 +477,6 @@ class _HomeViewState extends State<HomeView> {
                             Text(
                               displayName,
                               style: GoogleFonts.philosopher(
-                                // Menggunakan font philosopher agar lebih mewah
                                 fontSize: 26,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
@@ -327,7 +489,6 @@ class _HomeViewState extends State<HomeView> {
                         ),
                       ),
                       const SizedBox(width: 16),
-                      // Foto Profil dengan Border Emas
                       Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
@@ -365,7 +526,6 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
-  // ... SISA KODE (Grid Menu, Favorite, Artikel, dll) SAMA SEPERTI SEBELUMNYA ...
   Widget _buildWayangMenuGrid() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24),
@@ -376,24 +536,16 @@ class _HomeViewState extends State<HomeView> {
           return GestureDetector(
             onTap: () {
               final label = cat['label'];
-              if (label == 'Tokoh') {
+              if (label == 'Tokoh')
                 Get.to(() => const TokohView());
-              } else if (label == 'Kisah') {
+              else if (label == 'Kisah')
                 Get.to(() => const KisahView());
-              } else if (label == 'Museum') {
+              else if (label == 'Museum')
                 Get.to(() => const MuseumView());
-              } else if (label == 'Event') {
+              else if (label == 'Event')
                 Get.to(() => const EventView());
-              } else if (label == 'Kuis') {
+              else if (label == 'Kuis')
                 Get.to(() => const QuizView());
-              } else {
-                Get.snackbar(
-                  "Info",
-                  "Segera Hadir",
-                  backgroundColor: _primaryColor,
-                  colorText: Colors.white,
-                );
-              }
             },
             child: Column(
               children: [
@@ -434,258 +586,65 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
-  Widget _buildFavoriteSection() {
-    final User? user = FirebaseAuth.instance.currentUser;
-    if (user == null) return const SizedBox();
-
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .collection('favorites')
-          .orderBy('saved_at', descending: true)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const SizedBox();
-        }
-        var docs = snapshot.data!.docs;
-        int count = docs.length;
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Text(
-                "Koleksi Pribadi",
-                style: GoogleFonts.philosopher(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: _primaryColor,
-                ),
-              ),
-            ),
-            const SizedBox(height: 15),
-
-            // --- KOTAK STATISTIK BESAR ---
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 24),
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: _primaryColor.withOpacity(0.1)),
-                boxShadow: [
-                  BoxShadow(
-                    color: _primaryColor.withOpacity(0.05),
-                    blurRadius: 15,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Ionicons.heart, color: _primaryColor, size: 16),
-                          const SizedBox(width: 8),
-                          Text(
-                            "Total Disukai",
-                            style: GoogleFonts.mulish(
-                              color: _secondaryColor,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        "$count Item",
-                        style: GoogleFonts.philosopher(
-                          color: _primaryColor,
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "Tersimpan di akun Anda",
-                        style: GoogleFonts.mulish(
-                          color: Colors.grey[500],
-                          fontSize: 10,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      color: _primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Center(
-                      child: Icon(
-                        Ionicons.heart,
-                        color: _primaryColor,
-                        size: 32,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // --- LIST HORIZONTAL ---
-            SizedBox(
-              height: 200,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.only(left: 24, right: 10),
-                physics: const BouncingScrollPhysics(),
-                itemCount: docs.length,
-                itemBuilder: (context, index) {
-                  var data = docs[index].data() as Map<String, dynamic>;
-                  ContentModel item = ContentModel(
-                    id: data['id'] ?? '',
-                    title: data['title'] ?? '',
-                    subtitle: data['subtitle'] ?? '',
-                    category: data['category'] ?? '',
-                    description: data['description'] ?? '',
-                    imageUrl: data['image_url'] ?? '',
-                  );
-                  Uint8List? imageBytes = _decodeImage(item.imageUrl);
-
-                  return GestureDetector(
-                    onTap: () =>
-                        Get.to(() => const DetailWayangView(), arguments: item),
-                    child: Container(
-                      width: 140,
-                      margin: const EdgeInsets.only(right: 16, bottom: 10),
-                      decoration: BoxDecoration(
-                        color: _surfaceColor,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: _softShadow,
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(
-                            flex: 3,
-                            child: ClipRRect(
-                              borderRadius: const BorderRadius.vertical(
-                                top: Radius.circular(20),
-                              ),
-                              child: imageBytes != null
-                                  ? Image.memory(imageBytes, fit: BoxFit.cover)
-                                  : (item.imageUrl.startsWith('http')
-                                        ? Image.network(
-                                            item.imageUrl,
-                                            fit: BoxFit.cover,
-                                          )
-                                        : Image.asset(
-                                            'assets/wayang purwa.png',
-                                            fit: BoxFit.cover,
-                                          )),
-                            ),
-                          ),
-                          Expanded(
-                            flex: 2,
-                            child: Padding(
-                              padding: const EdgeInsets.all(10),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    item.category.toUpperCase(),
-                                    style: GoogleFonts.mulish(
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w800,
-                                      color: _accentColor,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    item.title,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.philosopher(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                      color: _primaryColor,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildArticleList() {
+  Widget _buildAudioList() {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: articles.length,
+      itemCount: audioCollections.length,
       itemBuilder: (context, index) {
-        final article = articles[index];
-        return Container(
+        final audio = audioCollections[index];
+        final bool isPlaying = _currentlyPlayingIndex == index;
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
           margin: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
+            color: isPlaying ? _primaryColor : Colors.white,
+            borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: _softShadow,
-                blurRadius: 10,
-                offset: const Offset(0, 2),
+                color: isPlaying ? _primaryColor.withOpacity(0.3) : _softShadow,
+                blurRadius: isPlaying ? 12 : 10,
+                offset: const Offset(0, 4),
               ),
             ],
+            border: isPlaying
+                ? Border.all(color: _accentColor, width: 1)
+                : null,
           ),
           child: Material(
             color: Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
             child: InkWell(
-              borderRadius: BorderRadius.circular(16),
-              onTap: () {},
+              borderRadius: BorderRadius.circular(20),
+              onTap: () {
+                setState(() {
+                  if (_currentlyPlayingIndex == index) {
+                    _currentlyPlayingIndex = -1;
+                  } else {
+                    _currentlyPlayingIndex = index;
+                  }
+                });
+              },
               child: Padding(
-                padding: const EdgeInsets.all(12.0),
+                padding: const EdgeInsets.all(16.0),
                 child: Row(
                   children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.asset(
-                        article['image'],
-                        width: 80,
-                        height: 80,
-                        fit: BoxFit.cover,
+                    Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: isPlaying
+                            ? Colors.white.withOpacity(0.1)
+                            : _primaryColor.withOpacity(0.05),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Icon(
+                          isPlaying ? Ionicons.pause : Ionicons.play,
+                          color: isPlaying ? _accentColor : _primaryColor,
+                          size: 24,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -693,46 +652,48 @@ class _HomeViewState extends State<HomeView> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Ionicons.bookmark_outline,
-                                size: 12,
-                                color: _accentColor,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                article['tag'],
-                                style: GoogleFonts.mulish(
-                                  fontSize: 11,
-                                  color: _accentColor,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const Spacer(),
-                              Text(
-                                article['date'],
-                                style: GoogleFonts.mulish(
-                                  fontSize: 10,
-                                  color: Colors.grey[400],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
                           Text(
-                            article['title'],
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                            audio['title'],
                             style: GoogleFonts.philosopher(
-                              fontSize: 15,
+                              fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: _primaryColor,
-                              height: 1.2,
+                              color: isPlaying ? Colors.white : _primaryColor,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            audio['subtitle'],
+                            style: GoogleFonts.mulish(
+                              fontSize: 12,
+                              color: isPlaying
+                                  ? Colors.white.withOpacity(0.7)
+                                  : Colors.grey[500],
                             ),
                           ),
                         ],
                       ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        if (isPlaying)
+                          MusicVisualizer(color: _accentColor)
+                        else
+                          Icon(
+                            audio['icon'],
+                            size: 18,
+                            color: Colors.grey[300],
+                          ),
+                        const SizedBox(height: 6),
+                        Text(
+                          audio['duration'],
+                          style: GoogleFonts.mulish(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: isPlaying ? _accentColor : Colors.grey[400],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -759,15 +720,12 @@ class _HomeViewState extends State<HomeView> {
             ),
           ),
           if (action.isNotEmpty)
-            GestureDetector(
-              onTap: () {},
-              child: Text(
-                action,
-                style: GoogleFonts.mulish(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: _accentColor,
-                ),
+            Text(
+              action,
+              style: GoogleFonts.mulish(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: _accentColor,
               ),
             ),
         ],
@@ -897,6 +855,47 @@ class _HomeViewState extends State<HomeView> {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class MusicVisualizer extends StatefulWidget {
+  final Color color;
+  const MusicVisualizer({super.key, required this.color});
+  @override
+  State<MusicVisualizer> createState() => _MusicVisualizerState();
+}
+
+class _MusicVisualizerState extends State<MusicVisualizer> {
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 15,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: List.generate(4, (i) {
+          return TweenAnimationBuilder<double>(
+            tween: Tween(begin: 3, end: 12),
+            duration: Duration(milliseconds: 300 + (i * 100)),
+            curve: Curves.easeInOut,
+            builder: (context, value, child) {
+              return Container(
+                width: 3,
+                height: value,
+                margin: const EdgeInsets.symmetric(horizontal: 1.5),
+                decoration: BoxDecoration(
+                  color: widget.color,
+                  borderRadius: BorderRadius.circular(5),
+                ),
+              );
+            },
+            onEnd: () {
+              if (mounted) setState(() {});
+            },
+          );
+        }),
       ),
     );
   }

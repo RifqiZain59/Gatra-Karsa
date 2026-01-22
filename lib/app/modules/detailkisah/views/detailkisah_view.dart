@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:ionicons/ionicons.dart';
-import 'package:google_fonts/google_fonts.dart'; // IMPORT GOOGLE FONTS
+import 'package:google_fonts/google_fonts.dart';
 import 'package:gatrakarsa/app/data/service/api_service.dart';
 import '../controllers/detailkisah_controller.dart';
 
@@ -31,6 +31,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
         systemNavigationBarColor: Colors.white,
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
@@ -241,9 +242,6 @@ class DetailkisahView extends GetView<DetailkisahController> {
     color: _textHeading,
   );
 
-  // ... (SISA KODE HELPER SAMA, HANYA GANTI DI TEXTSTYLE BAWAH INI)
-
-  // (Helper Button & Image tetap sama seperti kode Anda sebelumnya)
   Widget _glassButton({
     required IconData icon,
     required VoidCallback onTap,
@@ -300,7 +298,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
     }
   }
 
-  // --- REVIEW SECTION UPDATE FONTS ---
+  // --- REVIEW SECTION ---
   Widget _buildReviewSection(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
       stream: controller.ulasanStream,
@@ -435,6 +433,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text("Ulasan Terbaru", style: _headingStyle),
+                // --- BAGIAN YANG DIPERBAIKI (TEXTBUTTON) ---
                 TextButton(
                   onPressed: () => _openRatingBottomSheet(context),
                   style: TextButton.styleFrom(foregroundColor: _goldAccent),
@@ -443,7 +442,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
                     style: GoogleFonts.mulish(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
-                      decoration: TextDecoration.underline,
+                      decoration: TextDecoration.none, // Garis bawah dihapus
                     ),
                   ),
                 ),
@@ -489,7 +488,6 @@ class DetailkisahView extends GetView<DetailkisahController> {
     );
   }
 
-  // --- MODAL & SLIDER JUGA DIUPDATE FONT-NYA ---
   void _openRatingBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
@@ -612,7 +610,7 @@ class DetailkisahView extends GetView<DetailkisahController> {
   }
 }
 
-// --- AI SUMMARY GENERATOR (UPDATED FONTS) ---
+// --- AI SUMMARY GENERATOR ---
 class _AiSummaryGenerator extends StatefulWidget {
   final String description;
   final Color primaryColor;

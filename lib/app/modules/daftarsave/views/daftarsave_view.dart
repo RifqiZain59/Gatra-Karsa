@@ -2,18 +2,19 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:ionicons/ionicons.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../controllers/daftarsave_controller.dart';
 
-// --- TEMA WARNA ---
+// --- TEMA WARNA PREMIUM ---
 class WayangColors {
-  static const Color primaryDark = Color(0xFF4E342E);
-  static const Color primaryLight = Color(0xFF8D6E63);
-  static const Color goldAccent = Color(0xFFD4AF37);
-  static const Color background = Color(0xFFFAFAF5);
+  static const Color primaryDark = Color(0xFF3E2723); // Coklat Tua
+  static const Color primaryLight = Color(0xFF5D4037);
+  static const Color goldAccent = Color(0xFFD4AF37); // Emas
+  static const Color background = Color(0xFFFDFCF8); // Putih Tulang
   static const Color surface = Colors.white;
-  static const Color textPrimary = Color(0xFF3E2723);
   static const Color textSecondary = Color(0xFF795548);
 }
 
@@ -22,85 +23,229 @@ class DaftarsaveView extends GetView<DaftarsaveController> {
 
   @override
   Widget build(BuildContext context) {
-    // Inject Controller jika belum ada
     if (!Get.isRegistered<DaftarsaveController>()) {
       Get.put(DaftarsaveController());
     }
 
     return Scaffold(
       backgroundColor: WayangColors.background,
-      appBar: AppBar(
-        backgroundColor: WayangColors.background,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(
-            Ionicons.arrow_back,
-            color: WayangColors.primaryDark,
-          ),
-          onPressed: () => Get.back(),
-        ),
-        title: const Text(
-          'Koleksi Tersimpan',
-          style: TextStyle(
-            color: WayangColors.primaryDark,
-            fontFamily: 'Serif',
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-          ),
-        ),
-      ),
-      // MENGGUNAKAN STREAMBUILDER UNTUK DATA REALTIME
       body: StreamBuilder<QuerySnapshot>(
         stream: controller.bookmarksStream,
         builder: (context, snapshot) {
-          // 1. Loading
+          // 1. Loading State
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
               child: CircularProgressIndicator(color: WayangColors.primaryDark),
             );
           }
 
-          // 2. Error
+          // 2. Error State
           if (snapshot.hasError) {
             return Center(child: Text("Terjadi kesalahan: ${snapshot.error}"));
           }
 
-          // 3. Empty State
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return _buildEmptyState();
-          }
+          // Data
+          var docs = snapshot.hasData ? snapshot.data!.docs : [];
+          int totalSaved = docs.length;
 
-          // 4. Data Ada -> Tampilkan List
-          var docs = snapshot.data!.docs;
+          return Stack(
+            children: [
+              // --- BACKGROUND DECORATION ---
+              Positioned(
+                top: -80,
+                right: -60,
+                child: Container(
+                  width: 250,
+                  height: 250,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: WayangColors.goldAccent.withOpacity(0.1),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 100,
+                left: -40,
+                child: Container(
+                  width: 180,
+                  height: 180,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: WayangColors.primaryDark.withOpacity(0.05),
+                  ),
+                ),
+              ),
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(20),
-            itemCount: docs.length,
-            physics: const BouncingScrollPhysics(),
-            itemBuilder: (context, index) {
-              var doc = docs[index];
-              var data = doc.data() as Map<String, dynamic>;
+              // --- MAIN CONTENT ---
+              SafeArea(
+                child: Column(
+                  children: [
+                    // 1. HEADER NAVIGASI
+                    _buildAppBar(),
 
-              // Ambil Data dengan Default Value
-              String title = data['title'] ?? 'Tanpa Judul';
-              String category = data['category'] ?? 'Umum';
-              String imageUrl = data['image_url'] ?? '';
+                    // 2. KOTAK TOTAL (SUMMARY CARD)
+                    _buildTotalSummaryCard(totalSaved),
 
-              return _buildSavedCard(
-                title: title,
-                category: category,
-                imageUrl: imageUrl,
-                onRemove: () => controller.removeBookmark(doc.id),
-                onTap: () => controller.navigateToDetail(data),
-              );
-            },
+                    // 3. LIST DATA
+                    Expanded(
+                      child: docs.isEmpty
+                          ? _buildEmptyState()
+                          : ListView.builder(
+                              padding: const EdgeInsets.fromLTRB(
+                                20,
+                                10,
+                                20,
+                                20,
+                              ),
+                              physics: const BouncingScrollPhysics(),
+                              itemCount: docs.length,
+                              itemBuilder: (context, index) {
+                                var doc = docs[index];
+                                var data = doc.data() as Map<String, dynamic>;
+
+                                return _buildSavedCard(
+                                  title: data['title'] ?? 'Tanpa Judul',
+                                  category: data['category'] ?? 'Umum',
+                                  subtitle: data['subtitle'] ?? '',
+                                  imageUrl: data['image_url'] ?? '',
+                                  onRemove: () =>
+                                      controller.removeBookmark(doc.id),
+                                  onTap: () =>
+                                      controller.navigateToDetail(data),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           );
         },
       ),
     );
   }
 
+  // --- 1. HEADER SEDERHANA ---
+  Widget _buildAppBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          GestureDetector(
+            onTap: () => Get.back(),
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Ionicons.arrow_back,
+                color: WayangColors.primaryDark,
+                size: 20,
+              ),
+            ),
+          ),
+          Text(
+            "Arsip Pribadi",
+            style: GoogleFonts.philosopher(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: WayangColors.primaryDark,
+            ),
+          ),
+          const SizedBox(width: 40), // Penyeimbang
+        ],
+      ),
+    );
+  }
+
+  // --- 2. KOTAK TOTAL (BARU) ---
+  Widget _buildTotalSummaryCard(int total) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        // Gradient Coklat Mewah
+        gradient: const LinearGradient(
+          colors: [WayangColors.primaryDark, WayangColors.primaryLight],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: WayangColors.primaryDark.withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Total Disimpan",
+                style: GoogleFonts.mulish(
+                  fontSize: 14,
+                  color: Colors.white.withOpacity(0.8),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    "$total",
+                    style: GoogleFonts.philosopher(
+                      fontSize: 42,
+                      fontWeight: FontWeight.bold,
+                      color: WayangColors.goldAccent, // Angka warna Emas
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    "Item",
+                    style: GoogleFonts.mulish(
+                      fontSize: 14,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          // Icon Besar Transparan
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Icon(Ionicons.bookmark, color: Colors.white, size: 32),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- WIDGET EMPTY STATE ---
   Widget _buildEmptyState() {
     return Center(
       child: Column(
@@ -109,39 +254,50 @@ class DaftarsaveView extends GetView<DaftarsaveController> {
           Container(
             padding: const EdgeInsets.all(30),
             decoration: BoxDecoration(
-              color: WayangColors.primaryDark.withOpacity(0.05),
+              color: WayangColors.surface,
               shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: WayangColors.primaryDark.withOpacity(0.05),
+                  blurRadius: 20,
+                  spreadRadius: 5,
+                ),
+              ],
             ),
             child: Icon(
-              Ionicons.bookmark_outline,
-              size: 80,
-              color: WayangColors.primaryDark.withOpacity(0.4),
+              Ionicons.folder_open_outline,
+              size: 60,
+              color: WayangColors.primaryLight.withOpacity(0.5),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           Text(
             "Belum Ada Arsip",
-            style: TextStyle(
+            style: GoogleFonts.philosopher(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              fontFamily: 'Serif',
-              color: WayangColors.primaryDark.withOpacity(0.8),
+              color: WayangColors.primaryDark,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             "Simpan konten menarik agar\nmudah dibaca kembali nanti.",
             textAlign: TextAlign.center,
-            style: TextStyle(color: WayangColors.textSecondary, fontSize: 14),
+            style: GoogleFonts.mulish(
+              color: WayangColors.textSecondary,
+              fontSize: 14,
+            ),
           ),
         ],
       ),
     );
   }
 
+  // --- WIDGET CARD (LIST ITEM) ---
   Widget _buildSavedCard({
     required String title,
     required String category,
+    required String subtitle,
     required String imageUrl,
     required VoidCallback onRemove,
     required VoidCallback onTap,
@@ -150,10 +306,10 @@ class DaftarsaveView extends GetView<DaftarsaveController> {
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: WayangColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: WayangColors.primaryDark.withOpacity(0.08),
+            color: WayangColors.primaryDark.withOpacity(0.06),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -161,29 +317,32 @@ class DaftarsaveView extends GetView<DaftarsaveController> {
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           child: Padding(
             padding: const EdgeInsets.all(12.0),
             child: Row(
               children: [
                 // --- GAMBAR ---
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: WayangColors.background,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: WayangColors.goldAccent.withOpacity(0.3),
-                      width: 1,
+                Hero(
+                  tag: 'saved_$title',
+                  child: Container(
+                    width: 85,
+                    height: 85,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(15),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 5,
+                        ),
+                      ],
                     ),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(11),
-                    child: _buildImage(imageUrl),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(15),
+                      child: _buildImage(imageUrl),
+                    ),
                   ),
                 ),
 
@@ -194,25 +353,44 @@ class DaftarsaveView extends GetView<DaftarsaveController> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: WayangColors.goldAccent.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          category.toUpperCase(),
+                          style: GoogleFonts.mulish(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            color: WayangColors.goldAccent,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
                       Text(
-                        category.toUpperCase(),
-                        style: const TextStyle(
-                          fontSize: 10,
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.philosopher(
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: WayangColors.goldAccent,
-                          letterSpacing: 1.0,
+                          color: WayangColors.primaryDark,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        title,
-                        maxLines: 2,
+                        subtitle.isNotEmpty ? subtitle : "Klik untuk detail",
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontFamily: 'Serif',
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: WayangColors.textPrimary,
+                        style: GoogleFonts.mulish(
+                          fontSize: 12,
+                          color: Colors.grey[500],
                         ),
                       ),
                     ],
@@ -220,15 +398,20 @@ class DaftarsaveView extends GetView<DaftarsaveController> {
                 ),
 
                 // --- TOMBOL HAPUS ---
-                IconButton(
-                  onPressed: onRemove,
-                  splashRadius: 24,
-                  icon: const Icon(
-                    Ionicons.bookmark,
-                    color: WayangColors.goldAccent,
-                    size: 24,
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    shape: BoxShape.circle,
                   ),
-                  tooltip: "Hapus Simpanan",
+                  child: IconButton(
+                    onPressed: onRemove,
+                    icon: const Icon(
+                      Ionicons.trash_outline,
+                      color: Colors.redAccent,
+                      size: 20,
+                    ),
+                    tooltip: "Hapus dari koleksi",
+                  ),
                 ),
               ],
             ),
@@ -240,34 +423,51 @@ class DaftarsaveView extends GetView<DaftarsaveController> {
 
   // Helper Gambar
   Widget _buildImage(String path) {
-    if (path.isEmpty)
-      return const Icon(Ionicons.image_outline, color: Colors.grey);
+    if (path.isEmpty) {
+      return Container(
+        color: Colors.grey[200],
+        child: const Icon(Ionicons.image_outline, color: Colors.grey),
+      );
+    }
 
     try {
       if (path.startsWith('http')) {
         return Image.network(
           path,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => const Icon(Icons.error),
+          errorBuilder: (_, __, ___) => Container(
+            color: Colors.grey[200],
+            child: const Icon(Icons.broken_image, color: Colors.grey),
+          ),
         );
       } else if (path.startsWith('assets/')) {
         return Image.asset(
           path,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => const Icon(Icons.error),
+          errorBuilder: (_, __, ___) => Container(
+            color: Colors.grey[200],
+            child: const Icon(Icons.broken_image, color: Colors.grey),
+          ),
         );
       } else {
         String cleanBase64 = path.replaceAll(RegExp(r'\s+'), '');
-        if (cleanBase64.contains(','))
+        if (cleanBase64.contains(',')) {
           cleanBase64 = cleanBase64.split(',').last;
+        }
         return Image.memory(
           base64Decode(cleanBase64),
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => const Icon(Icons.error),
+          errorBuilder: (_, __, ___) => Container(
+            color: Colors.grey[200],
+            child: const Icon(Icons.broken_image, color: Colors.grey),
+          ),
         );
       }
     } catch (e) {
-      return const Icon(Ionicons.image_outline, color: Colors.grey);
+      return Container(
+        color: Colors.grey[200],
+        child: const Icon(Icons.error_outline, color: Colors.grey),
+      );
     }
   }
 }
