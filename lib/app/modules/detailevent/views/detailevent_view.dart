@@ -38,11 +38,8 @@ class DetaileventView extends GetView<DetaileventController> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        // --- PERBAIKAN DI SINI ---
-        statusBarIconBrightness: Brightness.light, // Icon Putih (Android)
-        statusBarBrightness:
-            Brightness.dark, // Icon Putih (iOS - logic terbalik)
-        // -------------------------
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
         systemNavigationBarColor: Colors.white,
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
@@ -399,19 +396,42 @@ class DetaileventView extends GetView<DetaileventController> {
     );
   }
 
+  // --- REVIEW SECTION ---
   Widget _buildReviewSection(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
       stream: controller.ulasanStream,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting)
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return Container(height: 150, color: Colors.grey[100]);
+        }
+
+        if (snapshot.hasError) {
+          return Text("Error: ${snapshot.error}");
+        }
+
         var docs = snapshot.data?.docs ?? [];
+
+        // --- SORTING MANUAL (Pengganti Index) ---
+        docs.sort((a, b) {
+          var dataA = a.data() as Map<String, dynamic>;
+          var dataB = b.data() as Map<String, dynamic>;
+          var timeA = dataA['created_at'];
+          var timeB = dataB['created_at'];
+
+          if (timeA is Timestamp && timeB is Timestamp) {
+            return timeB.compareTo(timeA); // Descending (Terbaru di atas)
+          }
+          return 0;
+        });
+        // ----------------------------------------
+
         int totalReviews = docs.length;
         double averageRating = 0.0;
         if (totalReviews > 0) {
           double totalStars = 0;
-          for (var doc in docs)
+          for (var doc in docs) {
             totalStars += (doc.data() as Map<String, dynamic>)['rating'] ?? 0;
+          }
           averageRating = totalStars / totalReviews;
         }
         return Column(

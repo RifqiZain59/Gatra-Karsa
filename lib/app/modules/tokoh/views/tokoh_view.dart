@@ -422,7 +422,7 @@ class _TokohViewState extends State<TokohView> {
     );
   }
 
-  // --- KARTU WAYANG (UPDATED: BACKGROUND CLEAN) ---
+  // --- KARTU WAYANG ---
   Widget _buildWayangCard(ContentModel item) {
     Uint8List? imageBytes = _decodeImage(item.imageUrl);
     return GestureDetector(
@@ -450,9 +450,6 @@ class _TokohViewState extends State<TokohView> {
               flex: 4,
               child: Stack(
                 children: [
-                  // --- PERBAIKAN BACKGROUND ---
-                  // Menggunakan warna solid/gradasi sangat tipis (Putih -> Cream)
-                  // Ini agar menyatu dengan gambar wayang apa pun.
                   Container(
                     width: double.infinity,
                     decoration: const BoxDecoration(
@@ -460,19 +457,12 @@ class _TokohViewState extends State<TokohView> {
                         top: Radius.circular(20),
                       ),
                       gradient: LinearGradient(
-                        colors: [
-                          Colors.white,
-                          Color(
-                            0xFFFFF8E1,
-                          ), // Cream sangat muda (Parchment look)
-                        ],
+                        colors: [Colors.white, Color(0xFFFFF8E1)],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                       ),
                     ),
                   ),
-
-                  // Gambar Wayang
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: SizedBox(
@@ -481,7 +471,7 @@ class _TokohViewState extends State<TokohView> {
                       child: imageBytes != null
                           ? Image.memory(
                               imageBytes,
-                              fit: BoxFit.contain, // Gambar utuh
+                              fit: BoxFit.contain,
                               alignment: Alignment.bottomCenter,
                             )
                           : Center(
@@ -493,8 +483,6 @@ class _TokohViewState extends State<TokohView> {
                             ),
                     ),
                   ),
-
-                  // Badge Kategori
                   Positioned(
                     top: 10,
                     left: 10,
@@ -560,7 +548,6 @@ class _TokohViewState extends State<TokohView> {
                             ),
                           ),
                         ),
-                        // Icon Like
                         Obx(() {
                           bool isLiked = controller.favoriteIds.contains(
                             item.id,
@@ -650,14 +637,16 @@ class _TokohViewState extends State<TokohView> {
               ),
             ),
             const SizedBox(height: 4),
+            // --- PERUBAHAN DI SINI: MENGGUNAKAN KATEGORI ---
             Text(
-              "Dalang Profesional",
+              item.category.isNotEmpty ? item.category : "Dalang Profesional",
               style: GoogleFonts.mulish(
                 fontSize: 10,
                 color: Colors.grey[500],
                 fontWeight: FontWeight.w600,
               ),
             ),
+            // ----------------------------------------------
             const SizedBox(height: 8),
             if (item.location != null && item.location!.isNotEmpty)
               Container(

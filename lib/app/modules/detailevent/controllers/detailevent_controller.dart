@@ -21,7 +21,6 @@ class DetaileventController extends GetxController {
     if (Get.arguments is ContentModel) {
       event = Get.arguments as ContentModel;
     } else {
-      // Fallback data jika arguments null
       event = ContentModel(
         id: '0',
         title: 'Unknown',
@@ -34,9 +33,6 @@ class DetaileventController extends GetxController {
     checkSaveStatus();
   }
 
-  // =======================================================================
-  // CEK STATUS BOOKMARK
-  // =======================================================================
   void checkSaveStatus() async {
     User? user = _auth.currentUser;
     if (user == null) return;
@@ -53,9 +49,6 @@ class DetaileventController extends GetxController {
     }
   }
 
-  // =======================================================================
-  // TOGGLE BOOKMARK
-  // =======================================================================
   void toggleSave() async {
     User? user = _auth.currentUser;
     if (user == null) {
@@ -103,25 +96,18 @@ class DetaileventController extends GetxController {
     }
   }
 
-  // =======================================================================
-  // OPEN MAPS
-  // =======================================================================
   void openMap() async {
     if (event.location == null || event.location!.isEmpty) {
       Get.snackbar("Info", "Lokasi tidak tersedia");
       return;
     }
-
-    // Menggunakan query search maps
     final Uri googleUrl = Uri.parse(
       "https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(event.location!)}",
     );
-
     try {
       if (await canLaunchUrl(googleUrl)) {
         await launchUrl(googleUrl, mode: LaunchMode.externalApplication);
       } else {
-        // Fallback jika tidak bisa membuka aplikasi eksternal
         await launchUrl(googleUrl, mode: LaunchMode.platformDefault);
       }
     } catch (e) {
@@ -129,43 +115,37 @@ class DetaileventController extends GetxController {
     }
   }
 
-  // Stream ulasan untuk ditampilkan di UI
+  // --- STREAM (TANPA ORDER BY - Supaya Data Muncul Tanpa Index) ---
   Stream<QuerySnapshot> get ulasanStream {
     return _firestore
-        .collection('contents')
-        .doc(event.id)
-        .collection('reviews')
-        .orderBy('created_at', descending: true)
+        .collection('event_user')
+        .where('content_id', isEqualTo: event.id)
+        // .orderBy(...)  <-- DIHAPUS AGAR TIDAK BUTUH INDEX
         .snapshots();
   }
 
   void setRating(int rating) => userRating.value = rating;
 
-  // =======================================================================
-  // SUBMIT REVIEW (USERS/{UID}/REVIEWS INCLUDED)
-  // =======================================================================
   void submitReview() async {
     User? user = _auth.currentUser;
     if (user == null) {
-      Get.snackbar("Akses Dibatasi", "Silakan login terlebih dahulu.");
+      Get.snackbar("Error", "Login dulu.");
       return;
     }
-
-    if (reviewController.text.trim().isEmpty) {
-      Get.snackbar("Peringatan", "Ulasan tidak boleh kosong.");
-      return;
-    }
+    if (reviewController.text.trim().isEmpty) return;
 
     try {
-      // 1. Ambil Nama & Foto dari Profile User
       var userDoc = await _firestore.collection('users').doc(user.uid).get();
       String userName =
           (userDoc.data() as Map<String, dynamic>?)?['name'] ?? 'Pengguna';
       String userPhoto =
           (userDoc.data() as Map<String, dynamic>?)?['photoBase64'] ?? '';
 
-      // 2. Data Ulasan Umum
       Map<String, dynamic> reviewData = {
+        'content_id': event.id,
+        'targetName': event.title,
+        'category': 'Event',
+        'image': event.imageUrl,
         'user_id': user.uid,
         'user_name': userName,
         'user_photo': userPhoto,
@@ -174,32 +154,11 @@ class DetaileventController extends GetxController {
         'created_at': FieldValue.serverTimestamp(),
       };
 
-      // 3. Simpan ke Collection Contents (Public)
-      await _firestore
-          .collection('contents')
-          .doc(event.id)
-          .collection('reviews')
-          .add(reviewData);
+      // Simpan ke event_user
+      await _firestore.collection('event_user').add(reviewData);
 
-      // 4. Simpan ke Collection User (Personal History) -> users/{uid}/reviews
-      Map<String, dynamic> userHistoryData = {
-        ...reviewData,
-        'content_id': event.id,
-        'targetName': event.title,
-        'category': 'Event',
-        'image': event.imageUrl,
-      };
-
-      await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection('reviews')
-          .add(userHistoryData);
-
-      // 5. Bersihkan UI
       reviewController.clear();
       userRating.value = 5;
-
       Get.snackbar(
         "Sukses",
         "Ulasan terkirim!",
@@ -207,7 +166,7 @@ class DetaileventController extends GetxController {
         colorText: Colors.white,
       );
     } catch (e) {
-      Get.snackbar("Error", "Gagal mengirim ulasan: $e");
+      Get.snackbar("Error", "$e");
     }
   }
 

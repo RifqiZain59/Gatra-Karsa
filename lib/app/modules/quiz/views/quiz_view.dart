@@ -81,8 +81,11 @@ class QuizView extends GetView<QuizController> {
       centerTitle: true,
       backgroundColor: Colors.transparent,
       elevation: 0,
+      // --- PERBAIKAN POSISI ICON ARROW ---
+      leadingWidth: 80, // Memberikan ruang lebih untuk margin kiri
       leading: Container(
-        margin: const EdgeInsets.all(8),
+        // Margin kiri 24 disamakan dengan padding horizontal body (24)
+        margin: const EdgeInsets.only(left: 24, top: 8, bottom: 8, right: 8),
         decoration: BoxDecoration(
           color: surfaceWhite,
           shape: BoxShape.circle,
@@ -93,6 +96,7 @@ class QuizView extends GetView<QuizController> {
         child: IconButton(
           icon: const Icon(Ionicons.chevron_back, color: primaryDark, size: 20),
           onPressed: () => Get.back(),
+          padding: EdgeInsets.zero, // Memastikan icon tepat di tengah lingkaran
         ),
       ),
     );

@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
-import 'dart:ui'; // Diperlukan untuk dekorasi
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gatrakarsa/app/data/service/api_service.dart';
@@ -13,10 +13,9 @@ import '../../detailmuseum/views/detailmuseum_view.dart';
 class MuseumView extends GetView<MuseumController> {
   const MuseumView({super.key});
 
-  // --- PALET WARNA PREMIUM ---
-  final Color _primaryColor = const Color(0xFF3E2723); // Coklat Tua
-  final Color _accentColor = const Color(0xFFD4AF37); // Emas
-  final Color _bgColor = const Color(0xFFFDFCF8); // Putih Tulang
+  final Color _primaryColor = const Color(0xFF3E2723);
+  final Color _accentColor = const Color(0xFFD4AF37);
+  final Color _bgColor = const Color(0xFFFDFCF8);
   final Color _secondaryColor = const Color(0xFF5D4037);
 
   List<String> get _dynamicFilters {
@@ -35,10 +34,9 @@ class MuseumView extends GetView<MuseumController> {
 
     return Scaffold(
       backgroundColor: _bgColor,
-      // Menggunakan Stack untuk background dekoratif
       body: Stack(
         children: [
-          // --- BACKGROUND DECORATION ---
+          // Decoration Background
           Positioned(
             top: -60,
             left: -60,
@@ -64,7 +62,6 @@ class MuseumView extends GetView<MuseumController> {
             ),
           ),
 
-          // --- MAIN CONTENT ---
           AnnotatedRegion<SystemUiOverlayStyle>(
             value: const SystemUiOverlayStyle(
               statusBarColor: Colors.transparent,
@@ -115,7 +112,6 @@ class MuseumView extends GetView<MuseumController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Navigasi & Judul
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             child: Row(
@@ -177,10 +173,7 @@ class MuseumView extends GetView<MuseumController> {
               ],
             ),
           ),
-
           const SizedBox(height: 15),
-
-          // Search Bar
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Container(
@@ -230,17 +223,13 @@ class MuseumView extends GetView<MuseumController> {
               ),
             ),
           ),
-
           const SizedBox(height: 20),
-
-          // Filter Tabs (Chips)
           _buildFilterTabs(),
         ],
       ),
     );
   }
 
-  // Widget Filter Chips Modern
   Widget _buildFilterTabs() {
     return Obx(() {
       final filters = _dynamicFilters;
@@ -329,13 +318,15 @@ class MuseumView extends GetView<MuseumController> {
     );
   }
 
-  // --- CARD MUSEUM (MODERN LOOK) ---
+  // --- PERBAIKAN: GAMBAR RATA BAWAH (SQUARE BOTTOM) ---
   Widget _buildMuseumCard(ContentModel item) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(
+          20,
+        ), // Border radius container utama
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF3E2723).withOpacity(0.08),
@@ -353,12 +344,16 @@ class MuseumView extends GetView<MuseumController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- GAMBAR DENGAN BADGE HARGA ---
+              // --- GAMBAR ---
               Stack(
                 children: [
                   ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(20),
+                    // PERBAIKAN: Hanya Radius ATAS yang melengkung, BAWAH RATA (ZERO)
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                      bottomLeft: Radius.zero,
+                      bottomRight: Radius.zero,
                     ),
                     child: SizedBox(
                       height: 180,
@@ -366,7 +361,7 @@ class MuseumView extends GetView<MuseumController> {
                       child: _buildImage(item.imageUrl),
                     ),
                   ),
-                  // Badge Harga Floating
+                  // Badge Harga
                   Positioned(
                     top: 16,
                     right: 16,
@@ -433,7 +428,6 @@ class MuseumView extends GetView<MuseumController> {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        // Tombol Panah Kecil
                         Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
@@ -449,7 +443,6 @@ class MuseumView extends GetView<MuseumController> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    // Lokasi
                     Row(
                       children: [
                         Icon(
@@ -501,9 +494,8 @@ class MuseumView extends GetView<MuseumController> {
         );
       } else {
         String base64String = imageUrl.replaceAll(RegExp(r'\s+'), '');
-        if (base64String.contains(',')) {
+        if (base64String.contains(','))
           base64String = base64String.split(',').last;
-        }
         int mod4 = base64String.length % 4;
         if (mod4 > 0) base64String += '=' * (4 - mod4);
         return Image.memory(

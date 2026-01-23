@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:ionicons/ionicons.dart';
-import 'package:google_fonts/google_fonts.dart'; // Pastikan package ini ada
+import 'package:google_fonts/google_fonts.dart';
 import '../controllers/ulasan_controller.dart';
 
 // --- TEMA WARNA PREMIUM ---
@@ -29,7 +29,8 @@ class UlasanView extends GetView<UlasanController> {
 
     return Scaffold(
       backgroundColor: WayangColors.background,
-      body: StreamBuilder<QuerySnapshot>(
+      // PERUBAHAN TIPE STREAM: List<DocumentSnapshot>
+      body: StreamBuilder<List<DocumentSnapshot>>(
         stream: controller.myReviewsStream,
         builder: (context, snapshot) {
           // 1. Loading
@@ -44,8 +45,8 @@ class UlasanView extends GetView<UlasanController> {
             return Center(child: Text("Error: ${snapshot.error}"));
           }
 
-          // Data
-          var docs = snapshot.hasData ? snapshot.data!.docs : [];
+          // Data (Snapshot sekarang langsung List, bukan .docs lagi)
+          List<DocumentSnapshot> docs = snapshot.data ?? [];
           int totalReviews = docs.length;
 
           return Stack(
@@ -100,9 +101,12 @@ class UlasanView extends GetView<UlasanController> {
                               physics: const BouncingScrollPhysics(),
                               itemCount: docs.length,
                               itemBuilder: (context, index) {
+                                // Ambil dokumen langsung
                                 var doc = docs[index];
                                 var data = doc.data() as Map<String, dynamic>;
-                                return _buildReviewCard(context, data, doc.id);
+
+                                // Kirim doc utuh untuk keperluan delete reference
+                                return _buildReviewCard(context, data, doc);
                               },
                             ),
                     ),
@@ -227,7 +231,7 @@ class UlasanView extends GetView<UlasanController> {
               borderRadius: BorderRadius.circular(20),
             ),
             child: const Icon(
-              Ionicons.chatbubbles_outline, // Icon berbeda untuk ulasan
+              Ionicons.chatbubbles_outline,
               color: Colors.white,
               size: 32,
             ),
@@ -241,7 +245,7 @@ class UlasanView extends GetView<UlasanController> {
   Widget _buildReviewCard(
     BuildContext context,
     Map<String, dynamic> data,
-    String docId,
+    DocumentSnapshot doc, // Parameter diubah menerima DocumentSnapshot
   ) {
     // Format Data
     String title = data['targetName'] ?? 'Tanpa Judul';
@@ -380,8 +384,9 @@ class UlasanView extends GetView<UlasanController> {
             ),
 
             // --- TOMBOL HAPUS ---
+            // Mengirim DocumentSnapshot utuh agar controller bisa ambil reference-nya
             IconButton(
-              onPressed: () => controller.deleteReview(docId),
+              onPressed: () => controller.deleteReview(doc),
               icon: Icon(
                 Ionicons.trash_outline,
                 size: 20,
@@ -471,7 +476,7 @@ class UlasanView extends GetView<UlasanController> {
           ),
           const SizedBox(height: 8),
           Text(
-            "Mulai berikan ulasan pada\ntokoh atau cerita wayang favoritmu.",
+            "Mulai berikan ulasan pada\nmuseum atau event wayang yang kamu kunjungi.",
             textAlign: TextAlign.center,
             style: GoogleFonts.mulish(
               color: WayangColors.textSecondary,

@@ -7,8 +7,6 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:google_fonts/google_fonts.dart';
-
-// Pastikan import ini sesuai path project Anda
 import 'package:gatrakarsa/app/data/service/api_service.dart';
 import '../controllers/detailmuseum_controller.dart';
 
@@ -29,17 +27,21 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
 
     final ContentModel museum = controller.museum;
 
+    // Format Data
+    final String price = (museum.price != null && museum.price!.isNotEmpty)
+        ? museum.price!
+        : "Gratis";
+    final String location = museum.subtitle.isNotEmpty
+        ? museum.subtitle
+        : "Lokasi belum tersedia";
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
-        // --- BAGIAN YANG DIPERBAIKI ---
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light, // Icon Putih (Android)
-        statusBarBrightness: Brightness.dark, // Icon Putih (iOS)
-
-        // -----------------------------
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
         systemNavigationBarColor: Colors.white,
         systemNavigationBarIconBrightness: Brightness.dark,
-        systemNavigationBarDividerColor: Colors.transparent,
       ),
       child: Scaffold(
         backgroundColor: Colors.white,
@@ -55,7 +57,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
               child: _buildHeaderImage(museum.imageUrl),
             ),
 
-            // 2. NAVBAR TOMBOL KEMBALI
+            // 2. NAVBAR
             Positioned(
               top: MediaQuery.of(context).padding.top + 10,
               left: 20,
@@ -74,7 +76,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                           : Ionicons.bookmark_outline,
                       color: controller.isSaved.value
                           ? _goldAccent
-                          : Colors.black,
+                          : Colors.white,
                       onTap: () => controller.toggleSave(),
                     ),
                   ),
@@ -98,7 +100,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                 ),
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(24, 30, 24, 160),
+                  padding: const EdgeInsets.fromLTRB(24, 30, 24, 100),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -114,20 +116,19 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                       ),
                       const SizedBox(height: 24),
 
-                      // INFO TILES
-                      _buildLocationTile(
-                        museum.subtitle.isNotEmpty
-                            ? museum.subtitle
-                            : "Lokasi tidak tersedia",
-                      ),
+                      // LOKASI
+                      _buildLocationTile(location),
                       const SizedBox(height: 12),
+
+                      // GRID INFO
                       Row(
                         children: [
                           Expanded(
                             child: _buildInfoTile(
-                              Ionicons.time_outline,
-                              "Kategori",
-                              museum.category,
+                              Ionicons.time_outline, // Icon tetap Jam
+                              "Jam Buka", // Label tetap "Jam Buka"
+                              museum
+                                  .category, // Data DIKEMBALIKAN ke museum.category
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -135,9 +136,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                             child: _buildInfoTile(
                               Ionicons.ticket_outline,
                               "Tiket Masuk",
-                              (museum.price != null && museum.price!.isNotEmpty)
-                                  ? museum.price!
-                                  : "Gratis",
+                              price,
                             ),
                           ),
                         ],
@@ -148,7 +147,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                       Text("Tentang Museum", style: _headingStyle),
                       const SizedBox(height: 10),
                       Text(
-                        (museum.description.isNotEmpty)
+                        museum.description.isNotEmpty
                             ? museum.description
                             : "Deskripsi belum tersedia.",
                         textAlign: TextAlign.justify,
@@ -162,6 +161,8 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
 
                       // REVIEW SECTION
                       _buildReviewSection(context),
+
+                      const SizedBox(height: 80),
                     ],
                   ),
                 ),
@@ -189,34 +190,25 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                       offset: const Offset(0, -5),
                     ),
                   ],
-                  border: Border(top: BorderSide(color: Colors.grey.shade100)),
                 ),
-                child: SizedBox(
-                  height: 56,
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () => controller.openMap(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _primaryBrown,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 28,
-                        vertical: 16,
-                      ),
-                      elevation: 5,
-                      shadowColor: _primaryBrown.withOpacity(0.3),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
+                child: ElevatedButton.icon(
+                  onPressed: () => controller.openMap(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _primaryBrown,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    elevation: 5,
+                    shadowColor: _primaryBrown.withOpacity(0.3),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    icon: const Icon(Ionicons.navigate_outline, size: 20),
-                    label: Text(
-                      "Navigasi ke Lokasi",
-                      style: GoogleFonts.mulish(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        letterSpacing: 0.5,
-                      ),
+                  ),
+                  icon: const Icon(Ionicons.navigate_outline, size: 20),
+                  label: Text(
+                    "Navigasi ke Lokasi",
+                    style: GoogleFonts.mulish(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
                     ),
                   ),
                 ),
@@ -228,11 +220,32 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
     );
   }
 
+  // --- WIDGET HELPER ---
+
   TextStyle get _headingStyle => GoogleFonts.philosopher(
     fontSize: 18,
     fontWeight: FontWeight.bold,
     color: _textHeading,
   );
+
+  Widget _glassButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    Color color = Colors.white,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 45,
+        height: 45,
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.3),
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: color, size: 22),
+      ),
+    );
+  }
 
   Widget _buildInfoTile(IconData icon, String label, String value) {
     return Container(
@@ -277,7 +290,6 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
         border: Border.all(color: Colors.grey.shade200),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(Ionicons.location_outline, color: _goldAccent, size: 24),
           const SizedBox(width: 16),
@@ -309,20 +321,55 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
     );
   }
 
+  Widget _buildHeaderImage(String imageUrl) {
+    if (imageUrl.isEmpty) return Container(color: _primaryBrown);
+    try {
+      if (imageUrl.startsWith('http')) {
+        return Image.network(
+          imageUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (c, e, s) => Container(color: _primaryBrown),
+        );
+      } else if (imageUrl.startsWith('assets/')) {
+        return Image.asset(imageUrl, fit: BoxFit.cover);
+      } else {
+        String cleanBase64 = imageUrl.replaceAll(RegExp(r'\s+'), '');
+        if (cleanBase64.contains(','))
+          cleanBase64 = cleanBase64.split(',').last;
+        int mod4 = cleanBase64.length % 4;
+        if (mod4 > 0) cleanBase64 += '=' * (4 - mod4);
+        return Image.memory(
+          base64Decode(cleanBase64),
+          fit: BoxFit.cover,
+          errorBuilder: (c, e, s) => Container(color: _primaryBrown),
+        );
+      }
+    } catch (e) {
+      return Container(color: _primaryBrown);
+    }
+  }
+
+  // --- REVIEW SECTION ---
   Widget _buildReviewSection(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
       stream: controller.ulasanStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Container(
-            height: 150,
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(16),
-            ),
-          );
+          return Container(height: 150, color: Colors.grey[100]);
         }
+
         var docs = snapshot.data?.docs ?? [];
+        docs.sort((a, b) {
+          var dataA = a.data() as Map<String, dynamic>;
+          var dataB = b.data() as Map<String, dynamic>;
+          var timeA = dataA['created_at'];
+          var timeB = dataB['created_at'];
+          if (timeA is Timestamp && timeB is Timestamp) {
+            return timeB.compareTo(timeA);
+          }
+          return 0;
+        });
+
         int totalReviews = docs.length;
         double averageRating = 0.0;
         if (totalReviews > 0) {
@@ -332,6 +379,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
           }
           averageRating = totalStars / totalReviews;
         }
+
         return Column(
           children: [
             Container(
@@ -346,8 +394,8 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                 boxShadow: [
                   BoxShadow(
                     color: _primaryBrown.withOpacity(0.3),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
                   ),
                 ],
               ),
@@ -382,7 +430,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                                   height: 1.0,
                                 ),
                               ),
-                              const SizedBox(width: 6),
+                              const SizedBox(width: 4),
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 8),
                                 child: Text(
@@ -416,7 +464,7 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                                     ? Ionicons.star
                                     : Ionicons.star_outline,
                                 color: _goldAccent,
-                                size: 20,
+                                size: 18,
                               ),
                             ),
                           ),
@@ -447,22 +495,24 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("Ulasan Terbaru", style: _headingStyle),
-                TextButton(
-                  onPressed: () => _openRatingBottomSheet(context),
-                  style: TextButton.styleFrom(foregroundColor: _goldAccent),
-                  child: Text(
-                    "Tulis Ulasan",
-                    style: GoogleFonts.mulish(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      decoration: TextDecoration.none,
+                Text("Ulasan Pengunjung", style: _headingStyle),
+                GestureDetector(
+                  onTap: () => _openRatingBottomSheet(context),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      "Tulis Ulasan",
+                      style: GoogleFonts.mulish(
+                        color: _goldAccent,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
             if (docs.isEmpty)
               Container(
                 padding: const EdgeInsets.all(30),
@@ -470,7 +520,6 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
                 decoration: BoxDecoration(
                   color: _bgSoft,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey.shade200),
                 ),
                 child: Column(
                   children: [
@@ -502,241 +551,119 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
     );
   }
 
-  // --- BAGIAN FIXED (Full Width + Safe Area Nav Bar) ---
   void _openRatingBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Padding(
-          // Padding luar untuk menaikkan sheet saat Keyboard muncul
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: Container(
-            width: double.infinity, // Lebar Penuh
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 10,
-                  offset: Offset(0, -5),
-                ),
-              ],
-            ),
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Padding(
-                // Padding dalam: Menangani jarak tombol dari bawah layar (Safe Area)
-                padding: EdgeInsets.fromLTRB(
-                  24,
-                  24,
-                  24,
-                  24 +
-                      MediaQuery.of(
-                        context,
-                      ).padding.bottom, // <--- INI KUNCINYA
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Handle Bar
-                    Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Judul
-                    Text(
-                      "Bagikan Pengalaman",
-                      style: GoogleFonts.philosopher(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: _primaryBrown,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      "Beri rating dan ulasan untuk museum ini",
-                      style: GoogleFonts.mulish(
-                        color: Colors.grey[500],
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 25),
-
-                    // Rating
-                    Obx(
-                      () => Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(
-                          5,
-                          (index) => GestureDetector(
-                            onTap: () => controller.setRating(index + 1),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 5,
-                              ),
-                              child: AnimatedScale(
-                                scale: index < controller.userRating.value
-                                    ? 1.1
-                                    : 1.0,
-                                duration: const Duration(milliseconds: 200),
-                                child: Icon(
-                                  index < controller.userRating.value
-                                      ? Ionicons.star
-                                      : Ionicons.star_outline,
-                                  color: _goldAccent,
-                                  size: 44,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 30),
-
-                    // TextField
-                    TextField(
-                      controller: controller.reviewController,
-                      minLines: 3,
-                      maxLines: 5,
-                      textCapitalization: TextCapitalization.sentences,
-                      style: GoogleFonts.mulish(
-                        color: _textHeading,
-                        fontSize: 14,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: "Ceritakan pengalaman menarik Anda...",
-                        hintStyle: GoogleFonts.mulish(
-                          color: Colors.grey[400],
-                          fontSize: 14,
-                        ),
-                        filled: true,
-                        fillColor: Colors.grey[50],
-                        contentPadding: const EdgeInsets.all(16),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(
-                            color: Colors.grey.shade300,
-                            width: 1,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(
-                            color: _primaryBrown,
-                            width: 1.5,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 25),
-
-                    // Tombol Kirim
-                    SizedBox(
-                      width: double.infinity,
-                      height: 55,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Get.back();
-                          controller.submitReview();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _primaryBrown,
-                          foregroundColor: Colors.white,
-                          elevation: 2,
-                          shadowColor: _primaryBrown.withOpacity(0.4),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        child: Text(
-                          "Kirim Ulasan",
-                          style: GoogleFonts.mulish(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+      builder: (context) => Container(
+        padding: EdgeInsets.only(
+          left: 24,
+          right: 24,
+          top: 24,
+          bottom:
+              MediaQuery.of(context).viewInsets.bottom +
+              MediaQuery.of(context).padding.bottom +
+              24,
+        ),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _glassButton({
-    required IconData icon,
-    required VoidCallback onTap,
-    Color color = Colors.black,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(50),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-          child: Container(
-            width: 45,
-            height: 45,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.8),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10),
-              ],
-            ),
-            child: Icon(icon, color: color, size: 22),
+              const SizedBox(height: 20),
+              Text(
+                "Bagikan Pengalaman",
+                style: GoogleFonts.philosopher(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: _primaryBrown,
+                ),
+              ),
+              const SizedBox(height: 25),
+              Obx(
+                () => Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    5,
+                    (index) => GestureDetector(
+                      onTap: () => controller.setRating(index + 1),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 5),
+                        child: Icon(
+                          index < controller.userRating.value
+                              ? Ionicons.star
+                              : Ionicons.star_outline,
+                          color: _goldAccent,
+                          size: 42,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 25),
+              TextField(
+                controller: controller.reviewController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: "Ceritakan pengalamanmu...",
+                  hintStyle: GoogleFonts.mulish(color: Colors.grey[400]),
+                  filled: true,
+                  fillColor: _bgSoft,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.all(16),
+                ),
+              ),
+              const SizedBox(height: 25),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Get.back();
+                    controller.submitReview();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _primaryBrown,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    "Kirim Ulasan",
+                    style: GoogleFonts.mulish(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
-
-  Widget _buildHeaderImage(String imageUrl) {
-    if (imageUrl.isEmpty) return Container(color: _bgSoft);
-    try {
-      if (imageUrl.startsWith('http')) {
-        return Image.network(
-          imageUrl,
-          fit: BoxFit.cover,
-          errorBuilder: (c, e, s) => Container(color: _bgSoft),
-        );
-      } else if (imageUrl.startsWith('assets/')) {
-        return Image.asset(imageUrl, fit: BoxFit.cover);
-      } else {
-        String cleanBase64 = imageUrl.replaceAll(RegExp(r'\s+'), '');
-        if (cleanBase64.contains(',')) {
-          cleanBase64 = cleanBase64.split(',').last;
-        }
-        int mod4 = cleanBase64.length % 4;
-        if (mod4 > 0) cleanBase64 += '=' * (4 - mod4);
-        return Image.memory(
-          base64Decode(cleanBase64),
-          fit: BoxFit.cover,
-          errorBuilder: (c, e, s) => Container(color: _bgSoft),
-        );
-      }
-    } catch (e) {
-      return Container(color: _bgSoft);
-    }
-  }
 }
 
+// --- SLIDER WIDGET ---
 class _AutoPlayReviewSlider extends StatefulWidget {
   final List<DocumentSnapshot> docs;
   final Color primaryBrown;
@@ -754,6 +681,7 @@ class _AutoPlayReviewSliderState extends State<_AutoPlayReviewSlider> {
   late PageController _pageController;
   int _currentIndex = 0;
   Timer? _timer;
+
   @override
   void initState() {
     super.initState();
