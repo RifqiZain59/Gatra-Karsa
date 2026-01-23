@@ -3,9 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:gatrakarsa/app/data/service/api_service.dart';
-
-// Import View Detail untuk Navigasi
-import 'package:gatrakarsa/app/modules/detailkisah/views/detailkisah_view.dart';
 import 'package:gatrakarsa/app/modules/detailevent/views/detailevent_view.dart';
 import 'package:gatrakarsa/app/modules/detailmuseum/views/detailmuseum_view.dart';
 
@@ -74,7 +71,6 @@ class DaftarsaveController extends GetxController {
 
     // Logika Routing Berdasarkan Kategori
     if (category.contains('kisah')) {
-      Get.to(() => const DetailkisahView(), arguments: item);
     } else if (category.contains('event')) {
       Get.to(() => const DetaileventView(), arguments: item);
     } else if (category.contains('museum')) {

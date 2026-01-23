@@ -12,8 +12,6 @@ import '../modules/detaildalang/bindings/detaildalang_binding.dart';
 import '../modules/detaildalang/views/detaildalang_view.dart';
 import '../modules/detailevent/bindings/detailevent_binding.dart';
 import '../modules/detailevent/views/detailevent_view.dart';
-import '../modules/detailkisah/bindings/detailkisah_binding.dart';
-import '../modules/detailkisah/views/detailkisah_view.dart';
 import '../modules/detailmuseum/bindings/detailmuseum_binding.dart';
 import '../modules/detailmuseum/views/detailmuseum_view.dart';
 import '../modules/deteksi/bindings/deteksi_binding.dart';
@@ -155,11 +153,6 @@ class AppPages {
       name: _Paths.DETAILEVENT,
       page: () => const DetaileventView(),
       binding: DetaileventBinding(),
-    ),
-    GetPage(
-      name: _Paths.DETAILKISAH,
-      page: () => const DetailkisahView(),
-      binding: DetailkisahBinding(),
     ),
     GetPage(
       name: _Paths.EDITPROFILE,
