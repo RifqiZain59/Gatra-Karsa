@@ -1,194 +1,128 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:gatrakarsa/app/data/service/api_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+// Pastikan path import ini sesuai dengan struktur project Anda
+import 'package:gatrakarsa/app/data/service/api_service.dart';
+
 class DetailmuseumController extends GetxController {
-  late ContentModel museum;
-  var isSaved = false.obs;
+  // Menerima data yang dikirim dari halaman sebelumnya
+  final ContentModel museum = Get.arguments;
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  // Instance Service
+  final ApiService _apiService = ApiService();
 
-  final TextEditingController reviewController = TextEditingController();
-  var userRating = 5.obs;
+  // State Variables
+  var isSaved = false.obs; // Status Bookmark
+  var userRating = 5.obs; // Bintang yang dipilih user
+  final TextEditingController reviewController =
+      TextEditingController(); // Input teks ulasan
+
+  // Stream untuk Realtime Review
+  late Stream<QuerySnapshot> ulasanStream;
 
   @override
   void onInit() {
     super.onInit();
-    if (Get.arguments is ContentModel) {
-      museum = Get.arguments as ContentModel;
-    } else {
-      museum = ContentModel(
-        id: '0',
-        title: 'Unknown',
-        subtitle: '',
-        category: 'Museum',
-        description: '',
-        imageUrl: '',
-      );
-    }
-    checkSaveStatus();
-  }
-
-  void checkSaveStatus() async {
-    User? user = _auth.currentUser;
-    if (user == null) return;
-    try {
-      var doc = await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection('bookmarks')
-          .doc(museum.id)
-          .get();
-      isSaved.value = doc.exists;
-    } catch (e) {
-      print(e);
-    }
-  }
-
-  void toggleSave() async {
-    User? user = _auth.currentUser;
-    if (user == null) {
-      Get.snackbar("Akses Dibatasi", "Silakan login.");
-      return;
-    }
-    var docRef = _firestore
-        .collection('users')
-        .doc(user.uid)
-        .collection('bookmarks')
-        .doc(museum.id);
-
-    try {
-      if (isSaved.value) {
-        await docRef.delete();
-        isSaved.value = false;
-        Get.snackbar(
-          "Dihapus",
-          "Museum dihapus dari bookmark",
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
-        );
-      } else {
-        await docRef.set({
-          'id': museum.id,
-          'title': museum.title,
-          'subtitle': museum.subtitle,
-          'category': 'Museum',
-          'image_url': museum.imageUrl,
-          'description': museum.description,
-          'location': museum.location,
-          'price': museum.price,
-          'saved_at': FieldValue.serverTimestamp(),
-        });
-        isSaved.value = true;
-        Get.snackbar(
-          "Disimpan",
-          "Museum disimpan",
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
-      }
-    } catch (e) {
-      Get.snackbar("Error", "$e");
-    }
-  }
-
-  // --- PERBAIKAN DI SINI (OPEN MAP) ---
-  void openMap() async {
-    if (museum.location == null || museum.location!.isEmpty) {
-      Get.snackbar("Info", "Lokasi tidak tersedia");
-      return;
-    }
-
-    // Format URL Google Maps Search yang benar
-    final Uri googleUrl = Uri.parse(
-      "https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(museum.location!)}",
-    );
-
-    try {
-      if (await canLaunchUrl(googleUrl)) {
-        await launchUrl(googleUrl, mode: LaunchMode.externalApplication);
-      } else {
-        await launchUrl(googleUrl, mode: LaunchMode.platformDefault);
-      }
-    } catch (e) {
-      Get.snackbar("Error", "Gagal membuka peta: $e");
-    }
-  }
-
-  Stream<QuerySnapshot> get ulasanStream {
-    return _firestore
-        .collection('contents')
-        .doc(museum.id)
-        .collection('reviews')
-        .orderBy('created_at', descending: true)
-        .snapshots();
-  }
-
-  void setRating(int rating) => userRating.value = rating;
-
-  void submitReview() async {
-    User? user = _auth.currentUser;
-    if (user == null) {
-      Get.snackbar("Error", "Login dulu.");
-      return;
-    }
-    if (reviewController.text.trim().isEmpty) return;
-
-    try {
-      var userDoc = await _firestore.collection('users').doc(user.uid).get();
-      String userName =
-          (userDoc.data() as Map<String, dynamic>?)?['name'] ?? 'Pengguna';
-      String userPhoto =
-          (userDoc.data() as Map<String, dynamic>?)?['photoBase64'] ?? '';
-
-      Map<String, dynamic> reviewData = {
-        'user_id': user.uid,
-        'user_name': userName,
-        'user_photo': userPhoto,
-        'rating': userRating.value,
-        'comment': reviewController.text.trim(),
-        'created_at': FieldValue.serverTimestamp(),
-      };
-
-      await _firestore
-          .collection('contents')
-          .doc(museum.id)
-          .collection('reviews')
-          .add(reviewData);
-
-      Map<String, dynamic> userHistoryData = {
-        ...reviewData,
-        'content_id': museum.id,
-        'targetName': museum.title,
-        'category': 'Museum',
-        'image': museum.imageUrl,
-      };
-      await _firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection('reviews')
-          .add(userHistoryData);
-
-      reviewController.clear();
-      userRating.value = 5;
-      Get.snackbar(
-        "Sukses",
-        "Ulasan terkirim!",
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
-    } catch (e) {
-      Get.snackbar("Error", "$e");
-    }
+    // Inisialisasi stream ulasan berdasarkan ID museum
+    ulasanStream = _apiService.streamUlasan(museum.id);
   }
 
   @override
   void onClose() {
     reviewController.dispose();
     super.onClose();
+  }
+
+  // =======================================================================
+  // 1. FUNGSI BUKA MAPS (WEBSITE MODE)
+  // =======================================================================
+  Future<void> openMap() async {
+    final String url = museum.mapsUrl ?? "";
+
+    if (url.isEmpty) {
+      Get.snackbar(
+        "Info",
+        "Link lokasi belum tersedia untuk museum ini.",
+        backgroundColor: Colors.black.withOpacity(0.7),
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(20),
+      );
+      return;
+    }
+
+    try {
+      final Uri uri = Uri.parse(url);
+
+      // Menggunakan externalApplication agar terbuka di Browser (Chrome/Safari)
+      // bukan memaksa masuk ke aplikasi Maps Native.
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        Get.snackbar("Gagal", "Tidak dapat membuka link website.");
+      }
+    } catch (e) {
+      Get.snackbar("Error", "Format link tidak valid.");
+    }
+  }
+
+  // =======================================================================
+  // 2. FUNGSI SUBMIT REVIEW
+  // =======================================================================
+  Future<void> submitReview() async {
+    if (reviewController.text.trim().isEmpty) {
+      Get.snackbar("Error", "Ulasan tidak boleh kosong");
+      return;
+    }
+
+    try {
+      // --- TODO: Ganti dengan Data User Asli dari Auth Controller ---
+      String dummyUserId = "user_123";
+      String dummyUserName = "Pengunjung";
+      // -------------------------------------------------------------
+
+      await _apiService.submitUlasan(
+        contentId: museum.id,
+        targetName: museum.title,
+        category: 'Museum',
+        rating: userRating.value,
+        comment: reviewController.text,
+        userId: dummyUserId, // Ganti dengan user.uid asli
+        userName: dummyUserName, // Ganti dengan user.displayName asli
+      );
+
+      // Reset Form setelah sukses
+      reviewController.clear();
+      userRating.value = 5;
+
+      Get.snackbar(
+        "Sukses",
+        "Terima kasih atas ulasan Anda!",
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      Get.snackbar("Gagal", "Terjadi kesalahan: $e");
+    }
+  }
+
+  // =======================================================================
+  // 3. FUNGSI BOOKMARK (TOGGLE)
+  // =======================================================================
+  void toggleSave() {
+    isSaved.value = !isSaved.value;
+    // Disini Anda bisa menambahkan logika simpan ke Database (Favorites collection)
+    if (isSaved.value) {
+      Get.snackbar(
+        "Disimpan",
+        "${museum.title} ditambahkan ke koleksi.",
+        duration: const Duration(seconds: 1),
+      );
+    }
+  }
+
+  // Helper untuk mengubah rating bintang
+  void setRating(int rating) {
+    userRating.value = rating;
   }
 }

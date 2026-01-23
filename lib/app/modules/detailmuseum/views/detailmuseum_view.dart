@@ -31,9 +31,12 @@ class DetailmuseumView extends GetView<DetailmuseumController> {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
+        // --- BAGIAN YANG DIPERBAIKI ---
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        statusBarBrightness: Brightness.light,
+        statusBarIconBrightness: Brightness.light, // Icon Putih (Android)
+        statusBarBrightness: Brightness.dark, // Icon Putih (iOS)
+
+        // -----------------------------
         systemNavigationBarColor: Colors.white,
         systemNavigationBarIconBrightness: Brightness.dark,
         systemNavigationBarDividerColor: Colors.transparent,

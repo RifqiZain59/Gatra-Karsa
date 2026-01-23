@@ -1,5 +1,7 @@
 import 'package:get/get.dart';
 
+import '../modules/artikel/bindings/artikel_binding.dart';
+import '../modules/artikel/views/artikel_view.dart';
 import '../modules/daftarlike/bindings/daftarlike_binding.dart';
 import '../modules/daftarlike/views/daftarlike_view.dart';
 import '../modules/daftarsave/bindings/daftarsave_binding.dart';
@@ -30,8 +32,6 @@ import '../modules/kebijakanprivasi/bindings/kebijakanprivasi_binding.dart';
 import '../modules/kebijakanprivasi/views/kebijakanprivasi_view.dart';
 import '../modules/ketentuanpemakaian/bindings/ketentuanpemakaian_binding.dart';
 import '../modules/ketentuanpemakaian/views/ketentuanpemakaian_view.dart';
-import '../modules/kisah/bindings/kisah_binding.dart';
-import '../modules/kisah/views/kisah_view.dart';
 import '../modules/leaderboard/bindings/leaderboard_binding.dart';
 import '../modules/leaderboard/views/leaderboard_view.dart';
 import '../modules/login/bindings/login_binding.dart';
@@ -137,11 +137,6 @@ class AppPages {
       binding: TokohBinding(),
     ),
     GetPage(
-      name: _Paths.KISAH,
-      page: () => const KisahView(),
-      binding: KisahBinding(),
-    ),
-    GetPage(
       name: _Paths.EVENT,
       page: () => const EventView(),
       binding: EventBinding(),
@@ -225,6 +220,11 @@ class AppPages {
       name: _Paths.DAFTARLIKE,
       page: () => const DaftarlikeView(),
       binding: DaftarlikeBinding(),
+    ),
+    GetPage(
+      name: _Paths.ARTIKEL,
+      page: () => const ArtikelView(),
+      binding: ArtikelBinding(),
     ),
   ];
 }

@@ -38,7 +38,11 @@ class DetaileventView extends GetView<DetaileventController> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
+        // --- PERBAIKAN DI SINI ---
+        statusBarIconBrightness: Brightness.light, // Icon Putih (Android)
+        statusBarBrightness:
+            Brightness.dark, // Icon Putih (iOS - logic terbalik)
+        // -------------------------
         systemNavigationBarColor: Colors.white,
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
@@ -744,7 +748,7 @@ class DetaileventView extends GetView<DetaileventController> {
   }
 }
 
-// --- DEFINISI SLIDER AGAR TIDAK ERROR ---
+// --- DEFINISI SLIDER ---
 class _AutoPlayReviewSlider extends StatefulWidget {
   final List<DocumentSnapshot> docs;
   final Color primaryBrown;

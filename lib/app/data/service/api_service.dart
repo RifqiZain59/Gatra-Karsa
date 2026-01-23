@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 // ==========================================
-// 1. MODEL DATA
+// 1. MODEL DATA (SUDAH DIPERBAIKI)
 // ==========================================
 class ContentModel {
   final String id;
@@ -11,7 +11,11 @@ class ContentModel {
   final String description;
   final String imageUrl;
 
-  // PERUBAHAN: Menggunakan nama variabel 'video_link' sesuai request
+  // --- FIELD BARU: LINK ---
+  // Ditambahkan agar View tidak error saat memanggil artikel.link
+  final String? link;
+
+  // Variable khusus video
   final String? video_link;
 
   final String? mapsUrl;
@@ -30,7 +34,8 @@ class ContentModel {
     required this.category,
     required this.description,
     required this.imageUrl,
-    this.video_link, // Variable name is now video_link
+    this.link, // <--- Tambahkan di Constructor
+    this.video_link,
     this.mapsUrl,
     this.phone,
     this.price,
@@ -51,7 +56,12 @@ class ContentModel {
       description: data['description'] ?? '',
       imageUrl: data['image_url'] ?? '',
 
-      // MAPPING: Database 'video_link' -> Variable 'video_link'
+      // --- MAPPING LINK ---
+      // Mencoba membaca dari field 'link', jika tidak ada coba 'url', jika tidak ada 'website'
+      // Ini untuk jaga-jaga jika nama field di database berbeda-beda
+      link: data['link'] ?? data['url'] ?? data['website'],
+
+      // Mapping Video
       video_link: data['video_link'] ?? data['video_url'],
 
       mapsUrl: data['maps_url'],
@@ -72,10 +82,10 @@ class ContentModel {
 class ApiService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Helper: Fetch & Sort Manual (Tanpa Index Firebase)
+  // Helper: Fetch & Sort Manual
   Future<List<ContentModel>> _fetchAndSort(String collectionName) async {
     try {
-      // 1. Ambil data query standar
+      // 1. Ambil data query standar (Hanya status Publish)
       QuerySnapshot snapshot = await _firestore
           .collection(collectionName)
           .where('status', isEqualTo: 'Publish')
@@ -86,7 +96,7 @@ class ApiService {
           .map((doc) => ContentModel.fromFirestore(doc))
           .toList();
 
-      // 3. Sorting Manual di Client (Terbaru di atas)
+      // 3. Sorting Manual (Terbaru di atas)
       dataList.sort((a, b) {
         var t1 = a.createdAt ?? Timestamp(0, 0);
         var t2 = b.createdAt ?? Timestamp(0, 0);
@@ -104,7 +114,9 @@ class ApiService {
   // A. FUNGSI GET DATA
   // ==========================================
 
-  Future<List<ContentModel>> getKisah() async => await _fetchAndSort('stories');
+  Future<List<ContentModel>> getArtikel() async =>
+      await _fetchAndSort('articles');
+
   Future<List<ContentModel>> getTokohWayang() async =>
       await _fetchAndSort('wayang');
   Future<List<ContentModel>> getTokohDalang() async =>

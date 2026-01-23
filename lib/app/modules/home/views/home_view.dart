@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:gatrakarsa/app/modules/artikel/views/artikel_view.dart';
 import 'package:gatrakarsa/app/modules/daftarlike/views/daftarlike_view.dart';
 import 'package:get/get.dart';
 import 'package:ionicons/ionicons.dart';
@@ -18,7 +19,6 @@ import '../../video/views/video_view.dart';
 import '../../leaderboard/views/leaderboard_view.dart';
 import '../../quiz/views/quiz_view.dart';
 import '../../tokoh/views/tokoh_view.dart';
-import '../../kisah/views/kisah_view.dart';
 import '../../museum/views/museum_view.dart';
 import '../../event/views/event_view.dart';
 
@@ -43,7 +43,7 @@ class _HomeViewState extends State<HomeView> {
 
   final List<Map<String, dynamic>> categories = [
     {'icon': Ionicons.people_outline, 'label': 'Tokoh', 'color': 0xFF5D4037},
-    {'icon': Ionicons.book_outline, 'label': 'Kisah', 'color': 0xFF795548},
+    {'icon': Ionicons.book_outline, 'label': 'Artikel', 'color': 0xFF795548},
     {'icon': Ionicons.map_outline, 'label': 'Museum', 'color': 0xFF8D6E63},
     {'icon': Ionicons.calendar_outline, 'label': 'Event', 'color': 0xFFA1887F},
     {
@@ -538,8 +538,8 @@ class _HomeViewState extends State<HomeView> {
               final label = cat['label'];
               if (label == 'Tokoh')
                 Get.to(() => const TokohView());
-              else if (label == 'Kisah')
-                Get.to(() => const KisahView());
+              else if (label == 'Artikel')
+                Get.to(() => const ArtikelView());
               else if (label == 'Museum')
                 Get.to(() => const MuseumView());
               else if (label == 'Event')
