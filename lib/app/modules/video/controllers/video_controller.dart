@@ -1,8 +1,8 @@
 import 'package:get/get.dart';
-import 'package:gatrakarsa/app/data/service/api_service.dart'; // Sesuaikan import ini
+import 'package:gatrakarsa/app/data/service/api_service.dart';
 
 class VideoController extends GetxController {
-  // Inisialisasi Service
+  // 1. Panggil ApiService yang sudah diperbaiki (No Index Error)
   final ApiService _apiService = ApiService();
 
   // State Variables
@@ -12,16 +12,15 @@ class VideoController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    fetchVideos(); // Ambil data saat controller dibuat
+    fetchVideos();
   }
 
-  /// Fungsi utama mengambil data video dari API Service
   Future<void> fetchVideos() async {
     try {
-      isLoading.value = true;
+      isLoading(true);
 
-      // Memanggil fungsi getVideos() yang sudah kita update logikanya
-      // (Filter otomatis: 'video', 'dokumenter', atau punya videoUrl)
+      // Panggil fungsi spesifik untuk Video dari ApiService
+      // Ini akan mengambil dari collection 'video'
       final videos = await _apiService.getVideos();
 
       if (videos.isNotEmpty) {
@@ -31,13 +30,12 @@ class VideoController extends GetxController {
       }
     } catch (e) {
       print("Error fetching videos: $e");
-      // Opsional: Tampilkan snackbar error jika perlu
+      Get.snackbar("Info", "Gagal memuat data video.");
     } finally {
-      isLoading.value = false;
+      isLoading(false);
     }
   }
 
-  /// Fungsi untuk Pull-to-Refresh
   Future<void> refreshData() async {
     await fetchVideos();
   }

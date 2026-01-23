@@ -29,7 +29,6 @@ class DeteksiView extends StatelessWidget {
       appBar: AppBar(
         // --- PERUBAHAN DI SINI: MENGHAPUS ICON PANAH ---
         automaticallyImplyLeading: false, // Memastikan tidak ada panah otomatis
-
         // leading: ... (Bagian ini sudah dihapus)
         title: const Text(
           'Deteksi Wayang',
